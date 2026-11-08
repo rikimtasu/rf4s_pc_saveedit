@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+node_modules/
+*.sav
+*.changes.json
+web/local-game-data.js
+web/local-save-reference.js
+/ct/
+/switch_save/
+/exports/
+/Inter/

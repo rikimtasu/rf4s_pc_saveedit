@@ -1,0 +1,12 @@
+{
+  "name": "rf4s-save-editor",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline RF4S PC / Switch save editor with skills, recipes, friendship, actors and storage",
+  "scripts": {
+    "start": "python serve.py",
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": { "node": ">=20" }
+}

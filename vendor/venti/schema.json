@@ -1,0 +1,4477 @@
+{
+  "crop": {
+    "struct": "Crop",
+    "source": "src/rf/crop.h",
+    "handler": "src/rf/overrides/crop_override.cpp",
+    "size": 108,
+    "fields": {
+      "stage_1_days": {
+        "offset": 0,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Number of in-game days required for the first growth stage."
+      },
+      "stage_2_days": {
+        "offset": 1,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Number of in-game days required for the second growth stage."
+      },
+      "stage_3_days": {
+        "offset": 2,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Number of in-game days required for the third growth stage."
+      },
+      "stage_4_days": {
+        "offset": 3,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Number of in-game days required for the fourth and final growth stage."
+      },
+      "stage_1_size": {
+        "offset": 4,
+        "bits": 8,
+        "signed": true,
+        "min": -128,
+        "max": 127,
+        "length": 0,
+        "description": "Sprite size during the first growth stage. Usually 0, negative values make the sprite smaller. Unconfirmed in game."
+      },
+      "stage_2_size": {
+        "offset": 5,
+        "bits": 8,
+        "signed": true,
+        "min": -128,
+        "max": 127,
+        "length": 0,
+        "description": "Sprite size during the second growth stage. Unconfirmed in game."
+      },
+      "stage_3_size": {
+        "offset": 6,
+        "bits": 8,
+        "signed": true,
+        "min": -128,
+        "max": 127,
+        "length": 0,
+        "description": "Sprite size during the third growth stage. Unconfirmed in game."
+      },
+      "stage_4_size": {
+        "offset": 7,
+        "bits": 8,
+        "signed": true,
+        "min": -128,
+        "max": 127,
+        "length": 0,
+        "description": "Sprite size during the fourth and final growth stage. Unconfirmed in game."
+      },
+      "giant_sprite_size": {
+        "offset": 8,
+        "bits": 16,
+        "signed": true,
+        "min": -32768,
+        "max": 32767,
+        "length": 0,
+        "description": "Sprite size of the giant variant. Unconfirmed in game."
+      },
+      "withered_sprite_size": {
+        "offset": 10,
+        "bits": 16,
+        "signed": true,
+        "min": -32768,
+        "max": 32767,
+        "length": 0,
+        "description": "Sprite size when withered. Unconfirmed in game."
+      },
+      "wild_spawn_chance": {
+        "offset": 12,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Chance of spawning in the wild. Only the low 16 bits are used. Unconfirmed in game."
+      },
+      "initial_hp": {
+        "offset": 16,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Initial HP."
+      },
+      "collision_size": {
+        "offset": 20,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Size used for collisions, where 16 = 100%."
+      },
+      "regrowth_days": {
+        "offset": 24,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Number of in-game days required to regrow after harvesting, or 0 if the crop does not regrow."
+      },
+      "yield": {
+        "offset": 28,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Number of items yielded per harvest."
+      },
+      "defense": {
+        "offset": 32,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Defense (for typhoons), up to 63."
+      },
+      "harvest_event_chance": {
+        "offset": 36,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Chance of triggering an NPC visit/event when harvesting. Unconfirmed in game."
+      },
+      "harvest_health_cost": {
+        "offset": 40,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Soil health lost when harvesting. Only the low 16 bits are used."
+      },
+      "soil_xp_overall": {
+        "offset": 44,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Soil XP gained for the overall level."
+      },
+      "soil_xp_speed": {
+        "offset": 48,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Soil XP gained for growth speed."
+      },
+      "soil_xp_quality": {
+        "offset": 52,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Soil XP gained for quality."
+      },
+      "soil_xp_size": {
+        "offset": 56,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Soil XP gained for size."
+      },
+      "soil_xp_yield": {
+        "offset": 60,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Soil XP gained for yield."
+      },
+      "growth_rate": {
+        "offset": 64,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Rate of progression through the different growth stages, per in-game day."
+      },
+      "quality_gain_rate": {
+        "offset": 68,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Rate at which quality (harvested crop level) increases, per in-game day."
+      },
+      "size_gain_rate": {
+        "offset": 72,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Rate at which size (progress toward giant-ness) increases, per in-game day."
+      },
+      "yield_gain_rate": {
+        "offset": 76,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Rate at which `yield` increases, per in-game day."
+      },
+      "harvest_growth_cost": {
+        "offset": 80,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Amount subtracted from the soil's growth rate when this crop is harvested."
+      },
+      "harvest_quality_cost": {
+        "offset": 84,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Amount subtracted from the soil's quality when this crop is harvested."
+      },
+      "harvest_size_cost": {
+        "offset": 88,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Amount subtracted from the soil's size (giant-ness of crops grown on that soil) when this crop is harvested."
+      },
+      "harvest_yield_cost": {
+        "offset": 92,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Amount subtracted from the soil's yield when this crop is harvested."
+      },
+      "harvest_item": {
+        "offset": 96,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Item ID of the main product received when harvesting."
+      },
+      "seed_item": {
+        "offset": 100,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Item ID of the additional seed that may be dropped when harvesting."
+      },
+      "flags": {
+        "offset": 104,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Good and poor growing seasons, along with other crop properties.",
+        "enum": {
+          "None": 0,
+          "MaybeForage": 1,
+          "Unknown2": 2,
+          "Unknown4": 4,
+          "Plant": 8,
+          "Seeded": 16,
+          "Minable": 32,
+          "Choppable": 64,
+          "Flower": 128,
+          "Vegetable": 256,
+          "Tree": 512,
+          "DungeonField": 1024,
+          "SpringGood": 4096,
+          "SummerGood": 8192,
+          "FallGood": 16384,
+          "WinterGood": 32768,
+          "SpringPoor": 65536,
+          "SummerPoor": 131072,
+          "FallPoor": 262144,
+          "WinterPoor": 524288
+        },
+        "bitmask": true
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3CropParam.bin",
+        "archiveIndex": 14807,
+        "raw": false
+      }
+    ]
+  },
+  "equipment": {
+    "struct": "EquipmentParam",
+    "source": "src/rf/equipment_param.h",
+    "handler": "src/rf/overrides/equipment_param_override.cpp",
+    "size": 180,
+    "fields": {
+      "gear_params": {
+        "offset": 0,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Weapon and armor abilities.",
+        "enum": {
+          "None": 0,
+          "Fire": 1,
+          "Water": 2,
+          "Earth": 4,
+          "Wind": 8,
+          "Light": 16,
+          "Dark": 32,
+          "Love": 64,
+          "Magic": 128,
+          "DirectPlayerDamage": 256,
+          "IgnoreDefense": 512,
+          "NoSpread": 1024,
+          "HammerSound": 2048,
+          "FullStun": 4096,
+          "TurnipEffect": 8192,
+          "MarionettaGrab": 32768,
+          "WaterSound": 65536,
+          "DropRateUp": 524288,
+          "WhiteStone": 1048576,
+          "MinimumDamage": 2097152,
+          "HalfElementRes": 4194304,
+          "FaintDropCabbage": 8388608,
+          "FaintDropPumpkin": 16777216,
+          "FaintDropPotato": 33554432,
+          "FaintDropTurnip": 67108864,
+          "MagnifyingGlass": 134217728,
+          "Lightweight": 536870912,
+          "NoCrits": 1073741824
+        },
+        "bitmask": true
+      },
+      "boot_params": {
+        "offset": 4,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Special effects of boots.",
+        "enum": {
+          "None": 0,
+          "WaterWalking": 1,
+          "AggroRangeDown": 2,
+          "DashDistanceUp": 4,
+          "FreeFarming": 8,
+          "ChirpOnStep": 16,
+          "BrakingSpeedDown": 32,
+          "DashAttackDisabled": 64,
+          "BrakingSpeedUp": 128,
+          "Clumsy": 256,
+          "HeightUp": 512,
+          "MovementSpeedUp": 1024,
+          "MovementSpeedUpMore": 2048,
+          "MovementSpeedDown": 4096,
+          "ResistWeakWind": 8192,
+          "DashInvincibilityUp": 16384
+        },
+        "bitmask": true
+      },
+      "acc_params": {
+        "offset": 8,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Special effects of accessories.",
+        "enum": {
+          "None": 0,
+          "DropRateUp": 1,
+          "Poison": 2,
+          "Paralysis": 4,
+          "Seal": 8,
+          "ChargeSpeedUp": 16,
+          "ThrowDistanceUp": 32,
+          "MovementSpeedUp": 64,
+          "YawnDisabled": 128,
+          "MonsterStatsUp": 256,
+          "CompanionStatsUp": 512,
+          "FarmToolAttackUp": 1024,
+          "LevelXpGainUp": 2048,
+          "SkillXpGainUp": 4096,
+          "RpCostDown": 8192,
+          "RpCostDownMore": 16384,
+          "NullDamageChance": 32768,
+          "BestAttack": 65536,
+          "MaxHpUp": 131072,
+          "NoMonsterSpawns": 262144,
+          "ReverseStatus": 524288,
+          "HpRegen": 1048576,
+          "RpRegen": 2097152,
+          "FlinchTimeDown": 4194304,
+          "HitRangeUp": 8388608,
+          "PhysicalDamageDown": 16777216,
+          "RecoveryUp": 33554432,
+          "IgnoreDefense": 67108864
+        },
+        "bitmask": true
+      },
+      "attack": {
+        "offset": 12,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "ATK rating; adds to physical damage."
+      },
+      "magic_attack": {
+        "offset": 16,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "M.ATK rating; adds to magical damage, for both the weapon (if a staff) and magic skills."
+      },
+      "defense": {
+        "offset": 20,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "DEF rating; reduces physical damage taken."
+      },
+      "magic_defense": {
+        "offset": 24,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "M.DEF rating; reduces all elemental damage taken."
+      },
+      "strength": {
+        "offset": 28,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to the actor's STR; increases physical damage."
+      },
+      "intelligence": {
+        "offset": 32,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to the actor's INT; increases magical damage."
+      },
+      "vitality": {
+        "offset": 36,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to the actor's VIT; reduces both physical and magical/element damage at half the rate per point as the `defense` and `magic_defense` stats; i.e. 2 points of `vitality` is worth 1 point each of `defense` and `magic_defense`."
+      },
+      "dizzy": {
+        "offset": 40,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Diz rating, weapons only; higher values cause monsters to be knocked out with fewer hits."
+      },
+      "crit": {
+        "offset": 44,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to critical hit chance (%, additive)."
+      },
+      "knock": {
+        "offset": 48,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to distance enemies are knocked back on hit (%)."
+      },
+      "stun": {
+        "offset": 52,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to duration that enemies are stunned (%), once they hit the dizzy max."
+      },
+      "poison_atk": {
+        "offset": 56,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to inflict poison on hit (%)."
+      },
+      "seal_atk": {
+        "offset": 60,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to inflict seal on hit (%)."
+      },
+      "paralysis_atk": {
+        "offset": 64,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to inflict paralysis on hit (%)."
+      },
+      "sleep_atk": {
+        "offset": 68,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to inflict sleep on hit (%)."
+      },
+      "fatigue_atk": {
+        "offset": 72,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to inflict fatigue on hit (%)."
+      },
+      "sick_atk": {
+        "offset": 76,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to inflict sick on hit (%)."
+      },
+      "faint_atk": {
+        "offset": 80,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to cause instant death on hit (%)."
+      },
+      "drain_atk": {
+        "offset": 84,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "% of inflicted damage absorbed as HP."
+      },
+      "fire_res": {
+        "offset": 88,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to fire element resistance (%. additive)."
+      },
+      "water_res": {
+        "offset": 92,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to water element resistance (%, additive)."
+      },
+      "earth_res": {
+        "offset": 96,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to earth element resistance (%, additive)."
+      },
+      "wind_res": {
+        "offset": 100,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to wind element resistance (%, additive)."
+      },
+      "light_res": {
+        "offset": 104,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to light element resistance (%, additive)."
+      },
+      "dark_res": {
+        "offset": 108,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to dark element resistance (%, additive)."
+      },
+      "love_res": {
+        "offset": 112,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to love element resistance (%, additive)."
+      },
+      "physical_res": {
+        "offset": 116,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Physical (non-elemental) resistance or \"no res\" (%, additive)."
+      },
+      "dizzy_res": {
+        "offset": 120,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Reduction in received diz (knockout buildup) (%).  Does not prevent being \"launched\" by some enemies, only the spinning-stars stun effect."
+      },
+      "crit_res": {
+        "offset": 124,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to cancel a received critical hit (%, additive)."
+      },
+      "knock_res": {
+        "offset": 128,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Reduction in knockback distance when hit by enemy (%, additive)."
+      },
+      "poison_res": {
+        "offset": 132,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to resist a poison status infliction (%, additive)."
+      },
+      "seal_res": {
+        "offset": 136,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to resist a seal status infliction (%, additive)."
+      },
+      "paralysis_res": {
+        "offset": 140,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to resist a paralysis status infliction (%, additive)."
+      },
+      "sleep_res": {
+        "offset": 144,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to resist a sleep status infliction (%, additive)."
+      },
+      "fatigue_res": {
+        "offset": 148,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to resist a fatigue status infliction (%, additive)."
+      },
+      "sick_res": {
+        "offset": 152,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to resist a sick status infliction (%, additive)."
+      },
+      "faint_res": {
+        "offset": 156,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance to resist an instant death attack (%, additive)."
+      },
+      "drain_res": {
+        "offset": 160,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Reduction in HP absorbed by some enemies as a % of their damage."
+      },
+      "depth": {
+        "offset": 164,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Ambiguous, sometimes labeled as tool charge coverage (%) but is populated for all weapons and is usually a value other than 100%. For armor pieces it is always 0."
+      },
+      "hit_range": {
+        "offset": 168,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Base attack range for a weapon, as % of the standard (short sword) distance."
+      },
+      "hit_arc": {
+        "offset": 172,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Angle of the weapon's attack arc, as % of the standard (short sword) arc."
+      },
+      "model": {
+        "offset": 176,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Index of the weapon's model when held by an actor.  Probably an offset into the `rom:/weapon` area starting at 0x3C61; shields start at value 0 and the first entry here is `I_ShieldJ00.bfres`."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3ItemEquipmentParam.bin",
+        "archiveIndex": 14808,
+        "raw": false
+      }
+    ]
+  },
+  "fish_level": {
+    "struct": "FishLevelRate",
+    "source": "src/rf/fish_level_rate.h",
+    "handler": "src/rf/overrides/fish_level_rate_override.cpp",
+    "size": 16,
+    "fields": {
+      "type_0": {
+        "offset": 0,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Level weights for fish in category 0."
+      },
+      "type_1": {
+        "offset": 4,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Level weights for fish in category 1."
+      },
+      "type_2": {
+        "offset": 8,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Level weights for fish in category 2."
+      },
+      "type_3": {
+        "offset": 12,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Level weights for fish in category 3."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "spring",
+        "file": "Fishing_rate_lv_Spring.bin",
+        "archiveIndex": 14805,
+        "raw": false
+      },
+      {
+        "sub": "spring2",
+        "file": "Fishing_rate_lv_Spring2.bin",
+        "archiveIndex": 14806,
+        "raw": false
+      }
+    ]
+  },
+  "fish": {
+    "struct": "FishRate",
+    "source": "src/rf/fish_rate.h",
+    "handler": "src/rf/overrides/fish_rate_override.cpp",
+    "size": 88,
+    "fields": {
+      "spring": {
+        "offset": 0,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in spring, clear weather."
+      },
+      "spring_rain": {
+        "offset": 4,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in spring, rainy weather; also in Idra Cave, 1F."
+      },
+      "summer": {
+        "offset": 8,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in summer, clear weather."
+      },
+      "summer_rain": {
+        "offset": 12,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in summer, rainy weather."
+      },
+      "fall": {
+        "offset": 16,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in fall, clear weather."
+      },
+      "fall_rain": {
+        "offset": 20,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in fall, rainy weather."
+      },
+      "winter": {
+        "offset": 24,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in winter, clear weather."
+      },
+      "winter_snow": {
+        "offset": 28,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in winter, when snowing."
+      },
+      "sand": {
+        "offset": 32,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in the Sand Pond."
+      },
+      "idra_b2": {
+        "offset": 36,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in Idra Cave, B2."
+      },
+      "idra_b1": {
+        "offset": 40,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in Idra Cave, B1."
+      },
+      "yokmir_waterfall": {
+        "offset": 44,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in Yokmir Forest, waterfall area."
+      },
+      "yokmir_pond": {
+        "offset": 48,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in Yokmir Forest, pond area."
+      },
+      "water_ruins": {
+        "offset": 52,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in the Water Ruins."
+      },
+      "maya_road": {
+        "offset": 56,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in Maya Road."
+      },
+      "sechs_cave": {
+        "offset": 60,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Spawn weight in the Sechs Cave."
+      },
+      "trash_0": {
+        "offset": 64,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Catch weight when rerolling a trash item caught with the tier 0 pole (Cheap Pole)."
+      },
+      "trash_1": {
+        "offset": 68,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Catch weight when rerolling a trash item caught with the tier 1 pole (Beginner's Pole)."
+      },
+      "trash_2": {
+        "offset": 72,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Catch weight when rerolling a trash item caught with the tier 2 pole (Skilled Pole)."
+      },
+      "trash_3": {
+        "offset": 76,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Catch weight when rerolling a trash item caught with the tier 3 pole (Famous Pole)."
+      },
+      "trash_4": {
+        "offset": 80,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Catch weight when rerolling a trash item caught with the tier 4 pole (Sacred Pole)."
+      },
+      "level_rate_index": {
+        "offset": 84,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Column index or \"category\" to look up in `FishLevelRate` when determining the size/level."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "spring",
+        "file": "Fishing_rate_fish_Spring.bin",
+        "archiveIndex": 14803,
+        "raw": false
+      },
+      {
+        "sub": "spring2",
+        "file": "Fishing_rate_fish_Spring2.bin",
+        "archiveIndex": 14804,
+        "raw": false
+      }
+    ]
+  },
+  "geode": {
+    "struct": "GeodeRate",
+    "source": "src/rf/geode_rate.h",
+    "handler": "src/rf/overrides/geode_rate_override.cpp",
+    "size": 32,
+    "fields": {
+      "kind": {
+        "offset": 0,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Identifies the kind of geode; controls which sprite is drawn and which name is displayed."
+      },
+      "break_chance": {
+        "offset": 4,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Percentage chance of the geode breaking with each mining hit, where 256 = 100%. Lower values mean that the geode can be hit more times (and produce more ore) before disappearing.  This is the baseline stat, not taking into account reductions from hammer tier, mining skill, etc."
+      },
+      "scrap_chance": {
+        "offset": 8,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Percentage chance of dropping scrap metal instead of _any_ of the configured drops, where 256 = 100%.  This is the baseline stat, not taking into account reductions from hammer tier, mining skill, etc. 0x08"
+      },
+      "drop_weight_1": {
+        "offset": 12,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Likelihood of mining `drop_item_1` on each hit, relative to the other drop weights."
+      },
+      "drop_weight_2": {
+        "offset": 16,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Likelihood of mining `drop_item_2` on each hit, relative to the other drop weights."
+      },
+      "drop_weight_3": {
+        "offset": 20,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Likelihood of mining `drop_item_3` on each hit, relative to the other drop weights."
+      },
+      "drop_item_1": {
+        "offset": 24,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "First item that can be mined."
+      },
+      "drop_item_2": {
+        "offset": 26,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Second item that can be mined."
+      },
+      "drop_item_3": {
+        "offset": 28,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Third item that can be mined."
+      },
+      "drop_item_rare": {
+        "offset": 30,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "An additional, very rare drop whose drop rate is hardcoded in the game and never rises above 10% at the max possible level and with the best possible equipment.  None of the `drop_weight` fields affect this drop, it is always rare and always takes priority over all other drops when the game rolls it."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "MapOre_Rate.bin",
+        "archiveIndex": 4877,
+        "raw": false
+      }
+    ]
+  },
+  "item": {
+    "struct": "Item",
+    "source": "src/rf/item.h",
+    "handler": "src/rf/overrides/item_override.cpp",
+    "size": 40,
+    "fields": {
+      "family": {
+        "offset": 0,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "ID of a family of related items. Mainly used for recipe slots."
+      },
+      "category": {
+        "offset": 4,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "ID of the category that is displayed in the game UI such as \"Vegetable\" or \"Ready-Made\".",
+        "enum": {
+          "Vegetable": 0,
+          "Fruit": 1,
+          "Plant": 2,
+          "Medicine": 3,
+          "Fail": 4,
+          "Knife": 5,
+          "FryingPan": 6,
+          "Pot": 7,
+          "Oven": 8,
+          "Mixer": 9,
+          "Steamed": 10,
+          "Handmade": 11,
+          "ReadyMade": 12,
+          "Dairy": 13,
+          "Ingredient": 14,
+          "ShortSword": 15,
+          "LongSword": 16,
+          "Spear": 17,
+          "Hammer": 18,
+          "Axe": 19,
+          "Staff": 24,
+          "DualBlades": 25,
+          "Fist": 26,
+          "Hoe": 27,
+          "Waterpot": 28,
+          "Sickle": 29,
+          "MiningHammer": 30,
+          "ChoppingAxe": 31,
+          "Pole": 32,
+          "Shield": 33,
+          "Accessory": 34,
+          "Headgear": 35,
+          "Shoes": 36,
+          "Armor": 37,
+          "Brush": 40,
+          "Clippers": 41,
+          "MagnifyingGlass": 45,
+          "Seed": 46,
+          "Nutrient": 47,
+          "Magic": 48,
+          "RuneAbility": 49,
+          "Special": 50,
+          "Collectible": 51,
+          "Fish": 52,
+          "Trash": 53,
+          "Other": 54,
+          "Category": 55,
+          "RecipeBread": 57
+        },
+        "bitmask": false
+      },
+      "buy_rate_index": {
+        "offset": 6,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Index of the `PriceTable` record that holds the buying price multiplier at each item level."
+      },
+      "sell_rate_index": {
+        "offset": 7,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Index of the `PriceTable` record that holds the selling price multiplier at each item level."
+      },
+      "buy": {
+        "offset": 8,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Base price to buy the level 1 item at a shop. Modified by `buy_rate_index` at higher levels."
+      },
+      "sell": {
+        "offset": 12,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Base price to sell or ship the level 1 item. Modified by `sell_rate_index` at higher levels."
+      },
+      "crop": {
+        "offset": 16,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Index into `Crop`, either grown by a seed or used to grow a product."
+      },
+      "flags": {
+        "offset": 20,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Miscellaneous flags attached to the item, affecting different parts of the game's behavior.",
+        "enum": {
+          "None": 0,
+          "NonDiscardable": 1,
+          "KeyItem": 2,
+          "SpecialCatch": 4,
+          "Giant": 8,
+          "AttackBonus": 16,
+          "DefenseBonus": 32,
+          "MagicAttackBonus": 64,
+          "MagicDefenseBonus": 128,
+          "Unknown100": 256
+        },
+        "bitmask": true
+      },
+      "story_unlock": {
+        "offset": 28,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Story progress required for automatic unlock of this item in shops.  \"Automatic\" in this context means that the item is always guaranteed to unlock at this point, but may have been unlocked earlier by an event or by picking up the item as loot."
+      },
+      "sort_order": {
+        "offset": 32,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Order within the item's category in game menus"
+      },
+      "staff_shot_level": {
+        "offset": 36,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "For staves, the level of the charged shot. Some other items have nonzero values but they appear to be unused."
+      },
+      "rarity": {
+        "offset": 5,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 15,
+        "length": 0,
+        "description": "Rarity, from 0 to 15; one packed nibble.",
+        "shift": 4
+      },
+      "max_stack": {
+        "offset": 5,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 15,
+        "length": 0,
+        "description": "Max stack, from 0 to 15; one packed nibble.",
+        "shift": 0
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3ItemList.bin",
+        "archiveIndex": 14809,
+        "raw": false
+      }
+    ]
+  },
+  "use": {
+    "struct": "ItemUseParam",
+    "source": "src/rf/item_use_param.h",
+    "handler": "src/rf/overrides/item_use_param_override.cpp",
+    "size": 180,
+    "fields": {
+      "hp": {
+        "offset": 0,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "HP gained/lost on use, absolute."
+      },
+      "rp": {
+        "offset": 4,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "RP gained/lost on use, absolute."
+      },
+      "hp_pct": {
+        "offset": 8,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "HP gained/lost on use, % of max."
+      },
+      "rp_pct": {
+        "offset": 12,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "RP gained/lost on use, % of max."
+      },
+      "status_flags": {
+        "offset": 16,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Status effects caused or cured.",
+        "enum": {
+          "None": 0,
+          "HealPoison": 1,
+          "HealSeal": 2,
+          "HealParalysis": 4,
+          "HealSleep": 8,
+          "HealFatigue": 16,
+          "HealSick": 32,
+          "CausePoison": 64,
+          "CauseSeal": 128,
+          "CauseParalysis": 256,
+          "CauseSleep": 512,
+          "CauseFatigue": 1024,
+          "CauseSick": 2048,
+          "CauseFaint": 4096,
+          "LevelUp": 8192,
+          "Unknown4000": 16384
+        },
+        "bitmask": true
+      },
+      "effect_duration": {
+        "offset": 20,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Duration of temporary effects, in units of 3 in-game minutes."
+      },
+      "max_hp": {
+        "offset": 24,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Max HP gained/lost on use, absolute."
+      },
+      "max_rp": {
+        "offset": 28,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Max RP gained/lost on use, absolute."
+      },
+      "strength": {
+        "offset": 32,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "STR gained/lost on use, absolute."
+      },
+      "intelligence": {
+        "offset": 36,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "INT gained/lost on use, absolute."
+      },
+      "vitality": {
+        "offset": 40,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "VIT gained/lost on use, absolute."
+      },
+      "max_hp_pct": {
+        "offset": 44,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Max HP gained/lost on use, % of natural max."
+      },
+      "max_rp_pct": {
+        "offset": 48,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Max RP gained/lost on use, % of natural max."
+      },
+      "strength_pct": {
+        "offset": 52,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "STR gained/lost on use, % of natural value."
+      },
+      "intelligence_pct": {
+        "offset": 56,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "INT gained/lost on use, % of natural value."
+      },
+      "vitality_pct": {
+        "offset": 60,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "VIT gained/lost on use, % of natural value."
+      },
+      "crit": {
+        "offset": 64,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Critical hit rate boost/reduction, flat %."
+      },
+      "knock_res": {
+        "offset": 68,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Knock resistance boost/reduction, flat %."
+      },
+      "crit_res": {
+        "offset": 72,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Critical hit resistance boost/reduction, flat %."
+      },
+      "poison_res": {
+        "offset": 76,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Poison resistance boost/reduction, flat %."
+      },
+      "seal_res": {
+        "offset": 80,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Seal resistance boost/reduction, flat %."
+      },
+      "paralysis_res": {
+        "offset": 84,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Paralysis resistance boost/reduction, flat %."
+      },
+      "sleep_res": {
+        "offset": 88,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Sleep resistance boost/reduction, flat %."
+      },
+      "fatigue_res": {
+        "offset": 92,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Fatigue resistance boost/reduction, flat %."
+      },
+      "sick_res": {
+        "offset": 96,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Sick resistance boost/reduction, flat %."
+      },
+      "faint_res": {
+        "offset": 100,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Faint resistance boost/reduction, flat %."
+      },
+      "poison_atk": {
+        "offset": 104,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional/reduced chance to inflict poison on attack, flat %."
+      },
+      "seal_atk": {
+        "offset": 108,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional/reduced chance to inflict seal on attack, flat %."
+      },
+      "paralysis_atk": {
+        "offset": 112,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional/reduced chance to inflict paralysis on attack, flat %."
+      },
+      "sleep_atk": {
+        "offset": 116,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional/reduced chance to inflict sleep on attack, flat %."
+      },
+      "fatigue_atk": {
+        "offset": 120,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional/reduced chance to inflict fatigue on attack, flat %."
+      },
+      "sick_atk": {
+        "offset": 124,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional/reduced chance to inflict sick on attack, flat %."
+      },
+      "faint_atk": {
+        "offset": 128,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional/reduced chance to inflict faint on attack, flat %."
+      },
+      "fire_res": {
+        "offset": 132,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Fire element resistance boost/reduction, flat %."
+      },
+      "water_res": {
+        "offset": 136,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Water element resistance boost/reduction, flat %."
+      },
+      "earth_res": {
+        "offset": 140,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Earth element resistance boost/reduction, flat %."
+      },
+      "wind_res": {
+        "offset": 144,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Wind element resistance boost/reduction, flat %."
+      },
+      "light_res": {
+        "offset": 148,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Light element resistance boost/reduction, flat %."
+      },
+      "dark_res": {
+        "offset": 152,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Dark element resistance boost/reduction, flat %."
+      },
+      "love_res": {
+        "offset": 156,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Love element resistance boost/reduction, flat %."
+      },
+      "perm_hp": {
+        "offset": 160,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Permanent HP gained, absolute."
+      },
+      "perm_strength": {
+        "offset": 164,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Permanent STR gained, absolute."
+      },
+      "perm_intelligence": {
+        "offset": 168,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Permanent INT gained, absolute."
+      },
+      "perm_vitality": {
+        "offset": 172,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Permanent VIT gained, absolute."
+      },
+      "level_scaling": {
+        "offset": 176,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Per-level scaling of effects, where 4096 = 12.5%."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3UseItemParam.bin",
+        "archiveIndex": 14848,
+        "raw": false
+      }
+    ]
+  },
+  "level": {
+    "struct": "LevelUp",
+    "source": "src/rf/level_up.h",
+    "handler": "src/rf/overrides/level_up_override.cpp",
+    "size": 24,
+    "fields": {
+      "xp": {
+        "offset": 0,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "XP required to reach this level from the previous level."
+      },
+      "hp": {
+        "offset": 4,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Max HP at this level."
+      },
+      "rp": {
+        "offset": 8,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Max RP at this level."
+      },
+      "strength": {
+        "offset": 12,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "STR stat at this level."
+      },
+      "intelligence": {
+        "offset": 16,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "INT stat at this level."
+      },
+      "vitality": {
+        "offset": 20,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "VIT stat at this level."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3Parameter.bin",
+        "archiveIndex": 14813,
+        "raw": false
+      }
+    ]
+  },
+  "magic": {
+    "struct": "MagicParam",
+    "source": "src/rf/magic_param.h",
+    "handler": "src/rf/overrides/magic_param_override.cpp",
+    "size": 148,
+    "fields": {
+      "damage_type_attribute": {
+        "offset": 28,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "0x1C 0x80 = Magical, plus attribute bits: 0x01 = Fire, 0x02 = Water,"
+      },
+      "persists": {
+        "offset": 31,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "0x1F"
+      },
+      "base_damage": {
+        "offset": 32,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "0x20"
+      },
+      "attack_scaling": {
+        "offset": 36,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x24 %"
+      },
+      "magic_attack_scaling": {
+        "offset": 40,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x28 %"
+      },
+      "damage_scaling": {
+        "offset": 44,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x2C %"
+      },
+      "knock": {
+        "offset": 56,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x38 %"
+      },
+      "launch": {
+        "offset": 60,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x3C %"
+      },
+      "hit_counter": {
+        "offset": 92,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x5C"
+      },
+      "dizzy": {
+        "offset": 96,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x60"
+      },
+      "poison_atk": {
+        "offset": 100,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x64 %"
+      },
+      "seal_atk": {
+        "offset": 104,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x68 %"
+      },
+      "paralysis_atk": {
+        "offset": 108,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x6C %"
+      },
+      "sleep_atk": {
+        "offset": 112,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x70 %"
+      },
+      "fatigue_atk": {
+        "offset": 116,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x74 %"
+      },
+      "sick_atk": {
+        "offset": 120,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x78 %"
+      },
+      "faint_atk": {
+        "offset": 124,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x7C %"
+      },
+      "drain_atk": {
+        "offset": 128,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x80 %"
+      },
+      "skill_exp": {
+        "offset": 132,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x84"
+      },
+      "rp_cost": {
+        "offset": 136,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x88"
+      },
+      "rp_cost_pct": {
+        "offset": 140,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x8C %"
+      },
+      "skill_type": {
+        "offset": 144,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "0x90 Fire, Water, Earth, Wind, Light, Dark, Love, Resist Poison, ..."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3ParamMagic.bin",
+        "archiveIndex": 14817,
+        "raw": false
+      }
+    ]
+  },
+  "monster_gift": {
+    "struct": "MonsterGift",
+    "source": "src/rf/monster_gift.h",
+    "handler": "src/rf/overrides/monster_gift_override.cpp",
+    "size": 32,
+    "fields": {
+      "like_1": {
+        "offset": 0,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "ID of the first liked item"
+      },
+      "fp_1": {
+        "offset": 4,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "FP gained by giving `like_1`"
+      },
+      "like_2": {
+        "offset": 8,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "ID of the second liked item"
+      },
+      "fp_2": {
+        "offset": 12,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "FP gained by giving `like_2`"
+      },
+      "like_3": {
+        "offset": 16,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "ID of the third liked item"
+      },
+      "fp_3": {
+        "offset": 20,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "FP gained by giving `like_3`"
+      },
+      "like_4": {
+        "offset": 24,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "ID of the fourth liked item"
+      },
+      "fp_4": {
+        "offset": 28,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "FP gained by giving `like_4`"
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3MonsterPresent.bin",
+        "archiveIndex": 14849,
+        "raw": true
+      }
+    ]
+  },
+  "npc": {
+    "struct": "NpcParam",
+    "source": "src/rf/npc_param.h",
+    "handler": "src/rf/overrides/npc_param_override.cpp",
+    "size": 308,
+    "fields": {
+      "scale": {
+        "offset": 0,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Size (%) of the NPC's sprite in the field."
+      },
+      "collision_size": {
+        "offset": 4,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Size used for collisions, where 16 = 100%."
+      },
+      "walk_speed": {
+        "offset": 8,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Walking speed, as a % of the game's default."
+      },
+      "run_speed": {
+        "offset": 12,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Running speed, as a % of the game's default."
+      },
+      "acceleration": {
+        "offset": 16,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Rate of acceleration to top speed, as a % of the game's default."
+      },
+      "braking": {
+        "offset": 20,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Rate of deceleration to stop, as a % of the game's default."
+      },
+      "effect_scale": {
+        "offset": 24,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Scale (%) of visual effects such as the break/death animation."
+      },
+      "height": {
+        "offset": 28,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Literally the NPC height, e.g. affecting where the head is drawn."
+      },
+      "default_animation_set": {
+        "offset": 32,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Which animation set to use if `animation_set` is not defined; 0 = female, 1 = male."
+      },
+      "ai_script": {
+        "offset": 34,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Index of the script file (`AI_m`) governing this NPC's AI behavior."
+      },
+      "spawn_asleep_chance": {
+        "offset": 36,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance that when the NPC spawns, it will be asleep; max = 255 (100%)."
+      },
+      "base_hp": {
+        "offset": 40,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Max HP at level 1."
+      },
+      "base_strength": {
+        "offset": 44,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "STR at level 1."
+      },
+      "base_intelligence": {
+        "offset": 48,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "INT at level 1."
+      },
+      "base_vitality": {
+        "offset": 52,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "VIT at level 1."
+      },
+      "xp": {
+        "offset": 56,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "XP awarded to the player/party on kill."
+      },
+      "base_attack": {
+        "offset": 60,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "ATK at level 1."
+      },
+      "base_magic_attack": {
+        "offset": 64,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "M.ATK at level 1."
+      },
+      "dizzy": {
+        "offset": 68,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Diz inflicted per hit; higher numbers lead to quicker knockouts after many hits."
+      },
+      "base_defense": {
+        "offset": 72,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "DEF at level 1."
+      },
+      "base_magic_defense": {
+        "offset": 76,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "M.DEF at level 1."
+      },
+      "strength_level_weight": {
+        "offset": 80,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Weighting of STR, relative to the INT and VIT weights, when a stat point is allocated during level up.  For reasons known only to the original game devs, STR/INT/VIT follow different rules from other stats (ATK etc.). First, a certain number of stat points are allocated, minimum of 9 plus a random bonus. Then, point by point, each is assigned to one of the three stats, using an additional random roll compared against those weights.  Although the weights have very similar values in the game data to the other `_level` fields, and look like a % growth, their absolute values don't mean anything, they are just relative to each other."
+      },
+      "intelligence_level_weight": {
+        "offset": 84,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Weighting of INT, relative to the STR and VIT weights, when a stat point is allocated during level up.  See `strength_level_weight` for details on point assignment."
+      },
+      "vitality_level_weight": {
+        "offset": 88,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Weighting of VIT, relative to the STR and INT weights, when a stat point is allocated during level up.  See `strength_level_weight` for details on point assignment."
+      },
+      "attack_level": {
+        "offset": 92,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "ATK gained per level, as a % of the game's default growth."
+      },
+      "magic_attack_level": {
+        "offset": 96,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "M.ATK gained per level, as a % of the game's default growth."
+      },
+      "defense_level": {
+        "offset": 100,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "DEF gained per level, as a % of the game's default growth."
+      },
+      "magic_defense_level": {
+        "offset": 104,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "M.DEF gained per level, as a % of the game's default growth."
+      },
+      "hp_level": {
+        "offset": 108,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Max HP gained per level, as a % of the game's default growth."
+      },
+      "dizzy_res": {
+        "offset": 112,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Percent reduction in the player/party's dizzy attack (stun buildup)."
+      },
+      "knock_atk": {
+        "offset": 116,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Amount of knockback this NPC applies to others when landing a hit."
+      },
+      "stun_attack_duration": {
+        "offset": 120,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Duration of the stun (% of game's default) when this NPC stuns a target."
+      },
+      "knock_res": {
+        "offset": 124,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Reduction (%) in knockback distance when hit by player/party."
+      },
+      "stun_duration": {
+        "offset": 128,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Duration that the stun lasts when this NPC becomes stunned (i.e. reaching `dizzy_max`)."
+      },
+      "crit_atk": {
+        "offset": 132,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Critical hit rate (%) when this NPC is attacking."
+      },
+      "crit_res": {
+        "offset": 136,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Critical hit resistance (%) when attacked."
+      },
+      "hit_arc": {
+        "offset": 140,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Roughly, the \"hitbox width\" of the NPC's attack, but applied as an arc, with 65536 = 360 degrees. Affects how wide, but not how far, the attack can cover."
+      },
+      "hit_range": {
+        "offset": 142,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Roughly, the \"hitbox length/distance\", i.e. distance out from which the NPC's attacks extend along the `hit_arc`. Higher values mean attacks hit actors farther away."
+      },
+      "flying": {
+        "offset": 144,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Set for all flying monsters but does not have a known effect."
+      },
+      "fire_res": {
+        "offset": 152,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to fire element attacks."
+      },
+      "water_res": {
+        "offset": 156,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to water element attacks."
+      },
+      "earth_res": {
+        "offset": 160,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to earth element attacks."
+      },
+      "wind_res": {
+        "offset": 164,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to wind element attacks."
+      },
+      "light_res": {
+        "offset": 168,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to light element attacks."
+      },
+      "dark_res": {
+        "offset": 172,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to dark element attacks."
+      },
+      "physical_res": {
+        "offset": 176,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to physical attacks. The in-game text is \"No Res\", i.e. Non-Elemental Resistance."
+      },
+      "love_res": {
+        "offset": 180,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to love element attacks."
+      },
+      "poison_res": {
+        "offset": 184,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to being poisoned."
+      },
+      "seal_res": {
+        "offset": 188,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to being sealed (unable to use magic)."
+      },
+      "paralysis_res": {
+        "offset": 192,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to being paralyzed (slow movement)."
+      },
+      "sleep_res": {
+        "offset": 196,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to being put to sleep."
+      },
+      "fatigue_res": {
+        "offset": 200,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to being fatigued."
+      },
+      "sick_res": {
+        "offset": 204,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to sick status."
+      },
+      "faint_res": {
+        "offset": 208,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to faint, i.e. instant death."
+      },
+      "drain_res": {
+        "offset": 212,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Resistance (%) to drain (HP absorb) attacks. Modifies the % of HP recovered by the attacker."
+      },
+      "drain_atk": {
+        "offset": 216,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Assumed to be natural HP absorb (% of damage) on attack, but not used on any party-able NPCs or recruitable monsters. May or may not work as expected."
+      },
+      "friendliness": {
+        "offset": 220,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Tameability; higher numbers = more likely to befriend per each item given."
+      },
+      "movement_class": {
+        "offset": 224,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Affects the NPC's movement, exact details still unclear."
+      },
+      "drop_item_1": {
+        "offset": 228,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "ID of the first item potentially dropped on kill."
+      },
+      "drop_item_2": {
+        "offset": 230,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "ID of the second item potentially dropped on kill."
+      },
+      "drop_item_3": {
+        "offset": 232,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "ID of the third item potentially dropped on kill."
+      },
+      "drop_item_4": {
+        "offset": 234,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "ID of the fourth item potentially dropped on kill."
+      },
+      "drop_chance_1": {
+        "offset": 236,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance (%) to drop the `drop_item_1`, where 1000 = 100%."
+      },
+      "drop_chance_2": {
+        "offset": 240,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance (%) to drop the `drop_item_2`, where 1000 = 100%."
+      },
+      "drop_chance_3": {
+        "offset": 244,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance (%) to drop the `drop_item_3`, where 1000 = 100%."
+      },
+      "drop_chance_4": {
+        "offset": 248,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Chance (%) to drop the `drop_item_4`, where 1000 = 100%."
+      },
+      "face_icon": {
+        "offset": 252,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "ID of the face icon to display for this NPC in the game's UI."
+      },
+      "rideable": {
+        "offset": 254,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Whether the tamed NPC can be mounted by the player; 0 = no, 1 = yes."
+      },
+      "floating": {
+        "offset": 255,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Whether the NPC can float over water and low obstacles; 0 = no, 1 = yes.  This field appears to track the `flying` field's data but is the one that is actually used for collisions."
+      },
+      "model_set": {
+        "offset": 256,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Identifies a family of similar NPCs used for loading models/skeletons.  Although the actual value does tend to group together monsters with the same model--such as Shadow Panther and Blood Panther, or Buffaloo and Buffamoo--this tends to act more like a general \"model type\" and the exact value does not really matter so much as the range in which it falls: - All values between 48-253 treat the `model` as an index starting from 0x3128, the first `rom:/mons` entry, i.e. a monster model. - Other values treat the `model` as an index starting from 0x03A5, the first `rom:/chr` entry, i.e. a character. This includes actual characters but also inanimate objects like signs and furniture, which also happen to appear in the \"character\" list, but have values >= 254 for this field which triggers special behavior.  An additional property is that when a monster is spawned, a value of 0 causes the model to load with different parameters, probably as static rather than animated, since it largely applies to furniture and other inanimate objects. This _only_ applies to monster spawns; character spawns are done in an entirely different place and always use animated models.  These ranges are hard-coded in the game, and no evidence has been found that the value within the range makes any difference. Thus: - Major characters (non monsters) can have any value below 48, usually zero. Non-zero values (Blossom = 16) might indicate they can also be spawned as a \"monster\" in some event. - Monsters can have any value between 48 and 253. - Static objects usually have a value of 0, except those with values >= 254 which have special (hard-coded) behavior; don't use the high range unless you know what you're doing."
+      },
+      "sight_range": {
+        "offset": 260,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "How far the actor can see, i.e. aggro distance along the `sight_arc`. Works similarly to the `hit_range` but applied to their vision and not their attacks."
+      },
+      "sight_arc": {
+        "offset": 264,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "The actor's vision code or field of view, where 65536 = 360 degrees. Party members inside this arc and within the `sight_range` will cause aggro."
+      },
+      "model": {
+        "offset": 272,
+        "bits": 16,
+        "signed": true,
+        "min": -32768,
+        "max": 32767,
+        "length": 0,
+        "description": "Index of the model asset, which is added to the model set offset (0x03A5 for characters, 0x3128 for monsters) to get the asset ID for the actor model. The value `0` is a real model; `-1` means no model.  While the manifest lists names with `.bfres` extension, which is a Nintendo archive format used with Switch, on PC these are a different, custom format containing similar data (geometry, skeleton, textures, etc.).  In a dump of the main bundle, these are the assets named `NPC_*.model` (characters), `BM_*.model` or `M_*.model` (monsters)."
+      },
+      "animation_set": {
+        "offset": 274,
+        "bits": 16,
+        "signed": true,
+        "min": -32768,
+        "max": 32767,
+        "length": 0,
+        "description": "Index of the first skeletal animation asset, which is always added to offset 0x3128 to get the asset ID for the actor's animations.  Only monster animation sets (`M_` and `BM_` files) exist as assets; unlike `model`, there is no separate category for human characters. The value `-1` means no animation, and most characters use that value, except one, which can also spawn as a monster. A value of `0` would point to a real animation.  These are both listed and dumped as `.bfskl` files, but actually appear to be `.bfres` containers each with only a single animation and no other data."
+      },
+      "attack_set": {
+        "offset": 280,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Index offset of the attack set used by this actor.  Although not confirmed by decompilation, this is most likely added to 0x00F3 (beginning of the `rom:/as` entries) to get the asset ID, which for monsters will typically land on an `as_atk_mb_*` or `as_atk_m_*` file. For example, Orc has value 0x196, which adds up to 0x289, the ID of the first monster attack, `as_atk_m_00_00.bin`.  Characters always have 0 in this field unless they can also spawn as monsters."
+      },
+      "ridden_attack_1": {
+        "offset": 282,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Index of the primary attack to perform when ridden by the player.  This is likely applied as an offset to the entry identified by `attack_set`. For example, if the first attack is `as_atk_m_06_00.bin`, and the value of this field is 0x7, then the attack used will be `as_atk_m_06_07.bin`.  Note that different NPCs do not have equal numbers of attack scripts. The value used for this field must be valid for the specific NPC and only has meaning for that NPC."
+      },
+      "ridden_attack_1_alt": {
+        "offset": 283,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Alternate version of the primary mounted attack, applied when thrown (?). Usually the same as `ridden_attack_1`."
+      },
+      "ridden_attack_2": {
+        "offset": 284,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Index of the secondary attack to perform when ridden by the player.  See `ridden_attack_1` for implementation details."
+      },
+      "ridden_attack_2_alt": {
+        "offset": 285,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Alternate version of the secondary mounted attack. See `ridden_attack_1_alt` for implementation details."
+      },
+      "ridden_attack_3": {
+        "offset": 286,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Index of the tertiary attack to perform when ridden by the player.  See `ridden_attack_1` for implementation details."
+      },
+      "ridden_attack_3_alt": {
+        "offset": 287,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Alternate version of the tertiary mounted attack. See `ridden_attack_1_alt` for implementation details."
+      },
+      "base_level": {
+        "offset": 288,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Default level of the monster when spawned. Actual level may be modified by game flags, area, etc."
+      },
+      "home_map": {
+        "offset": 292,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "ID of the map that the game considers to be the monster's earliest or most common spawning area.  This is the area that Eliza requests to kill the monster will point the player to; see `slay_request_story_unlock`."
+      },
+      "slay_request_story_unlock": {
+        "offset": 294,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Story progress required before Eliza requests will appear to kill this type of monster."
+      },
+      "evs": {
+        "offset": 296,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Effort Values for this monster, named after the Pokemon concept. Low to high bytes are HP, STR, INT, VIT.  Tamed monsters initially have 50 points to distribute among the four stats, which ultimately become percentage bonuses, with HP values counting as double. When the player kills a monster of this type, with a tamed monster in his/her party, then that tamed monster will gain these points as percentage bonuses, until all 50 points have been assigned.  For example, if the player, with a tamed monster in the party, kills 25 Buffaloos (EV: +1 STR) and 25 Ants (EV: +1 HP) then the tamed monster ends up with a permanent bonus of +25% STR and +50% HP, and no more points can be assigned with additional kills.  Most of the time, regular monsters will provide +1 or +2 to a single stat. +3 or higher in a single stat, or non-zero values in multiple stats, are comparatively rare, although they are perfectly legal."
+      },
+      "produce": {
+        "offset": 300,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "ID of the item that a tamed version of the monster will drop as produce in the barn."
+      },
+      "upgradable": {
+        "offset": 304,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Whether the `produce` gains size at higher monster levels, e.g. Medium or Large milk for Buffamoos.  This is a boolean value, with 0 = No, 1 = Yes."
+      },
+      "produce_chance": {
+        "offset": 305,
+        "bits": 8,
+        "signed": false,
+        "min": 0,
+        "max": 255,
+        "length": 0,
+        "description": "Chance that a tamed monster will drop its `produce` on any given day; 255 = 100%."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3NpcParam.bin",
+        "archiveIndex": 14812,
+        "raw": false
+      }
+    ]
+  },
+  "present_category": {
+    "struct": "PresentCategory",
+    "source": "src/rf/present_category.h",
+    "handler": "src/rf/overrides/present_category_override.cpp",
+    "size": 4,
+    "fields": {
+      "item": {
+        "offset": 0,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "0x00 Item ID"
+      },
+      "fp": {
+        "offset": 2,
+        "bits": 16,
+        "signed": true,
+        "min": -32768,
+        "max": 32767,
+        "length": 0,
+        "description": "0x02 Default amount of FP gained when gifting this item."
+      }
+    },
+    "groups": [
+      "trash",
+      "cakes",
+      "sweets",
+      "dumplings_misc",
+      "jams_misc",
+      "flowers",
+      "medicines",
+      "juices",
+      "fruits",
+      "milk",
+      "rice_dishes",
+      "bread_dishes",
+      "tomato_dishes",
+      "egg_dishes",
+      "japanese_dishes",
+      "cheese_dishes",
+      "grape_dishes",
+      "apple_dishes",
+      "curry_dishes",
+      "western_dishes",
+      "chinese_dishes"
+    ],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3PresentCategory.bin",
+        "archiveIndex": 14850,
+        "raw": false
+      }
+    ]
+  },
+  "present": {
+    "struct": "Present",
+    "source": "src/rf/present.h",
+    "handler": "src/rf/overrides/present_override.cpp",
+    "size": 4,
+    "fields": {
+      "item": {
+        "offset": 0,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Item ID, or category ID (0x8000 and up; 0x8100 + N is `PresentCategory` group N)"
+      },
+      "fp": {
+        "offset": 2,
+        "bits": 16,
+        "signed": true,
+        "min": -32768,
+        "max": 32767,
+        "length": 0,
+        "description": "Amount of FP gained when gifting this item."
+      }
+    },
+    "groups": [
+      "dislikes",
+      "likes",
+      "loves"
+    ],
+    "variants": [
+      {
+        "sub": "vishnal",
+        "file": "rf3PresentNpc01.bin",
+        "archiveIndex": 14851,
+        "raw": false
+      },
+      {
+        "sub": "clorica",
+        "file": "rf3PresentNpc02.bin",
+        "archiveIndex": 14852,
+        "raw": false
+      },
+      {
+        "sub": "volkanon",
+        "file": "rf3PresentNpc03.bin",
+        "archiveIndex": 14853,
+        "raw": false
+      },
+      {
+        "sub": "forte",
+        "file": "rf3PresentNpc04.bin",
+        "archiveIndex": 14854,
+        "raw": false
+      },
+      {
+        "sub": "kiel",
+        "file": "rf3PresentNpc05.bin",
+        "archiveIndex": 14855,
+        "raw": false
+      },
+      {
+        "sub": "bado",
+        "file": "rf3PresentNpc06.bin",
+        "archiveIndex": 14856,
+        "raw": false
+      },
+      {
+        "sub": "margaret",
+        "file": "rf3PresentNpc07.bin",
+        "archiveIndex": 14857,
+        "raw": false
+      },
+      {
+        "sub": "dylas",
+        "file": "rf3PresentNpc08.bin",
+        "archiveIndex": 14858,
+        "raw": false
+      },
+      {
+        "sub": "arthur",
+        "file": "rf3PresentNpc09.bin",
+        "archiveIndex": 14859,
+        "raw": false
+      },
+      {
+        "sub": "porcoline",
+        "file": "rf3PresentNpc10.bin",
+        "archiveIndex": 14860,
+        "raw": false
+      },
+      {
+        "sub": "xiao_pai",
+        "file": "rf3PresentNpc11.bin",
+        "archiveIndex": 14861,
+        "raw": false
+      },
+      {
+        "sub": "lin_fa",
+        "file": "rf3PresentNpc12.bin",
+        "archiveIndex": 14862,
+        "raw": false
+      },
+      {
+        "sub": "amber",
+        "file": "rf3PresentNpc13.bin",
+        "archiveIndex": 14863,
+        "raw": false
+      },
+      {
+        "sub": "illuminata",
+        "file": "rf3PresentNpc14.bin",
+        "archiveIndex": 14864,
+        "raw": false
+      },
+      {
+        "sub": "doug",
+        "file": "rf3PresentNpc15.bin",
+        "archiveIndex": 14865,
+        "raw": false
+      },
+      {
+        "sub": "blossom",
+        "file": "rf3PresentNpc16.bin",
+        "archiveIndex": 14866,
+        "raw": false
+      },
+      {
+        "sub": "dolce",
+        "file": "rf3PresentNpc17.bin",
+        "archiveIndex": 14867,
+        "raw": false
+      },
+      {
+        "sub": "jones",
+        "file": "rf3PresentNpc18.bin",
+        "archiveIndex": 14868,
+        "raw": false
+      },
+      {
+        "sub": "nancy",
+        "file": "rf3PresentNpc19.bin",
+        "archiveIndex": 14869,
+        "raw": false
+      },
+      {
+        "sub": "leon",
+        "file": "rf3PresentNpc20.bin",
+        "archiveIndex": 14870,
+        "raw": false
+      },
+      {
+        "sub": "ventuswill",
+        "file": "rf3PresentNpc21.bin",
+        "archiveIndex": 14871,
+        "raw": false
+      },
+      {
+        "sub": "noel",
+        "file": "rf3PresentNpc22.bin",
+        "archiveIndex": 14872,
+        "raw": false
+      },
+      {
+        "sub": "luna",
+        "file": "rf3PresentNpc23.bin",
+        "archiveIndex": 14873,
+        "raw": false
+      },
+      {
+        "sub": "barrett",
+        "file": "rf3PresentNpc24.bin",
+        "archiveIndex": 14874,
+        "raw": false
+      },
+      {
+        "sub": "raven",
+        "file": "rf3PresentNpc25.bin",
+        "archiveIndex": 14875,
+        "raw": false
+      },
+      {
+        "sub": "mist",
+        "file": "rf3PresentNpc26.bin",
+        "archiveIndex": 14876,
+        "raw": false
+      },
+      {
+        "sub": "traveler",
+        "file": "rf3PresentNpc27.bin",
+        "archiveIndex": 14877,
+        "raw": false
+      }
+    ]
+  },
+  "prices": {
+    "struct": "PriceTable",
+    "source": "src/rf/price_table.h",
+    "handler": "src/rf/overrides/price_table_override.cpp",
+    "size": 20,
+    "fields": {
+      "rates": {
+        "offset": 0,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 10,
+        "description": "0x00 % of base price at levels 1 to 10 (100 = 100%)"
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3PriceTable.bin",
+        "archiveIndex": 14825,
+        "raw": false
+      }
+    ]
+  },
+  "recipe": {
+    "struct": "Recipe",
+    "source": "src/rf/recipe.h",
+    "handler": "src/rf/overrides/recipe_override.cpp",
+    "size": 20,
+    "fields": {
+      "result": {
+        "offset": 0,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "ID of the item produced by this recipe."
+      },
+      "material_1": {
+        "offset": 2,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Item ID for the first ingredient (required)."
+      },
+      "material_2": {
+        "offset": 4,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Item ID for the second ingredient (optional)."
+      },
+      "material_3": {
+        "offset": 6,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Item ID for the third ingredient (optional)."
+      },
+      "material_4": {
+        "offset": 8,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Item ID for the fourth ingredient (optional)."
+      },
+      "material_5": {
+        "offset": 10,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Item ID for the fifth ingredient (optional)."
+      },
+      "material_6": {
+        "offset": 12,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "Item ID for the sixth ingredient (optional)."
+      },
+      "level": {
+        "offset": 14,
+        "bits": 16,
+        "signed": false,
+        "min": 0,
+        "max": 65535,
+        "length": 0,
+        "description": "\"Recommended\" level to make. Players at lower level will have to expend much more RP to make the recipe, but will gain much more skill XP."
+      },
+      "learned_flag_id": {
+        "offset": 16,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Which flag (bit) is used in the game to indicate that the player has learned this recipe. Must be unique across ALL recipes, not just per category/file."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "accessory",
+        "file": "rf3RecipeAcce.bin",
+        "archiveIndex": 14826,
+        "raw": false
+      },
+      {
+        "sub": "armor",
+        "file": "rf3RecipeArmor.bin",
+        "archiveIndex": 14827,
+        "raw": false
+      },
+      {
+        "sub": "frying_pan",
+        "file": "rf3RecipeCookFry.bin",
+        "archiveIndex": 14828,
+        "raw": false
+      },
+      {
+        "sub": "handmade",
+        "file": "rf3RecipeCookHandmade.bin",
+        "archiveIndex": 14829,
+        "raw": false
+      },
+      {
+        "sub": "knife",
+        "file": "rf3RecipeCookKnife.bin",
+        "archiveIndex": 14830,
+        "raw": false
+      },
+      {
+        "sub": "mixer",
+        "file": "rf3RecipeCookMixer.bin",
+        "archiveIndex": 14831,
+        "raw": false
+      },
+      {
+        "sub": "oven",
+        "file": "rf3RecipeCookOven.bin",
+        "archiveIndex": 14832,
+        "raw": false
+      },
+      {
+        "sub": "pot",
+        "file": "rf3RecipeCookPan.bin",
+        "archiveIndex": 14833,
+        "raw": false
+      },
+      {
+        "sub": "steamer",
+        "file": "rf3RecipeCookSteamer.bin",
+        "archiveIndex": 14834,
+        "raw": false
+      },
+      {
+        "sub": "chemistry",
+        "file": "rf3RecipeDrug.bin",
+        "archiveIndex": 14835,
+        "raw": false
+      },
+      {
+        "sub": "tool",
+        "file": "rf3RecipeFarm.bin",
+        "archiveIndex": 14836,
+        "raw": false
+      },
+      {
+        "sub": "headgear",
+        "file": "rf3RecipeHat.bin",
+        "archiveIndex": 14837,
+        "raw": false
+      },
+      {
+        "sub": "shield",
+        "file": "rf3RecipeShield.bin",
+        "archiveIndex": 14838,
+        "raw": false
+      },
+      {
+        "sub": "shoes",
+        "file": "rf3RecipeShoes.bin",
+        "archiveIndex": 14839,
+        "raw": false
+      },
+      {
+        "sub": "short_sword",
+        "file": "rf3RecipeWeaponA.bin",
+        "archiveIndex": 14840,
+        "raw": false
+      },
+      {
+        "sub": "long_sword",
+        "file": "rf3RecipeWeaponB.bin",
+        "archiveIndex": 14841,
+        "raw": false
+      },
+      {
+        "sub": "spear",
+        "file": "rf3RecipeWeaponC.bin",
+        "archiveIndex": 14842,
+        "raw": false
+      },
+      {
+        "sub": "axe_hammer",
+        "file": "rf3RecipeWeaponD.bin",
+        "archiveIndex": 14843,
+        "raw": false
+      },
+      {
+        "sub": "weapon_e",
+        "file": "rf3RecipeWeaponE.bin",
+        "archiveIndex": 14844,
+        "raw": false
+      },
+      {
+        "sub": "staff",
+        "file": "rf3RecipeWeaponK.bin",
+        "archiveIndex": 14845,
+        "raw": false
+      },
+      {
+        "sub": "dual_blade",
+        "file": "rf3RecipeWeaponM.bin",
+        "archiveIndex": 14846,
+        "raw": false
+      },
+      {
+        "sub": "fist",
+        "file": "rf3RecipeWeaponN.bin",
+        "archiveIndex": 14847,
+        "raw": false
+      }
+    ]
+  },
+  "skill_action": {
+    "struct": "SkillDataParam",
+    "source": "src/rf/skill_data_param.h",
+    "handler": "src/rf/overrides/skill_data_param_override.cpp",
+    "size": 32,
+    "fields": {
+      "rp_cost_pct": {
+        "offset": 0,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "RP required to use the skill, as a percent of player's max RP, where 256 = 100%."
+      },
+      "rp_cost": {
+        "offset": 4,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Flat RP cost required to use the skill. Acts as a minimum; if the record also defines `rp_cost_pct`, then the actual RP used will be the greater of the two values."
+      },
+      "skill_xp_1": {
+        "offset": 8,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Skill-specific XP gained for `skill_1` per each use of this action."
+      },
+      "skill_1": {
+        "offset": 12,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "ID of the first skill increased by performing this action."
+      },
+      "skill_xp_2": {
+        "offset": 16,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Skill-specific XP gained for `skill_2` per each use of this action."
+      },
+      "skill_2": {
+        "offset": 20,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "ID of the second skill increased by performing this action."
+      },
+      "skill_xp_3": {
+        "offset": 24,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Skill-specific XP gained for `skill_3` per each use of this action."
+      },
+      "skill_3": {
+        "offset": 28,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "ID of the third skill increased by performing this action."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3ParamSkillData.bin",
+        "archiveIndex": 14819,
+        "raw": false
+      }
+    ]
+  },
+  "skill_exp": {
+    "struct": "SkillExpParam",
+    "source": "src/rf/skill_exp_param.h",
+    "handler": "src/rf/overrides/skill_exp_param_override.cpp",
+    "size": 4,
+    "fields": {
+      "xp": {
+        "offset": 0,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "XP required for this level."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "combat",
+        "file": "rf3ParamSkillExp.bin",
+        "archiveIndex": 14820,
+        "raw": false
+      },
+      {
+        "sub": "tools",
+        "file": "rf3ParamSkillExpFarm.bin",
+        "archiveIndex": 14821,
+        "raw": false
+      },
+      {
+        "sub": "field",
+        "file": "rf3ParamSkillExpFish.bin",
+        "archiveIndex": 14822,
+        "raw": false
+      },
+      {
+        "sub": "synthesis",
+        "file": "rf3ParamSkillExpMix.bin",
+        "archiveIndex": 14823,
+        "raw": false
+      },
+      {
+        "sub": "lifestyle",
+        "file": "rf3ParamSkillExpSleep.bin",
+        "archiveIndex": 14824,
+        "raw": false
+      }
+    ]
+  },
+  "skill_stat": {
+    "struct": "SkillStat",
+    "source": "src/rf/skill_stat.h",
+    "handler": "src/rf/overrides/skill_stat_override.cpp",
+    "size": 40,
+    "fields": {
+      "hp": {
+        "offset": 0,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Gain to max HP."
+      },
+      "rp": {
+        "offset": 4,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Gain to max RP."
+      },
+      "strength": {
+        "offset": 8,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Gain to STR attribute."
+      },
+      "intelligence": {
+        "offset": 12,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Gain to INT attribute."
+      },
+      "vitality": {
+        "offset": 16,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Gain to VIT attribute."
+      },
+      "attack": {
+        "offset": 20,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Gain to weapon ATK, but has unintuitive behavior in game."
+      },
+      "magic_attack": {
+        "offset": 28,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Gain to M.ATK, only applies to magic skills."
+      },
+      "resistance": {
+        "offset": 32,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Elemental resistance gained/damage reduced; for magic skills only."
+      },
+      "rp_reduction": {
+        "offset": 36,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Reduction in RP cost."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3ParamSkill.bin",
+        "archiveIndex": 14818,
+        "raw": false
+      }
+    ]
+  },
+  "upgrade": {
+    "struct": "Upgrade",
+    "source": "src/rf/upgrade.h",
+    "handler": "src/rf/overrides/upgrade_override.cpp",
+    "size": 296,
+    "fields": {
+      "difficulty": {
+        "offset": 0,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Item's difficulty rating; higher difficulty requires more RP to upgrade."
+      },
+      "attack": {
+        "offset": 4,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Flat bonus to ATK."
+      },
+      "magic_attack": {
+        "offset": 8,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Flat bonus to M.ATK."
+      },
+      "defense": {
+        "offset": 12,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Flat bonus to DEF."
+      },
+      "magic_defense": {
+        "offset": 16,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Flat bonus to M.DEF."
+      },
+      "strength": {
+        "offset": 20,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Flat bonus to STR."
+      },
+      "intelligence": {
+        "offset": 24,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Flat bonus to INT."
+      },
+      "vitality": {
+        "offset": 28,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Flat bonus to VIT."
+      },
+      "dizzy": {
+        "offset": 32,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Adds to weapon's dizzy rating; causes knockouts faster."
+      },
+      "crit": {
+        "offset": 40,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to critical hit rate (additive %)."
+      },
+      "knock": {
+        "offset": 44,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to knockback distance (additive %)."
+      },
+      "stun": {
+        "offset": 48,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to stun duration (additive %)."
+      },
+      "poison_atk": {
+        "offset": 56,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to poison infliction chance (%)."
+      },
+      "seal_atk": {
+        "offset": 60,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to seal infliction chance (%)."
+      },
+      "paralysis_atk": {
+        "offset": 64,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to paralysis infliction chance (%)."
+      },
+      "sleep_atk": {
+        "offset": 68,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to sleep infliction chance (%)."
+      },
+      "fatigue_atk": {
+        "offset": 72,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to fatigue infliction chance (%)."
+      },
+      "sick_atk": {
+        "offset": 76,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to sick infliction chance (%)."
+      },
+      "faint_atk": {
+        "offset": 80,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to faint (instant death) chance (%)."
+      },
+      "drain_atk": {
+        "offset": 84,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Recovers % of damage dealt as HP; additive with multiple upgrades."
+      },
+      "dizzy_res": {
+        "offset": 88,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Reduction in received diz (slower knockout buildup) (%)."
+      },
+      "crit_res": {
+        "offset": 92,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Reduction in received critical hit chance (%)."
+      },
+      "knock_res": {
+        "offset": 96,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Reduction in knockback distance (%)."
+      },
+      "poison_res": {
+        "offset": 100,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional chance to resist poison status (%)."
+      },
+      "seal_res": {
+        "offset": 104,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional chance to resist seal status (%)."
+      },
+      "paralysis_res": {
+        "offset": 108,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional chance to resist paralysis status (%)."
+      },
+      "sleep_res": {
+        "offset": 112,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional chance to resist sleep status (%)."
+      },
+      "fatigue_res": {
+        "offset": 116,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional chance to resist fatigue status (%)."
+      },
+      "sick_res": {
+        "offset": 120,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional chance to resist sick status (%)."
+      },
+      "faint_res": {
+        "offset": 124,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional chance to ignore an instant death proc (%)."
+      },
+      "drain_res": {
+        "offset": 128,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Reduction in enemy HP absorption (%, additive)."
+      },
+      "hit_range": {
+        "offset": 132,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "When applied to weapons, increases their attack range (%, additive)."
+      },
+      "hp_cook": {
+        "offset": 136,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional HP recovered (flat) by cooked items using this as extra ingredient."
+      },
+      "rp_cook": {
+        "offset": 140,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional RP recovered (flat) by cooked items using this as extra ingredient."
+      },
+      "hp_cook_pct": {
+        "offset": 144,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional HP recovered (% of max) by cooked items using this as extra ingredient."
+      },
+      "rp_cook_pct": {
+        "offset": 148,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Additional RP recovered (% of max) by cooked items using this as extra ingredient."
+      },
+      "status_cook": {
+        "offset": 152,
+        "bits": 32,
+        "signed": false,
+        "min": 0,
+        "max": 4294967295,
+        "length": 0,
+        "description": "Additional status modifiers for cooked items using this as extra ingredient.",
+        "enum": {
+          "None": 0,
+          "HealPoison": 1,
+          "HealSeal": 2,
+          "HealParalysis": 4,
+          "HealSleep": 8,
+          "HealFatigue": 16,
+          "HealSick": 32,
+          "CausePoison": 64,
+          "CauseSeal": 128,
+          "CauseParalysis": 256,
+          "CauseSleep": 512,
+          "CauseFatigue": 1024,
+          "CauseSick": 2048,
+          "CauseFaint": 4096,
+          "LevelUp": 8192,
+          "Unknown4000": 16384
+        },
+        "bitmask": true
+      },
+      "max_hp_cook": {
+        "offset": 160,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to Max HP (flat) as a cooking ingredient."
+      },
+      "max_rp_cook": {
+        "offset": 164,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to Max RP (flat) as a cooking ingredient."
+      },
+      "strength_cook": {
+        "offset": 168,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to STR (flat) as a cooking ingredient."
+      },
+      "intelligence_cook": {
+        "offset": 172,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to INT (flat) as a cooking ingredient."
+      },
+      "vitality_cook": {
+        "offset": 176,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to VIT (flat) as a cooking ingredient."
+      },
+      "max_hp_cook_pct": {
+        "offset": 180,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to Max HP (% of normal) as a cooking ingredient."
+      },
+      "max_rp_cook_pct": {
+        "offset": 184,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to Max RP (% of normal) as a cooking ingredient."
+      },
+      "strength_cook_pct": {
+        "offset": 188,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to STR (%) as a cooking ingredient."
+      },
+      "intelligence_cook_pct": {
+        "offset": 192,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to INT (%) as a cooking ingredient."
+      },
+      "vitality_cook_pct": {
+        "offset": 196,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to VIT (%) as a cooking ingredient."
+      },
+      "crit_cook": {
+        "offset": 200,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to critical chance (%) as a cooking ingredient."
+      },
+      "knock_res_cook": {
+        "offset": 204,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to knockback reduction (%) as a cooking ingredient."
+      },
+      "crit_res_cook": {
+        "offset": 208,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to critical resistance (%) as a cooking ingredient."
+      },
+      "poison_res_cook": {
+        "offset": 212,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to poison resistance (%) as a cooking ingredient."
+      },
+      "seal_res_cook": {
+        "offset": 216,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to seal resistance (%) as a cooking ingredient."
+      },
+      "paralysis_res_cook": {
+        "offset": 220,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to paralysis resistance (%) as a cooking ingredient."
+      },
+      "sleep_res_cook": {
+        "offset": 224,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to sleep resistance (%) as a cooking ingredient."
+      },
+      "fatigue_res_cook": {
+        "offset": 228,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to fatigue resistance (%) as a cooking ingredient."
+      },
+      "sick_res_cook": {
+        "offset": 232,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to sick resistance (%) as a cooking ingredient."
+      },
+      "faint_res_cook": {
+        "offset": 236,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to faint resistance (%) as a cooking ingredient."
+      },
+      "poison_atk_cook": {
+        "offset": 240,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to poison infliction chance (%) as a cooking ingredient."
+      },
+      "seal_atk_cook": {
+        "offset": 244,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to seal infliction chance (%) as a cooking ingredient (may not work)."
+      },
+      "paralysis_atk_cook": {
+        "offset": 248,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to paralysis infliction chance (%) as a cooking ingredient (may not work)."
+      },
+      "sleep_atk_cook": {
+        "offset": 252,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to sleep infliction chance (%) as a cooking ingredient (may not work)."
+      },
+      "fatigue_atk_cook": {
+        "offset": 256,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to fatigue infliction chance (%) as a cooking ingredient (may not work)."
+      },
+      "sick_atk_cook": {
+        "offset": 260,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to sick infliction chance (%) as a cooking ingredient (may not work)."
+      },
+      "faint_atk_cook": {
+        "offset": 264,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to faint infliction chance (%) as a cooking ingredient (may not work)."
+      },
+      "fire_res": {
+        "offset": 268,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to fire element resistance (%)."
+      },
+      "water_res": {
+        "offset": 272,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to water element resistance (%)."
+      },
+      "earth_res": {
+        "offset": 276,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to earth element resistance (%)."
+      },
+      "wind_res": {
+        "offset": 280,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to wind element resistance (%)."
+      },
+      "light_res": {
+        "offset": 284,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to light element resistance (%)."
+      },
+      "dark_res": {
+        "offset": 288,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to dark element resistance (%)."
+      },
+      "love_res": {
+        "offset": 292,
+        "bits": 32,
+        "signed": true,
+        "min": -2147483648,
+        "max": 2147483647,
+        "length": 0,
+        "description": "Bonus to love element resistance (%)."
+      }
+    },
+    "groups": [],
+    "variants": [
+      {
+        "sub": "",
+        "file": "rf3ItemStrengthening.bin",
+        "archiveIndex": 14811,
+        "raw": false
+      }
+    ]
+  }
+}
