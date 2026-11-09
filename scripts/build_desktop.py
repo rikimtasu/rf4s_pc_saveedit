@@ -13,9 +13,15 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--include-local', action='store_true', help='Private build only: include generated game references.')
+    parser.add_argument('--game', type=Path, help='Prepare bundled catalog/icons from this game copy before building.')
     parser.add_argument('--output', type=Path, default=ROOT / 'dist')
     args = parser.parse_args()
     if sys.platform != 'win32': parser.error('Build the Windows executable on Windows.')
+    if args.game:
+        subprocess.run([sys.executable, '-m', 'scripts.generate_builtin', str(args.game)], cwd=ROOT, check=True)
+    builtin = ROOT / 'builtin'
+    if not (builtin / 'references.json.gz').is_file() or not (builtin / 'icons.zip').is_file():
+        parser.error('Prepare the standalone catalog/icons with python -m scripts.generate_builtin <game-folder>, or use --game.')
     subprocess.run([shutil.which('npm.cmd') or 'npm', 'run', 'build:native-core'], cwd=ROOT, check=True)
     temp_base = Path(tempfile.gettempdir()) / 'opencode'
     with tempfile.TemporaryDirectory(prefix='rf4s-native-package-', dir=temp_base if temp_base.is_dir() else None) as temp:
@@ -31,6 +37,7 @@ def main():
             if args.include_local and source.is_file(): shutil.copy2(source, web / filename)
             else: (web / filename).write_text(f'export const {symbol} = null;\n', encoding='utf-8')
         datas = [(str(web), 'web'), (str(ROOT / 'vendor' / 'venti' / 'schema.json'), 'vendor/venti')]
+        datas.extend((str(builtin / filename), 'builtin') for filename in ['references.json.gz', 'icons.zip'])
         datas.extend((str(ROOT / filename), '.') for filename in ['COPYING', 'ATTRIBUTION.md'])
         spec = staging / 'RF4S Save Editor.spec'
         # QJSEngine runs binary-save algorithms only, not QML or a browser. Qt's

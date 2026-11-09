@@ -1,3 +1,30 @@
+# v0.3 — Standalone icons, tourists and direct export
+
+Download **RF4S-Save-Editor-v0.3-win-x64.zip**, extract it and run **RF4S Save Editor.exe**. Windows 10/11 x64; executable approximately **34.8 MiB**. No installation, Python, Node, browser, local server or game-folder reading is required.
+
+## New features
+
+- **Tourists** in Player values: 0–99,999,999, verified against the actual game loader/getter while preserving neighboring order points.
+- Removed per-page editing opt-ins and the synthetic-demo button. Valid drafts apply automatically before switching records or exporting; export applies pending drafts atomically as one undoable edit.
+- **Export edited save** (Ctrl+S) writes directly to `%APPDATA%\Rune Factory 4 Special`. A unique timestamped `.bak` is created beside the destination before replacement, preserving its current on-disk bytes. If the destination does not exist, the imported original is backed up instead.
+- **Save as…** remains available for copies, other locations and extracted Switch saves. Choose the intended target slot if an imported file has a nonstandard filename.
+- Bundled all four item/effect tables, **637 recipe records**, seven name languages including nicknames, **1,108 item-icon mappings** and **25 NPC portraits**. Icons appear in inventory, item/attachment/inheritance pickers, recipe selectors and relevant NPC/marriage pickers.
+- Chinese/system-language detection, manual overrides and drafts across resizing/language changes are retained.
+
+## Minimal protections and limitations
+
+Close the game before exporting and keep an independent full-folder backup. Basic filename/type checks, value/bit-field limits, checksum rebuilding, conversion data-loss protection and unsaved-close confirmation remain. An invalid draft does not partially apply the other pending edits or change the disk. Undo affects memory; export again to save it, with another backup. Handle Steam Cloud conflicts separately.
+
+A valid checksum does not guarantee in-game acceptance. Marriage/story edits do not simulate events or prerequisites; PC ↔ extracted Switch conversion remains experimental. The v0.2 friendship and system-flag corrections are retained; reapply edits made by older affected builds from pre-edit backups rather than guessing repairs.
+
+## Verification and notices
+
+117 JavaScript tests passed. Native regression checks, standalone GUI/export checks and the read-only tourist loader/getter replay passed. The portable executable was checked without a game-folder argument and with no installed Python or Node on its PATH.
+
+Documentation, editor/runtime licenses and a game-assets notice are included. Game-derived reference text and images retain their owners' copyright; they are not relicensed under the editor GPL. No personal saves, game executable, voices or full game archives are included. Previous v0.1/v0.2 releases remain unchanged.
+
+---
+
 # v0.2 — Names, relationships and Chinese interface
 
 Download **RF4S-Save-Editor-v0.2-win-x64.zip**, extract it and run **RF4S Save Editor.exe**. Windows 10/11 x64, approximately 28 MiB. No installation, Python, Node, browser or local server is required.

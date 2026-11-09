@@ -6,6 +6,18 @@ Developer symbols, item IDs, file paths and raw reference JSON remain unchanged.
 import re
 
 ZH = {
+    'Tourists': '游客人数',
+    'Reload game references (optional)': '重新读取游戏数据（可选）',
+    'Save as…': '另存为…',
+    'Target save file': '目标存档文件',
+    'Choose target save slot': '选择目标存档槽位',
+    'Choose a target save slot first.': '请先选择目标存档槽位。',
+    'Choose a target filename matching the save type.': '请选择与存档类型相符的目标文件。',
+    'Use PC output for the PC save folder, or choose Save as for Switch.': '写入 PC 存档目录请使用 PC 格式；Switch 格式请使用另存为。',
+    'Save pending edits to the game folder and create a backup.': '将待应用修改保存到游戏存档目录，并先创建备份。',
+    'Pending edits are applied automatically when exporting.': '导出时自动应用待保存的修改。',
+    'Pending edit · saved on export': '待保存修改 · 导出时自动应用',
+    'Saved: ': '已保存：', ' · Backup: ': ' · 备份：',
     'Interface: ': '界面：', 'Game names: ': '游戏名称：',
     'Follow system': '跟随系统',
     'Yes': '是', '&Yes': '是(&Y)', 'No': '否', '&No': '否(&N)',

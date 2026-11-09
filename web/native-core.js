@@ -19,9 +19,25 @@ let progress = new ProgressCatalog(SAVE_METADATA.symbols, SAVE_METADATA.ctFlags)
 const requireSave = () => { if (!save) throw new Error('Open a save first.'); return save; };
 const extra = () => new ExtendedSave(requireSave());
 const marriage = () => new MarriageEditor(requireSave(), progress.variables);
+const EDIT_OPERATIONS = new Set(['setPlayer', 'setCalendar', 'setMarriage', 'setSkill', 'setFriendship',
+  'setRelationship', 'setPlayerName', 'setStats', 'setMonster', 'setRecipes', 'setTrophy', 'setSystem',
+  'setFlag', 'setNumber', 'patchBytes', 'setItem']);
 
 export function nativeInvoke(operation, args = {}) {
   switch (operation) {
+    case 'applyOperations': {
+      if (!Array.isArray(args.operations) || args.operations.length > 128 ||
+          args.operations.some(entry => !entry || !EDIT_OPERATIONS.has(entry.operation))) throw new Error('Invalid edit batch.');
+      const original = requireSave();
+      return original.transact('Apply pending edits', bytes => {
+        const staged = Object.create(original);
+        staged.data = bytes;
+        staged.transact = (_label, edit) => { edit(bytes); return true; };
+        save = staged;
+        try { for (const entry of args.operations) nativeInvoke(entry.operation, entry.args || {}); }
+        finally { save = original; }
+      });
+    }
     case 'constants': return { player: PLAYER_FIELDS, inventories: INVENTORIES, systemFlags: SYSTEM_FLAGS, seasons: SEASONS, skills: SKILLS, people: PEOPLE_NAMES, stats: STAT_FIELDS, trophies: TROPHIES, candidates: MARRIAGE_CANDIDATES, marriage: MARRIAGE_FIELDS, elements: ELEMENTS, recipeGroups: RECIPE_FILES, nicknameCount: NICKNAME_COUNT };
     case 'open': save = new SaveDocument(args.bytes, args.name); return nativeInvoke('state');
     case 'demoBytes': return Array.from(createDemo().original);

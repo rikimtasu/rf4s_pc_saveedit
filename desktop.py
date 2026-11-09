@@ -22,7 +22,7 @@ def main():
     args = parser.parse_args()
     app = QApplication(sys.argv)
     app.setApplicationName('RF4S Save Editor')
-    app.setApplicationVersion('0.2.0')
+    app.setApplicationVersion('0.3.0')
     window = NativeWindow()
     if args.self_test:
         from scripts.desktop_smoke import run

@@ -1,3 +1,6 @@
 # Only needed to build from source, never on an end user's computer.
 PyInstaller>=6.22,<7
 PySide6-Essentials==6.10.2
+# Catalog/icon preparation only; not required by the portable executable.
+Pillow>=11,<13
+pefile>=2024.8.26

@@ -1,9 +1,10 @@
 """Native Qt Widgets save editor. No web views, HTML rendering or server."""
 import json
 import os
+import re
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QSignalBlocker, Signal, QSaveFile, QIODevice, QSettings, QLocale, QEvent
+from PySide6.QtCore import Qt, QSignalBlocker, Signal, QSaveFile, QIODevice, QSettings, QLocale, QEvent, QSize
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
     QGridLayout, QLabel, QPushButton, QCheckBox, QLineEdit, QComboBox, QGroupBox,
@@ -11,6 +12,8 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, Q
     QHeaderView, QAbstractItemView, QFileDialog, QMessageBox, QPlainTextEdit, QSplitter, QSizePolicy, QTabWidget, QSpacerItem)
 
 from native_save import NativeSave, local_references
+from native_export import atomic_write, export_to_game_folder, game_save_directory
+from native_icons import GameIcons
 from native_i18n import UiLanguage, install_qt_translator
 from native_layout import ResponsiveRow, wrapping_checkbox
 from scripts.game_sources import all_references, LANGUAGES, NAME_TABLES, parse_name_table
@@ -29,8 +32,10 @@ def system_ui_language(locale_name=None):
 def combo_options(combo, choices, selected=None):
     with QSignalBlocker(combo):
         combo.clear()
-        for label, value in choices:
-            combo.addItem(str(label), value)
+        for choice in choices:
+            label, value = choice[:2]
+            if len(choice) == 3: combo.addItem(choice[2], str(label), value)
+            else: combo.addItem(str(label), value)
         index = combo.findData(selected)
         if index < 0 and selected is not None:
             combo.addItem(f'Unrecognized stored value {selected} · keep unless verified', selected)
@@ -54,7 +59,9 @@ class EditForm(QWidget):
         self.syncing = False
         layout = QVBoxLayout(self)
         self.allow = QCheckBox('Enable editing')
-        layout.addWidget(self.allow)
+        # Readiness is automatic. Retain this internal switch for existing test
+        # harnesses, but there is no per-page opt-in checkbox in the interface.
+        self.allow.setChecked(True)
         self.body = QWidget()
         self.grid = QGridLayout(self.body)
         self.grid.setHorizontalSpacing(12)
@@ -97,7 +104,8 @@ class EditForm(QWidget):
         hint = QLabel(note)
         hint.setWordWrap(True)
         hint.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-        layout.addWidget(hint)
+        hint.hide()
+        self.setToolTip(note)
         footer = ResponsiveRow()
         self.status = QLabel('No draft')
         self.status.setWordWrap(True)
@@ -176,7 +184,7 @@ class EditForm(QWidget):
             self.drafts.pop(key, None)
         else:
             self.drafts[key] = value
-        text = 'Draft pending · apply or clear before export' if self.drafts else 'No draft'
+        text = 'Pending edit · saved on export' if self.drafts else 'No draft'
         ui = getattr(self.window(), 'ui', None)
         if ui: ui.set_text(self.status, text)
         else: self.status.setText(text)
@@ -230,6 +238,7 @@ class NativeWindow(QMainWindow):
         self.ui = UiLanguage(system_ui_language() if self.ui_language_mode == 'auto' else self.ui_language_mode)
         self.qt_translator = install_qt_translator(self.ui, self)
         self.backend = NativeSave()
+        self.icons = GameIcons()
         self.constants = self.backend.constants
         self.languages = {}
         self.language = 'en'
@@ -251,7 +260,7 @@ class NativeWindow(QMainWindow):
         toolbar = self.addToolBar('Save and references')
         self.save_toolbar = toolbar
         toolbar.setMovable(False)
-        for title, callback, shortcut in [('Open save', self.open_file, QKeySequence.StandardKey.Open), ('Undo', lambda: self.mutate('undo'), QKeySequence.StandardKey.Undo), ('Redo', lambda: self.mutate('redo'), QKeySequence.StandardKey.Redo), ('Read game folder', self.read_game, None)]:
+        for title, callback, shortcut in [('Open save', self.open_file, QKeySequence.StandardKey.Open), ('Undo', lambda: self.mutate('undo'), QKeySequence.StandardKey.Undo), ('Redo', lambda: self.mutate('redo'), QKeySequence.StandardKey.Redo)]:
             action = QAction(title, self)
             action.triggered.connect(callback)
             if shortcut:
@@ -339,8 +348,7 @@ class NativeWindow(QMainWindow):
         heading = QLabel(title)
         font = heading.font(); font.setPointSize(17); font.setBold(True); heading.setFont(font)
         layout.addWidget(heading)
-        if note:
-            hint = QLabel(note); hint.setWordWrap(True); hint.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(hint)
+        if note: heading.setToolTip(note)
         self.pages[key] = (widget, layout, self.navigation.count())
         self.navigation.addItem(title)
         scroll = QScrollArea(); scroll.setWidgetResizable(True); scroll.setWidget(widget)
@@ -349,6 +357,7 @@ class NativeWindow(QMainWindow):
 
     def form(self, layout, fields, callback, note=''):
         form = EditForm(fields, note)
+        form.apply_callback = callback
         layout.addWidget(form)
         layout.addStretch()
         form.draftChanged.connect(self.update_export)
@@ -367,6 +376,14 @@ class NativeWindow(QMainWindow):
         self.refresh()
         self.statusBar().showMessage(self.ui.text('Changes applied in memory. Review and export; the original is untouched.'), 10000)
 
+    def apply_all_drafts(self):
+        pending = [form for form in self.forms if form.drafts]
+        callbacks = [lambda form=form: form.apply_callback(form.changes()) for form in pending]
+        if callbacks: self.backend.apply_callbacks(callbacks)
+        for form in pending:
+            form.drafts.clear(); form.status.setText(self.ui.text('No draft'))
+        if pending: self.refresh()
+
     def attempt(self, action):
         try:
             return action()
@@ -382,8 +399,8 @@ class NativeWindow(QMainWindow):
 
     def update_export(self):
         state = self.backend.state()
-        self.export_action.setEnabled(bool(state) and not self.pending() and not self.demo_mode)
-        self.export_action.setToolTip('Apply or clear drafts before export.' if self.pending() else 'Download an edited copy; keep a backup.')
+        self.export_action.setEnabled(bool(state) and not self.demo_mode)
+        self.export_action.setToolTip(self.ui.text('Save pending edits to the game folder and create a backup.'))
 
     def select_page(self, index):
         if index < 0:
@@ -405,11 +422,10 @@ class NativeWindow(QMainWindow):
         always = {'overview', 'reference', 'review', 'player-name'}
         for key, (_widget, _layout, index) in self.pages.items():
             available = key in always or bool(state) and (key in {'raw'} or slot and key != 'system' or not slot and key == 'system')
-            if key in {'player', 'inventory'}:
-                available = slot and state['playerProfile']
+            if key in {'player', 'inventory'}: available = slot
             item = self.navigation.item(index)
             item.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled if available else Qt.ItemFlag.NoItemFlags)
-        self.overview_status.setText('No save loaded' if not state else f'{state["name"]}\n{state["platform"].upper()} · {state["size"]:,} bytes · CRC {"valid" if state["crcValid"] else "mismatch (repair consent required)"}\n{state["changedBytes"]:,} changed bytes · {state["undo"]} undoable edits')
+        self.overview_status.setText('No save loaded' if not state else f'{state["name"]}\n{state["platform"].upper()} · {state["size"]:,} bytes · CRC {"valid" if state["crcValid"] else "mismatch — rebuilt on export"}\n{state["changedBytes"]:,} changed bytes · {state["undo"]} undoable edits')
         self.refresh_page()
         self.update_export()
 
@@ -429,7 +445,10 @@ class NativeWindow(QMainWindow):
         self.reset_appearance.setChecked(False)
         self.reset_dating.setChecked(False)
         for form in self.forms:
-            form.drafts.clear(); form.base.clear(); form.allow.setChecked(False)
+            form.drafts.clear(); form.base.clear(); form.allow.setChecked(True)
+        filename = Path(name).name.lower()
+        target = filename if re.fullmatch(r'rf4_s\d{2}\.sav|rf4_sys\.sav', filename) else 'rf4_sys.sav' if self.backend.state()['kind'] == 'system' else None
+        with QSignalBlocker(self.target_save_combo): self.target_save_combo.setCurrentIndex(self.target_save_combo.findData(target))
         self.inventory_container = 'bag'; self.inventory_slot = 0
         self.candidate = 1
         self.refresh()
@@ -464,7 +483,7 @@ class NativeWindow(QMainWindow):
     def make_overview(self):
         layout = self.page('overview', 'Save overview', 'Native desktop controls · offline · no browser or local server. Back up your save folder and close the game before editing.')
         self.overview_status = QLabel(); self.overview_status.setWordWrap(True); self.overview_status.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(self.overview_status)
-        for title, callback in [('Open save', self.open_file), ('Try synthetic demo', lambda: self.attempt(self.demo)), ('Read game folder', self.read_game), ('Read extracted item tables', lambda: self.read_tables('importItems')), ('Read extracted recipe tables', lambda: self.read_tables('importRecipes')), ('Read extracted language names', self.read_languages)]:
+        for title, callback in [('Open save', self.open_file), ('Reload game references (optional)', self.read_game), ('Read extracted item tables', lambda: self.read_tables('importItems')), ('Read extracted recipe tables', lambda: self.read_tables('importRecipes')), ('Read extracted language names', self.read_languages)]:
             button = QPushButton(title); button.clicked.connect(callback); layout.addWidget(button)
         layout.addStretch()
 
@@ -473,16 +492,17 @@ class NativeWindow(QMainWindow):
             self.open_bytes(bytes(self.backend.call('demoBytes')), 'Synthetic demo.sav (not playable; export disabled)', demo=True)
 
     def load_references(self, data):
-        if self.pending(): raise ValueError('Apply or clear drafts before replacing game references.')
+        if self.pending(): self.apply_all_drafts()
         self.backend.call('references', items=data.get('items'), recipes=data.get('recipes'))
         self.languages = (data.get('languages') or {}).get('languages', {})
+        if 'icons' in data: self.icons.load_index(data['icons'])
         self.item_names = {item['id']: item['name'] for item in self.backend.call('items')}
         self.update_languages()
 
     def read_game(self):
         if self.pending():
-            self.attempt(lambda: (_ for _ in ()).throw(ValueError('Apply or clear drafts before reading game references.')))
-            return
+            try: self.apply_all_drafts()
+            except ValueError as error: self.statusBar().showMessage(self.ui.text(str(error))); return
         folder = QFileDialog.getExistingDirectory(self, self.ui.text('Choose game folder containing Bundle'))
         if folder:
             self.attempt(lambda: self.load_references(all_references(folder)))
@@ -490,8 +510,8 @@ class NativeWindow(QMainWindow):
 
     def read_tables(self, operation):
         if self.pending():
-            self.attempt(lambda: (_ for _ in ()).throw(ValueError('Apply or clear drafts before replacing references.')))
-            return
+            try: self.apply_all_drafts()
+            except ValueError as error: self.statusBar().showMessage(self.ui.text(str(error))); return
         paths, _ = QFileDialog.getOpenFileNames(self, self.ui.text('Read extracted definition tables'), '', 'Game tables (*.bin)')
         if paths:
             def load():
@@ -541,6 +561,9 @@ class NativeWindow(QMainWindow):
         fallback = self.constants['people'][index]
         return fallback if index in (22, 23) else self.name('people', index, fallback)
 
+    def icon_choices(self, choices, kind):
+        return [(label, value, self.icons.icon(kind, value)) for label, value in choices]
+
     def make_calendar(self):
         layout = self.page('calendar', 'Calendar', 'Direct date changes do not simulate daily game updates.')
         fields = [{'key': 'day', 'label': 'Day', 'min': 1, 'max': 30}, {'key': 'season', 'label': 'Season', 'kind': 'choice', 'choices': [(name, i) for i, name in enumerate(self.constants['seasons'])]}, {'key': 'year', 'label': 'Year', 'min': 1, 'max': 0xffffffff}]
@@ -555,7 +578,7 @@ class NativeWindow(QMainWindow):
         fields = [{'key': key, **spec} for key, spec in self.constants['player'].items()]
         self.player_form = self.form(layout, fields, lambda changes: self.backend.call('setPlayer', changes=changes))
         def render():
-            state = self.backend.state(); ready = bool(state and state['playerProfile']); self.player_form.set_ready(ready)
+            state = self.backend.state(); ready = bool(state and state['kind'] == 'slot'); self.player_form.set_ready(ready)
             if ready: self.player_form.set_data(self.backend.call('player'))
         self.renderers['player'] = render
 
@@ -586,9 +609,11 @@ class NativeWindow(QMainWindow):
         selected = self.player_name_selector.currentData()
         if selected is None or selected == self.name_record: return
         if self.player_name_form.drafts:
-            with QSignalBlocker(self.player_name_selector): self.player_name_selector.setCurrentIndex(self.player_name_selector.findData(self.name_record))
-            self.statusBar().showMessage(self.ui.text('Apply or clear this draft before selecting another record.'))
-            return
+            try: self.apply_form(self.player_name_form, self.player_name_form.apply_callback)
+            except ValueError as error:
+                with QSignalBlocker(self.player_name_selector): self.player_name_selector.setCurrentIndex(self.player_name_selector.findData(self.name_record))
+                self.statusBar().showMessage(self.ui.text(str(error))); return
+        with QSignalBlocker(self.player_name_selector): self.player_name_selector.setCurrentIndex(self.player_name_selector.findData(selected))
         self.name_record = selected
         self.render_player_name()
 
@@ -633,7 +658,9 @@ class NativeWindow(QMainWindow):
         self.inventory_table.setMaximumHeight(240)
         self.inventory_table.itemSelectionChanged.connect(self.change_inventory_slot)
         layout.addWidget(self.inventory_table)
-        self.slot_label = QLabel(); self.slot_label.setWordWrap(True); self.slot_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(self.slot_label)
+        self.slot_label = QLabel(); self.slot_label.setWordWrap(True); self.slot_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        self.slot_icon = QLabel(); self.slot_icon.setFixedSize(48, 48)
+        slot_row = QHBoxLayout(); slot_row.addWidget(self.slot_icon); slot_row.addWidget(self.slot_label, 1); layout.addLayout(slot_row)
         preview = QGroupBox('Item effect preview'); preview_row = QVBoxLayout(preview)
         preview.setCheckable(True); preview.setChecked(True)
         preview.setToolTip('Uncheck to hide the preview and make more room for item fields.')
@@ -649,6 +676,8 @@ class NativeWindow(QMainWindow):
         layout.addWidget(preview)
         fields = [{'key': 'id', 'label': 'Item (type to search)', 'kind': 'choice', 'search': True}, {'key': 'quantity', 'label': 'Quantity'}, {'key': 'level', 'label': 'Set all item levels', 'optional': True}, {'key': 'element', 'label': 'Weapon / tool element', 'kind': 'choice', 'choices': [('Keep existing', None)] + [(item['name'], item['value']) for item in self.constants['elements']]}, {'key': 'inherited', 'label': 'Inherited equipment', 'kind': 'choice', 'search': True}, {'key': 'totalLevel', 'label': 'Total-level bonus (0–150)'}, {'key': 'rarityBonus', 'label': 'Rarity bonus (0–200)'}, *[{'key': f'craft{i}', 'label': f'Crafting attachment {i + 1}', 'kind': 'choice', 'search': True} for i in range(3)], *[{'key': f'upgrade{i}', 'label': f'Upgrade {i + 1} · level {i + 2}', 'kind': 'choice', 'search': True} for i in range(9)]]
         self.inventory_form = self.form(layout, fields, self.apply_inventory, 'Attachment IDs are 10-bit (0–1023), equipment only. Unchanged fields are preserved; 0 removes an attachment. Blank level preserves mixed unit levels.')
+        for control in self.inventory_form.controls.values():
+            if isinstance(control, QComboBox): control.setIconSize(QSize(24, 24))
         self.inventory_form.controls['id'].currentIndexChanged.connect(self.inventory_id_changed)
         self.inventory_form.draftChanged.connect(self.render_item_preview)
         self.renderers['inventory'] = self.render_inventory
@@ -656,8 +685,10 @@ class NativeWindow(QMainWindow):
     def change_container(self):
         selected = self.container_combo.currentData()
         if self.inventory_form.drafts:
-            with QSignalBlocker(self.container_combo): self.container_combo.setCurrentIndex(self.container_combo.findData(self.inventory_container))
-            self.statusBar().showMessage('Apply or clear item drafts before switching containers.'); return
+            try: self.apply_form(self.inventory_form, self.apply_inventory)
+            except ValueError as error:
+                with QSignalBlocker(self.container_combo): self.container_combo.setCurrentIndex(self.container_combo.findData(self.inventory_container))
+                self.statusBar().showMessage(self.ui.text(str(error))); return
         self.inventory_container = selected; self.inventory_slot = 0; self.render_inventory()
 
     def change_inventory_slot(self):
@@ -666,7 +697,9 @@ class NativeWindow(QMainWindow):
         slot = selected[0].data(Qt.ItemDataRole.UserRole)
         if slot == self.inventory_slot: return
         if self.inventory_form.drafts:
-            self.statusBar().showMessage('Apply or clear item drafts before switching slots.'); self.render_inventory_table(); return
+            try: self.apply_form(self.inventory_form, self.apply_inventory)
+            except ValueError as error:
+                self.statusBar().showMessage(self.ui.text(str(error))); self.render_inventory_table(); return
         self.inventory_slot = slot; self.render_inventory()
 
     def inventory_id_changed(self):
@@ -682,7 +715,7 @@ class NativeWindow(QMainWindow):
 
     def render_inventory_table(self):
         state = self.backend.state()
-        if not state or not state['playerProfile']: return
+        if not state or state['kind'] != 'slot': return
         items = self.backend.call('inventory', container=self.inventory_container)
         query = self.inventory_search.text().casefold().strip()
         items = [item for item in items if (item['id'] or self.all_slots.isChecked()) and (not query or query in f'{item["slot"] + 1} {self.item_name(item["id"])}'.casefold())]
@@ -691,11 +724,13 @@ class NativeWindow(QMainWindow):
             for row, item in enumerate(items):
                 values = [item['slot'] + 1, self.item_name(item['id']) if item['id'] else 'Empty', item['quantity'], ', '.join(map(str, item['levels']))]
                 for column, value in enumerate(values):
-                    cell = QTableWidgetItem(str(value)); cell.setData(Qt.ItemDataRole.UserRole, item['slot']); self.inventory_table.setItem(row, column, cell)
+                    cell = QTableWidgetItem(str(value)); cell.setData(Qt.ItemDataRole.UserRole, item['slot'])
+                    if column == 1: cell.setIcon(self.icons.icon('items', item['id']))
+                    self.inventory_table.setItem(row, column, cell)
                 if item['slot'] == self.inventory_slot: self.inventory_table.selectRow(row)
 
     def render_inventory(self):
-        state = self.backend.state(); ready = bool(state and state['playerProfile']); self.inventory_form.set_ready(ready)
+        state = self.backend.state(); ready = bool(state and state['kind'] == 'slot'); self.inventory_form.set_ready(ready)
         if not ready: return
         with QSignalBlocker(self.container_combo): self.container_combo.setCurrentIndex(self.container_combo.findData(self.inventory_container))
         self.render_inventory_table()
@@ -707,6 +742,7 @@ class NativeWindow(QMainWindow):
         inherited = [('None · 0', 0)] + [(f'{self.item_name(entry["id"])} · {entry["id"]}', entry['id']) for entry in available if entry['id'] <= 1023 and entry['category'] in (15,16,17,18,19,24,25,26,27,28,29,30,31,32,33,34,35,36,37)]
         options = {key: attachments for key in self.inventory_form.controls if key.startswith(('craft', 'upgrade'))}
         options.update(id=[('Empty / clear slot · 0', 0)] + [(f'{label} · {value}', value) for label, value in choices], inherited=inherited)
+        options = {key: self.icon_choices(entries, 'items') for key, entries in options.items()}
         self.inventory_form.set_data({'id': item['id'], 'quantity': item['quantity'], 'level': None, 'element': None, **item['details']}, options)
         self.slot_label.setText(f'Saved slot {self.inventory_slot + 1} · {self.item_name(item["id"])} · current element: {next((entry["name"] for entry in self.constants["elements"] if entry["value"] == item["element"]), "not recognized / not a weapon")}.')
         self.render_item_preview()
@@ -744,11 +780,12 @@ class NativeWindow(QMainWindow):
     def render_item_preview(self):
         if not hasattr(self, 'inventory_form'): return
         state = self.backend.state()
-        if not state or not state['playerProfile']:
+        if not state or state['kind'] != 'slot':
             self.item_preview_before.clear(); self.item_preview_after.clear(); return
         try:
             form = self.inventory_form
             basic, details = self.inventory_changes(form.drafts) if form.drafts else ({}, {})
+            self.slot_icon.setPixmap(self.icons.icon('items', basic.get('id', form.base.get('id', 0))).pixmap(48, 48))
             result = self.backend.call('previewItem', container=self.inventory_container, slot=self.inventory_slot, changes=basic, details=details)
             self.item_preview_before.setPlainText(self.effect_preview_text('Current item', result['before']))
             self.item_preview_after.setPlainText(self.effect_preview_text('Draft result', result['after']))
@@ -774,6 +811,7 @@ class NativeWindow(QMainWindow):
         for key, (title, fields, note) in specs.items():
             layout = self.page(key, title, note)
             selector = QComboBox()
+            selector.setIconSize(QSize(24, 24))
             selector.setProperty('gameNames', key != 'trophies')
             layout.addWidget(selector)
             self.record_selectors[key] = selector
@@ -808,7 +846,8 @@ class NativeWindow(QMainWindow):
     def filter_recipes(self):
         if 'recipes' not in self.record_forms: return
         if self.record_forms['recipes'].drafts:
-            self.statusBar().showMessage('Clear or apply the recipe draft before selecting another recipe.')
+            try: self.apply_form(self.record_forms['recipes'], self.record_forms['recipes'].apply_callback)
+            except ValueError as error: self.statusBar().showMessage(self.ui.text(str(error))); return
         self.render_record('recipes')
 
     def change_record(self, key):
@@ -817,8 +856,11 @@ class NativeWindow(QMainWindow):
         selected = selector.currentData()
         if selected == self.selections[key]: return
         if form.drafts:
-            with QSignalBlocker(selector): selector.setCurrentIndex(selector.findData(self.selections[key]))
-            self.statusBar().showMessage('Apply or clear this draft before selecting another record.'); return
+            try: self.apply_form(form, form.apply_callback)
+            except ValueError as error:
+                with QSignalBlocker(selector): selector.setCurrentIndex(selector.findData(self.selections[key]))
+                self.statusBar().showMessage(self.ui.text(str(error))); return
+            with QSignalBlocker(selector): selector.setCurrentIndex(selector.findData(selected))
         self.selections[key] = selected
         self.render_record(key)
 
@@ -843,8 +885,11 @@ class NativeWindow(QMainWindow):
             elif key == 'recipes': label, value = f'{self.item_name(record["result"])} · difficulty {record["level"]} · variant {record["index"]}', f'{record["kind"]}:{record["index"]}'
             else: label, value = record['label'], record['name']
             choices.append((label, value))
+        if key in ('friendship', 'relationships', 'people'): choices = self.icon_choices(choices, 'people')
+        elif key == 'recipes':
+            choices = [(label, value, self.icons.icon('items', record['result'])) for (label, value), record in zip(choices, records)]
         selected = self.selections[key]
-        if selected not in {value for _label, value in choices} and not form.drafts:
+        if selected not in {choice[1] for choice in choices} and not form.drafts:
             selected = choices[0][1] if choices else None
             self.selections[key] = selected
         combo_options(self.record_selectors[key], choices, selected)
@@ -905,8 +950,7 @@ class NativeWindow(QMainWindow):
             self.backend.call('setRecipes', recipes=[record], known=bool(changes['known']))
 
     def bulk_recipes(self, known):
-        if not self.record_forms['recipes'].allow.isChecked() or self.record_forms['recipes'].drafts:
-            raise ValueError('Enable recipe editing and apply / clear its draft first.')
+        if self.record_forms['recipes'].drafts: self.apply_form(self.record_forms['recipes'], self.record_forms['recipes'].apply_callback)
         records = list({record['bitOffset']: record for record in self.filtered_recipes()}.values())
         self.backend.call('setRecipes', recipes=records, known=known)
         self.refresh()
@@ -924,15 +968,19 @@ class NativeWindow(QMainWindow):
         self.renderers['marriage'] = self.render_marriage
 
     def change_candidate(self):
+        selected = self.candidate_combo.currentData()
+        if selected is None or selected == self.candidate: return
         if self.marriage_form.drafts:
-            with QSignalBlocker(self.candidate_combo): self.candidate_combo.setCurrentIndex(self.candidate_combo.findData(self.candidate))
-            self.statusBar().showMessage('Apply or clear marriage drafts before switching candidates.'); return
-        self.candidate = self.candidate_combo.currentData()
+            try: self.apply_form(self.marriage_form, self.marriage_form.apply_callback)
+            except ValueError as error:
+                with QSignalBlocker(self.candidate_combo): self.candidate_combo.setCurrentIndex(self.candidate_combo.findData(self.candidate))
+                self.statusBar().showMessage(self.ui.text(str(error))); return
+        self.candidate = selected
         self.render_marriage()
 
     def render_marriage(self):
         state = self.backend.state(); ready = bool(state and state['kind'] == 'slot'); self.marriage_form.set_ready(ready)
-        candidates = [(self.person_name(person['id']), person['id']) for person in self.constants['candidates']]
+        candidates = self.icon_choices([(self.person_name(person['id']), person['id']) for person in self.constants['candidates']], 'people')
         combo_options(self.candidate_combo, candidates, self.candidate)
         if not ready: return
         values = self.backend.call('marriage', candidate=self.candidate)
@@ -967,9 +1015,12 @@ class NativeWindow(QMainWindow):
 
     def change_flag(self):
         selected = self.flag_selector.currentData()
+        if selected == self.selections['flags']: return
         if self.flag_form.drafts:
-            with QSignalBlocker(self.flag_selector): self.flag_selector.setCurrentIndex(self.flag_selector.findData(self.selections['flags']))
-            self.statusBar().showMessage('Apply or clear the flag draft first.'); return
+            try: self.apply_form(self.flag_form, self.flag_form.apply_callback)
+            except ValueError as error:
+                with QSignalBlocker(self.flag_selector): self.flag_selector.setCurrentIndex(self.flag_selector.findData(self.selections['flags']))
+                self.statusBar().showMessage(self.ui.text(str(error))); return
         self.selections['flags'] = selected
         self.render_flags()
 
@@ -1084,13 +1135,16 @@ class NativeWindow(QMainWindow):
         else: self.backend.call('setNumber', offset=offset, type=self.raw_form.value('type'), value=value)
 
     def make_review(self):
-        layout = self.page('review', 'Review & export', 'Export creates a copy. Keep your backup; a correct checksum does not guarantee in-game acceptance.')
+        layout = self.page('review', 'Review & export', 'Export writes to the game save folder and creates a backup there first. Save as is available for copies and other platforms.')
         self.review_text = QPlainTextEdit(); self.review_text.setReadOnly(True); layout.addWidget(self.review_text, 1)
         options = QFormLayout()
         options.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
+        self.target_save_combo = QComboBox()
+        combo_options(self.target_save_combo, [('Choose target save slot', None)] + [(f'rf4_s{slot:02d}.sav', f'rf4_s{slot:02d}.sav') for slot in range(40)] + [('rf4_sys.sav', 'rf4_sys.sav')])
+        options.addRow('Target save file', self.target_save_combo)
         self.export_platform = QComboBox(); combo_options(self.export_platform, [('Keep source format', 'keep'), ('PC (experimental if converting)', 'pc'), ('Switch (experimental if converting)', 'switch')], 'keep'); options.addRow('Output platform', self.export_platform)
-        self.conversion_consent, row = wrapping_checkbox('I accept experimental PC ↔ Switch conversion'); options.addRow(row)
-        self.repair_consent, row = wrapping_checkbox('Repair an invalid original checksum (does not recover damaged data)'); options.addRow(row)
+        self.conversion_consent = QCheckBox(); self.conversion_consent.setChecked(True)
+        self.repair_consent = QCheckBox(); self.repair_consent.setChecked(True)
         self.export_gender = QComboBox(); combo_options(self.export_gender, [('Keep edited gender', 'keep'), ('Match original gender', 'original'), ('Male · Lest', 'male'), ('Female · Frey', 'female')], 'keep'); options.addRow('Gender on export', self.export_gender)
         self.reset_appearance, row = wrapping_checkbox('Also reset appearance, portrait and outfit'); options.addRow(row)
         self.reset_dating, row = wrapping_checkbox('Clear incompatible dating and their special nicknames (keep friendship)'); options.addRow(row)
@@ -1100,7 +1154,7 @@ class NativeWindow(QMainWindow):
         self.reset_dating.toggled.connect(lambda: self.renderers['review']())
         layout.addLayout(options)
         row = ResponsiveRow()
-        for label, callback in [('Download original backup', self.original_file), ('Download change report', self.report_file), ('Restore original in memory', lambda: self.mutate('reset')), ('Export edited save', self.export_file)]:
+        for label, callback in [('Save as…', self.save_as), ('Download change report', self.report_file), ('Restore original in memory', lambda: self.mutate('reset')), ('Export edited save', self.export_file)]:
             button = QPushButton(label); button.clicked.connect(callback); row.addWidget(button)
         layout.addWidget(row)
         def render():
@@ -1108,7 +1162,7 @@ class NativeWindow(QMainWindow):
             if not state:
                 self.review_text.setPlainText('Open a save first.'); return
             changes = self.backend.call('changes')
-            lines = [f'{state["name"]} · {state["changedBytes"]:,} changed bytes · {state["undo"]} undoable edits', 'Drafts pending: ' + ('YES — export blocked' if self.pending() else 'none')]
+            lines = [f'{state["name"]} · {state["changedBytes"]:,} changed bytes · {state["undo"]} undoable edits', self.ui.text('Pending edits are applied automatically when exporting.')]
             lines += [f'0x{entry["offset"]:05X}: {bytes(entry["before"][:24]).hex(" ")} → {bytes(entry["after"][:24]).hex(" ")}' for entry in changes[:100]]
             if len(changes) > 100: lines.append(f'First 100 of {len(changes)} ranges shown; the JSON report includes all.')
             self.review_text.setPlainText('\n'.join(lines))
@@ -1137,18 +1191,15 @@ class NativeWindow(QMainWindow):
         slot = state['kind'] == 'slot'
         target = self.export_platform.currentData()
         gender = self.export_gender.currentData() if slot else 'keep'
-        return {'platform': state['platform'] if not slot or target == 'keep' else target, 'experimental': self.conversion_consent.isChecked(), 'repair': self.repair_consent.isChecked(), 'gender': gender, 'resetAppearance': slot and self.reset_appearance.isChecked(), 'resetDating': slot and self.reset_dating.isChecked()}
+        return {'platform': state['platform'] if not slot or target == 'keep' else target, 'experimental': True, 'repair': True, 'gender': gender, 'resetAppearance': slot and self.reset_appearance.isChecked(), 'resetDating': slot and self.reset_dating.isChecked()}
 
     def export_bytes(self):
         if self.demo_mode: raise ValueError('Open a real save first. Synthetic demo export is disabled.')
-        if self.pending(): raise ValueError('Apply or clear all drafts before exporting, including disabled editors.')
+        self.apply_all_drafts()
         return self.backend.build(**self.export_options())
 
     def write_file(self, path, data):
-        file = QSaveFile(str(path))
-        if not file.open(QIODevice.OpenModeFlag.WriteOnly): raise OSError(file.errorString())
-        if file.write(data) != len(data) or not file.commit():
-            file.cancelWriting(); raise OSError(file.errorString())
+        atomic_write(path, data)
 
     def write_dialog(self, data, suggested, filter):
         filename, _ = QFileDialog.getSaveFileName(self, self.ui.text('Save a new file — keep your backup'), suggested, filter)
@@ -1161,10 +1212,20 @@ class NativeWindow(QMainWindow):
         def export():
             data = self.export_bytes()
             state = self.backend.state()
-            filename = Path(state['name']).stem + '.edited.sav'
-            if self.write_dialog(data, filename, 'RF4S save (*.sav)'):
+            if state['kind'] == 'slot' and self.export_options()['platform'] != 'pc': raise ValueError('Use PC output for the PC save folder, or choose Save as for Switch.')
+            if (state['kind'] == 'system') != (self.target_save_combo.currentData() == 'rf4_sys.sav'): raise ValueError('Choose a target filename matching the save type.')
+            target, backup = export_to_game_folder(self.target_save_combo.currentData(), data, bytes(self.backend.call('original')))
+            self.source_path = target
+            self.last_export = bytes(self.backend.call('working'))
+            self.statusBar().showMessage(self.ui.text('Saved: ') + str(target) + self.ui.text(' · Backup: ') + str(backup), 15000)
+        self.attempt(export)
+
+    def save_as(self):
+        def export():
+            data = self.export_bytes()
+            filename = self.target_save_combo.currentData() or Path(self.backend.state()['name']).stem + '.edited.sav'
+            if self.write_dialog(data, str(game_save_directory() / filename), 'RF4S save (*.sav)'):
                 self.last_export = bytes(self.backend.call('working'))
-                self.statusBar().showMessage(self.ui.text('Edited save exported. Original source file was not automatically overwritten.'), 10000)
         self.attempt(export)
 
     def original_file(self):

@@ -1,12 +1,12 @@
 # Player names, dating and nickname editing
 
-These features are included in v0.2, not the original v0.1 release. All changes require editing opt-in, Apply and export. Neither the game nor original saves are automatically changed.
+These features were introduced in v0.2. In v0.3, edit directly: valid drafts apply automatically before switching records or exporting. Export explicitly writes to the game save folder with a same-folder backup first; Save as creates a separate copy. v0.2 retains its historical editing opt-in/manual Apply workflow. Game files are never changed.
 
 ## Dating & nicknames
 
 Open an individual slot save, choose **Dating & nicknames**, then select a main NPC. The 12 marriage candidates have an editable dating-status checkbox; all 23 main NPC records have independent **NPC calls player** and **Player calls NPC** pickers. Barrett/Raven are not exposed here because their relationship/address layout is not established.
 
-The pickers always offer the verified Lest/Frey default selectors and preserve the current stored ID, including unknown IDs. **Read game folder**, or import `rf3TxtHeroNickName` language tables, to load the remaining choices. Labels follow **Game names**, with English fallback; Interface changes captions only. The player-name substitution token is shown as **[Player name]**, not mistaken for a literal nickname. Options list the complete audited table, not only the choices normally offered to that character by dialogue. Unsupported combinations may look unusual.
+The pickers always offer the verified Lest/Frey default selectors and preserve the current stored ID, including unknown IDs. v0.3 bundles all seven localized nickname tables; optional reference reload/import accepts `rf3TxtHeroNickName` overrides. Labels follow **Game names**, with English fallback; Interface changes captions only. The player-name substitution token is shown as **[Player name]**, not mistaken for a literal nickname. Options list the complete audited table, not only the choices normally offered to that character by dialogue. Unsupported combinations may look unusual.
 
 An edit changes only main-record `+8` bit 22 (`0x00400000`), `+12` u8, and/or `+20` bits 7–14 (`0x00007F80`). Friendship, other flags and other records remain untouched. Dating and nicknames are independent: clearing dating does not silently reset a nickname. No confession, breakup, gender eligibility, marriage or story prerequisite is simulated. If export dating cleanup is enabled, it overrides these fields for its listed targets.
 
@@ -18,7 +18,7 @@ The loader and relationship-query evidence is in [extended layout](extended-layo
 
 Names allow at most **6 Unicode characters / 18 UTF-8 bytes**. The 19-byte buffer includes its NUL terminator; overlong names, control characters and invalid Unicode are rejected, never truncated. Game fonts may not support every Unicode glyph. Unknown original name bytes remain untouched until an explicit replacement is applied.
 
-**Reset player name to game default** prepares an empty-name draft. Apply it and export the system save. On the next load, the game getter generates the default name from the loaded actor's gender and its language branch: the audited branches produce **Lest / Frey** or **レスト / フレイ**. The editor does not translate personal names or guess from possibly stale system-record gender metadata.
+**Reset player name to game default** prepares an empty-name draft. Export the system save to apply it (manual Apply is optional in v0.3). On the next load, the game getter generates the default name from the loaded actor's gender and its language branch: the audited branches produce **Lest / Frey** or **レスト / フレイ**. The editor does not translate personal names or guess from possibly stale system-record gender metadata.
 
 Evidence for the audited executable:
 

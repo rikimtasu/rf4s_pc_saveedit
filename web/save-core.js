@@ -25,6 +25,7 @@ export const PLAYER_FIELDS = {
   fertilizer: { offset: 0x44, type: 'i32', min: 0, max: 50000, label: 'Fertilizer' },
   money: { offset: 0x4c, type: 'i32', min: 0, max: 2000000000, label: 'Money' },
   prince_points: { offset: 0x20710, type: 'i32', min: 0, max: 99999, label: 'Order points' },
+  tourists: { offset: 0x20714, type: 'i32', min: 0, max: 99999999, label: 'Tourists' },
   max_hp: { offset: 0x54, type: 'i32', min: 1, max: 2147483647, label: 'Maximum health' },
   hp: { offset: 0x58, type: 'i32', min: 0, max: 2147483647, label: 'Current health' },
   max_rp: { offset: 0x5c, type: 'u16', min: 1, max: 65535, label: 'Maximum rune points' },
@@ -392,8 +393,8 @@ export class SaveDocument {
         const result = spec.bits === 24 ? ((view.getUint32(spec.offset, true) & 0xff000000) | value) >>> 0 : value;
         view[NUMBER_TYPES[spec.type].setter](spec.offset, result, true);
       }
-      const issues = this.playerIssues(next);
-      if (issues.length) throw new Error(issues.join(' '));
+      if (('hp' in parsed || 'max_hp' in parsed) && this.player('hp', next) > this.player('max_hp', next)) throw new Error('Current health cannot exceed maximum health.');
+      if (('rp' in parsed || 'max_rp' in parsed) && this.player('rp', next) > this.player('max_rp', next)) throw new Error('Current rune points cannot exceed the maximum.');
     });
   }
 

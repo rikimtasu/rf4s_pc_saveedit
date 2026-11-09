@@ -41,6 +41,7 @@ Use `python scripts/inspect_executable.py <RF4S.exe> --function <RVA>` to view a
 | Intelligence | `0x64` | Low 24 bits of unsigned word | 1–16,777,215 |
 | Vitality | `0x68` | Low 24 bits of unsigned word | 1–16,777,215 |
 | Order points (prince/princess points) | `0x20710` | Signed 32-bit | 0–99,999 |
+| Tourist count | `0x20714` | Signed 32-bit | 0–99,999,999 |
 
 All integers are little-endian. The upper byte of each attribute word is retained. Money, order-point and material ceilings are corroborated by executable clamps; other numeric ceilings are storage limits, not established gameplay caps. Minimum base attributes of 1 and nonzero maxima are conservative editor guards. Extreme values may be clamped or cause derived-stat overflow in-game; use reasonable values and backups.
 
@@ -51,6 +52,8 @@ The sample's base values also match row zero of `rf3Parameter.bin` interpreted t
 ### Order-point serialization
 
 `GetPrincePoints` (`0x21DFB0`) reads the signed currency at runtime RVA `0xE9AC08`; `AddPrincePoints` (`0x21DFD0`) clamps additions to 0–99,999. Serializer instructions `0x7EABE..0x7EAD3` copy the block beginning at that runtime address to save `0x20710`. The matching load at `0x80037` copies it back. The runtime address is not used as a save offset. These points do not establish or edit whether a particular order is unlocked.
+
+The following word is the tourist count, runtime `0xE9AC0C` → save `0x20714`. The actual getter is `0x21E050..0x21E060`; its addition path clamps to `0x5F5E0FF` (99,999,999). `tests/test_replay_tourists.py` verifies exported counts against the actual loader/getter while retaining adjacent order points.
 
 ## Export gender and appearance
 
