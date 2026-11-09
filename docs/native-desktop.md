@@ -4,6 +4,8 @@ v0.3 uses the [standalone workflow](standalone-workflow.md): bundled data/icons,
 
 Open `dist/RF4S Save Editor.exe`. No installation, browser, server, Python or Node is required. The interface uses native Qt Widgets. The bundled scripting interpreter runs only shared save algorithms; it does not display web pages.
 
+The current source uses the Nord palette (Polar Night backgrounds, Snow Storm text and Frost highlights) with Fusion rendering across the GUI, dropdowns and search suggestions. It retains 12-point minimum body text, 40-pixel picker/portrait icons and a 56-pixel item grid with 64-pixel selected-item previews. Existing release executables are unchanged. The separate local development build is `dist/nord/RF4S Save Editor.exe`, preferred by `start.bat` when present; build it with `python scripts/build_desktop.py --output dist/nord` after installing the desktop build requirements. Earlier local builds remain available as fallbacks.
+
 1. Close the game and back up your save directory.
 2. The launch save picker starts at `%APPDATA%\Rune Factory 4 Special`; if absent, it uses your home folder. Select a PC / extracted Switch slot or `rf4_sys.sav`, or cancel and use **Open save** later. No save is auto-loaded.
 3. References, seven name languages and icons are already bundled. Optional reload/import controls in Save overview allow overrides without modifying game files.
@@ -12,11 +14,17 @@ Open `dist/RF4S Save Editor.exe`. No installation, browser, server, Python or No
 
 ## Items and attachments
 
-Select a container and saved slot. **Show empty slots** exposes positions for adding items; this does not unlock capacity. The filter searches localized names/slots. Item dropdowns support typing to find a matching entry; choose the entry rather than leaving arbitrary typed text.
+Select a container and saved slot in the icon grid. Tiles show quantity badges, level and the real saved slot number; hover for the full name and mixed unit levels. **Show empty slots** is checked by default; uncheck it to show occupied slots only. Showing/editing later positions does not unlock capacity. The filter searches localized names/slots. Item dropdowns offer large-icon search suggestions; choose a matching entry rather than leaving arbitrary typed text.
+
+Storage uses one decoded slot list per document revision, and pickers share three indexed, lazily illustrated catalogs instead of rebuilding thousands of entries for each selection. Uniform popup/grid layout avoids decoding the entire icon archive just to size closed controls. Filtering or selecting a slot reuses the models. Imports/language changes invalidate the appropriate display caches; edits, undo, redo and opening another save refresh the slot data. A synthetic 990-slot fridge selection measured approximately 1.97 seconds before this change and 0.15 seconds afterwards on the development machine; timings vary by machine and this is not a game-load benchmark.
 
 Replacements reset prior metadata. Unchanged fields are preserved. Blank level preserves mixed unit levels. Zero removes an attachment; attached IDs are restricted to 0–1023. Equipment supports three crafting and nine upgrade attachments, inherited equipment, total-level and rarity bonuses. Elements append crystals to unused upgrades, raise the level and never silently remove attachments. Full equipment is refused. Special effects remain the game's responsibility; in-game acceptance is not guaranteed.
 
 The current/draft **Item effect preview** is read-only and uses the same item-edit algorithm on a copy. Game tables supply base equipment and use effects, inherited-equipment references, and individual craft/upgrade material bonuses. Percentages are decoded from fixed-point values; unknown/missing references remain unknown. The planned element is shown separately. Final stats, material-level scaling, repeated-material penalties, total-level/rarity bonuses, special multipliers, inheritance combinations and actor stats are not simulated.
+
+## Recipes
+
+In **Learned recipes**, click **Learn all recipes** or press **Ctrl+Shift+L** to learn every loaded recipe across all groups, ignoring the current search/filter. Linked variants are deduplicated, and any selected recipe draft joins the operation in one undoable edit. It changes memory only; export to save. The shortcut is disabled for system saves or missing definitions. The existing filtered learn/forget buttons still affect only their filtered lists.
 
 ## Marriage and other editors
 

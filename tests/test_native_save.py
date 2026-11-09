@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import struct
 import unittest
+from unittest.mock import patch
 import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,6 +37,33 @@ class NativeSaveTests(unittest.TestCase):
         self.assertEqual(bytes(self.save.call('original')), self.original)
         self.save.call('undo'); self.save.call('undo')
         self.assertEqual(self.save.build(), self.original)
+
+    def test_state_snapshot_is_reused_until_a_successful_mutation(self):
+        snapshot = self.save.state()
+        snapshot['calendar']['day'] = 99
+        self.assertEqual(self.save.state()['calendar']['day'], 9, 'Callers must not mutate the cached snapshot')
+        with patch.object(self.save, '_evaluate', wraps=self.save._evaluate) as evaluate:
+            self.save.state(); self.save.state()
+            self.assertEqual(evaluate.call_count, 0, 'Read-only state queries rescan the whole save')
+        self.save.call('setPlayer', changes={'money': 1234})
+        self.assertEqual(self.save.state()['exportState'], 'unexported')
+        self.save.call('markExported')
+        self.assertEqual(self.save.state()['exportState'], 'exported')
+        self.save.call('undo')
+        self.assertEqual(self.save.state()['exportState'], 'unexported')
+        self.save.call('redo')
+        self.assertEqual(self.save.state()['exportState'], 'exported')
+        self.save.call('reset')
+        self.assertFalse(self.save.state()['dirty'])
+        self.save.open(self.original, 'new.sav')
+        self.assertEqual(self.save.state()['exportState'], 'original')
+        revision = self.save.revision
+        with self.assertRaises(ValueError): self.save.call('setCalendar', changes={'day': 99, 'season': 0, 'year': 1})
+        self.assertEqual(self.save.revision, revision)
+        self.assertEqual(self.save.state()['calendar']['day'], 9)
+        self.save.apply_callbacks([lambda: self.save.call('setPlayer', changes={'money': 345})])
+        self.assertGreater(self.save.revision, revision)
+        self.assertTrue(self.save.state()['dirty'])
 
     def test_marshaled_attachments_and_element_masks(self):
         records = [{'category': 51, 'max_stack': 9} for _ in range(1024)]

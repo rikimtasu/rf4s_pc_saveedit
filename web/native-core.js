@@ -41,7 +41,7 @@ export function nativeInvoke(operation, args = {}) {
     case 'constants': return { player: PLAYER_FIELDS, inventories: INVENTORIES, systemFlags: SYSTEM_FLAGS, seasons: SEASONS, skills: SKILLS, people: PEOPLE_NAMES, stats: STAT_FIELDS, trophies: TROPHIES, candidates: MARRIAGE_CANDIDATES, marriage: MARRIAGE_FIELDS, elements: ELEMENTS, recipeGroups: RECIPE_FILES, nicknameCount: NICKNAME_COUNT };
     case 'open': save = new SaveDocument(args.bytes, args.name); return nativeInvoke('state');
     case 'demoBytes': return Array.from(createDemo().original);
-    case 'state': return !save ? null : { name: save.name, kind: save.kind, platform: save.platform, size: save.size, crcValid: save.crcValid, dirty: save.dirty, changedBytes: save.changedBytes, undo: save.undoStack.length, redo: save.redoStack.length, playerProfile: save.playerProfile, calendar: save.kind === 'slot' ? { day: save.get('day'), season: save.get('season'), year: save.get('year') } : null, gender: save.kind === 'slot' ? save.gender() : null };
+    case 'state': return !save ? null : { name: save.name, kind: save.kind, platform: save.platform, size: save.size, crcValid: save.crcValid, dirty: save.dirty, exportState: save.exportState, changedBytes: save.changedBytes, undo: save.undoStack.length, redo: save.redoStack.length, playerProfile: save.playerProfile, calendar: save.kind === 'slot' ? { day: save.get('day'), season: save.get('season'), year: save.get('year') } : null, gender: save.kind === 'slot' ? save.gender() : null };
     case 'references': {
       const nextCatalog = new ItemCatalog(args.items);
       const nextRecipes = new SaveReferences(args.recipes);
@@ -120,6 +120,7 @@ export function nativeInvoke(operation, args = {}) {
     case 'undo': return requireSave().undo();
     case 'redo': return requireSave().redo();
     case 'reset': return requireSave().reset();
+    case 'markExported': return requireSave().markExported();
     case 'original': return Array.from(requireSave().original);
     case 'working': return Array.from(requireSave().data);
     case 'build': return Array.from(requireSave().build(args));

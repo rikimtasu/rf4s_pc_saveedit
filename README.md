@@ -58,6 +58,8 @@ v0.2 also offers an independent **Interface / 界面** selector: **Follow system
 
 Compact windows are supported down to **640×480**. Forms reflow instead of clipping labels, and long pages scroll vertically through the Apply/Clear controls. Item previews use current/draft tabs; uncheck their heading to collapse the preview. Resizing does not discard drafts.
 
+Current source builds add a game-inspired icon grid with quantity badges, 12-point body text and larger item/portrait icons. Nord colors apply consistently to controls and dropdowns; **Ctrl+Shift+L** or **Learn all recipes** learns every loaded recipe as one undoable edit. Shared lazy picker models and cached slot lists make full storage much faster to browse. Existing release packages are unchanged; the separate local build is `dist/nord/RF4S Save Editor.exe`, preferred by `start.bat` when present. See the [native guide](docs/native-desktop.md).
+
 v0.2 fixes blank confirmation buttons and Barrett / Raven friendship offsets. All 25 NPC friendship writes and every main-NPC level threshold are checked against the audited game code. **Reapply guest friendship edits from a pre-edit backup**: older builds wrote into the guest-block header, which is not automatically repaired. These corrections are not included in the original v0.1 release. See [friendship layout evidence](docs/extended-layout.md#friendship).
 
 ## Edit and export safely
@@ -111,6 +113,7 @@ The native **Item effect preview / 物品效果预览** compares current and dra
 ## More information
 
 - [Native user guide](docs/native-desktop.md)
+- [App state-machine map and transition rules](docs/state-machines.md)
 - [Legacy browser user guide](web/help.html)
 - [Save layout and appearance evidence](docs/save-layout.md)
 - [Skills, recipes, storage and actor layouts](docs/extended-layout.md)

@@ -12,6 +12,15 @@ import zlib
 ROOT = Path(__file__).resolve().parents[1]
 AVAILABLE = importlib.util.find_spec('PySide6') is not None and (ROOT / 'web/native-bundle.js').is_file()
 
+RECIPE_FIXTURE = {'recipes': [
+    {'kind': 'rf3RecipeAcce', 'records': [
+        {'index': 1, 'result': 328, 'level': 1, 'bitOffset': 5158},
+        {'index': 2, 'result': 328, 'level': 2, 'bitOffset': 5158},
+    ]},
+    {'kind': 'rf3RecipeArmor', 'records': [{'index': 1, 'result': 329, 'level': 3, 'bitOffset': 5159}]},
+    {'kind': 'rf3RecipeCookHandmade', 'records': [{'index': 1, 'result': 559, 'level': 4, 'bitOffset': 5160}]},
+]}
+
 
 @unittest.skipUnless(AVAILABLE, 'Native build dependencies are not installed')
 class StreamlinedUiTests(unittest.TestCase):
@@ -90,6 +99,111 @@ class StreamlinedUiTests(unittest.TestCase):
         self.assertEqual(self.window.selections['friendship'], 5)
         self.assertEqual(self.window.backend.call('friendship')[0]['level'], 27)
         self.assertFalse(self.window.record_forms['friendship'].drafts)
+
+    def test_learn_all_shortcut_ignores_filters_and_commits_one_undoable_edit(self):
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+        self.window.load_references({'recipes': RECIPE_FIXTURE})
+        self.select('recipes')
+        self.window.recipe_group.setCurrentIndex(self.window.recipe_group.findData('rf3RecipeAcce'))
+        self.window.recipe_search.setText('328')
+        self.edit(self.window.record_forms['recipes'], 'known', 1)
+        self.assertEqual(len(self.window.filtered_recipes()), 2)
+        self.assertTrue(self.window.learn_all_recipes_action.isEnabled())
+        self.assertEqual(self.window.learn_all_recipes_action.shortcut().toString(), 'Ctrl+Shift+L')
+        self.window.activateWindow(); self.window.setFocus(); self.app.processEvents()
+        QTest.keyClick(self.window, Qt.Key.Key_L, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
+        self.app.processEvents()
+        self.assertTrue(all(recipe['known'] for recipe in self.window.backend.call('recipes')))
+        self.assertEqual(self.window.backend.state()['undo'], 1)
+        self.assertFalse(self.window.record_forms['recipes'].drafts)
+        self.assertEqual(self.window.recipe_search.text(), '328')
+        self.window.learn_all_recipes_button.click()
+        self.assertEqual(self.window.backend.state()['undo'], 1, 'Learning already-known recipes is a no-op')
+        self.window.mutate('undo')
+        self.assertEqual(self.window.backend.call('working'), list(self.original))
+        self.assertEqual(self.window.test_errors, [])
+
+    def test_learn_all_is_disabled_without_definitions_or_for_system_saves(self):
+        self.window.load_references({}); self.window.refresh()
+        self.assertFalse(self.window.learn_all_recipes_action.isEnabled())
+        with self.assertRaises(ValueError): self.window.bulk_recipes(True, all_recipes=True)
+        self.assertEqual(self.window.backend.call('working'), list(self.original))
+        data = bytearray(9304); data[:4] = b'RF4D'
+        struct.pack_into('<I', data, 4, zlib.crc32(data[8:]))
+        self.window.load_references({'recipes': RECIPE_FIXTURE})
+        self.window.open_bytes(data, 'rf4_sys.sav')
+        self.assertFalse(self.window.learn_all_recipes_action.isEnabled())
+        self.window.learn_all_recipes_action.trigger()
+        self.assertEqual(self.window.backend.call('working'), list(data))
+
+    def test_failed_learn_all_keeps_the_recipe_draft_and_working_bytes(self):
+        self.window.load_references({'recipes': RECIPE_FIXTURE})
+        self.select('recipes')
+        form = self.window.record_forms['recipes']
+        self.edit(form, 'known', 1)
+        call = self.window.backend.call
+        def reject_bulk(operation, **args):
+            if operation == 'setRecipes' and len(args['recipes']) > 1: raise ValueError('Bulk edit rejected')
+            return call(operation, **args)
+        with patch.object(self.window.backend, 'call', side_effect=reject_bulk):
+            self.window.learn_all_recipes_action.trigger()
+        self.assertEqual(form.drafts, {'known': 1})
+        self.assertEqual(self.window.backend.call('working'), list(self.original))
+        self.assertEqual(self.window.backend.state()['undo'], 0)
+        self.assertEqual(self.window.test_errors, ['Bulk edit rejected'])
+
+    def test_export_then_undo_to_original_warns_before_close_or_replacement(self):
+        from PySide6.QtWidgets import QMessageBox
+        self.window.mutate('setPlayer', changes={'money': 1234})
+        with tempfile.TemporaryDirectory() as temp, patch.dict('os.environ', {'APPDATA': temp}):
+            self.window.export_file()
+            self.assertEqual(self.window.test_errors, [])
+        self.assertEqual(self.window.backend.state()['exportState'], 'exported')
+        self.assertEqual(self.window.document_status.text(), 'Current edits exported')
+        self.window.mutate('undo')
+        self.assertFalse(self.window.backend.state()['dirty'])
+        self.assertEqual(self.window.document_status.text(), 'Unexported changes')
+        before = self.window.backend.state()
+        self.window.ui_language_combo.setCurrentIndex(self.window.ui_language_combo.findData('zh-CN'))
+        self.assertEqual(self.window.document_status.text(), '尚未导出的修改')
+        self.assertEqual(self.window.backend.state(), before)
+        self.window.ui_language_combo.setCurrentIndex(self.window.ui_language_combo.findData('en'))
+        self.assertEqual(self.window.document_status.text(), 'Unexported changes')
+        with patch.object(self.window, 'question', return_value=QMessageBox.StandardButton.Cancel) as dialog:
+            self.assertFalse(self.window.discard_confirmation())
+            dialog.assert_called_once()
+        self.window.mutate('redo')
+        with patch.object(self.window, 'question') as dialog:
+            self.assertTrue(self.window.discard_confirmation())
+            dialog.assert_not_called()
+
+    def test_failed_export_and_cancelled_save_as_do_not_acknowledge_pending_changes(self):
+        self.select('player'); self.edit(self.window.player_form, 'money', 1234)
+        with patch('native_ui.export_to_game_folder', side_effect=OSError('write failed')):
+            self.window.export_file()
+        self.assertEqual(self.window.backend.state()['exportState'], 'unexported')
+        self.assertEqual(self.window.test_errors, ['write failed'])
+        with patch('native_ui.QFileDialog.getSaveFileName', return_value=('', '')):
+            self.window.save_as()
+        self.assertEqual(self.window.backend.state()['exportState'], 'unexported')
+        with patch('native_ui.QFileDialog.getSaveFileName', return_value=('copy.sav', '')), patch.object(self.window, 'write_file', side_effect=OSError('copy failed')):
+            self.window.save_as()
+        self.assertEqual(self.window.backend.state()['exportState'], 'unexported')
+        self.assertEqual(self.window.test_errors, ['write failed', 'copy failed'])
+
+    def test_successful_save_as_acknowledges_only_after_write_and_drafts_still_warn(self):
+        from PySide6.QtWidgets import QMessageBox
+        self.select('player'); self.edit(self.window.player_form, 'money', 1234)
+        with tempfile.TemporaryDirectory() as temp, patch('native_ui.QFileDialog.getSaveFileName', return_value=(str(Path(temp) / 'copy.sav'), '')):
+            self.window.save_as()
+            self.assertTrue((Path(temp) / 'copy.sav').is_file())
+        self.assertEqual(self.window.backend.state()['exportState'], 'exported')
+        self.edit(self.window.player_form, 'money', '')
+        with patch.object(self.window, 'question', return_value=QMessageBox.StandardButton.Cancel):
+            self.assertFalse(self.window.discard_confirmation())
+        self.window.player_form.clear()
+        self.assertTrue(self.window.discard_confirmation())
 
     @unittest.skipUnless((ROOT / 'builtin/references.json.gz').is_file(), 'Prepare the real standalone catalog first')
     def test_bundled_references_and_icons_work_without_reading_any_game_folder(self):

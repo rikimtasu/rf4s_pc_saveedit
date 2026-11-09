@@ -207,6 +207,7 @@ export class SaveDocument {
     this.name = name;
     this.undoStack = [];
     this.redoStack = [];
+    this._exportedData = null;
     this.originalCrc = this.view(this.original).getUint32(this.crcOffset, true);
     this.originalComputedCrc = crc32(this.original.subarray(this.crcStart, this.crcEnd));
     this.crcValid = this.originalCrc === this.originalComputedCrc;
@@ -481,6 +482,21 @@ export class SaveDocument {
 
   get dirty() {
     return !equalBytes(this.data, this.original);
+  }
+
+  // Payload lifecycle, independent of history, drafts and export-only options.
+  // Before the first export compare with the import; afterwards use the last
+  // export checkpoint, even when undo/reset has restored the imported bytes.
+  get exportState() {
+    if (this._exportedData === null) return this.dirty ? 'unexported' : 'original';
+    return equalBytes(this.data, this._exportedData) ? 'exported' : 'unexported';
+  }
+
+  // Call only after a successful native write (or a browser download request).
+  // build() is deliberately read-only and never acknowledges an export.
+  markExported() {
+    this._exportedData = this.data.slice();
+    return 'exported';
   }
 
   changes() {

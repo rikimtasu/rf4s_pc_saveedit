@@ -22,7 +22,6 @@ let storyValueDraft;
 let profileDraft;
 let flagPage = 0;
 let pendingReplacement;
-let lastExport;
 let loading = false;
 const flagDrafts = new Map();
 const playerDrafts = new Map();
@@ -49,10 +48,6 @@ function notify(message, warning = false) {
 
 function attempt(action) {
   try { return action(); } catch (error) { notify(error.message, true); return false; }
-}
-
-function hasUnexportedEdits() {
-  return save && save.dirty && (!lastExport || !equalBytes(save.data, lastExport));
 }
 
 function dateDraft() {
@@ -648,6 +643,7 @@ function refreshLayout() {
 
 function render({ syncCalendar = false } = {}) {
   const loaded = Boolean(save);
+  const exportState = save?.exportState;
   refreshLayout();
   $('calendar-fields').disabled = !slotSave();
   $('allow-flags').disabled = !slotSave();
@@ -666,8 +662,10 @@ function render({ syncCalendar = false } = {}) {
   $('nav-count').textContent = changed;
   $('nav-count').setAttribute('aria-label', `${changed} changed bytes`);
   $('changes-detail').textContent = save?.dirty ? `${save.undoStack.length} undoable ${save.undoStack.length === 1 ? 'edit' : 'edits'}` : 'Original stays untouched';
-  $('document-state').textContent = demo ? 'Demo · export disabled' : !loaded ? 'Open a save to begin' : hasUnexportedEdits() ? 'Unexported changes' : lastExport && equalBytes(save.data, lastExport) ? 'Current edits exported' : 'Original loaded · no edits';
-  document.title = `${hasUnexportedEdits() ? '• ' : ''}Rune Factory 4 Special · Save editor`;
+  $('document-state').textContent = demo ? 'Demo · export disabled' : !loaded ? 'Open a save to begin' : {
+    original: 'Original loaded · no edits', unexported: 'Unexported changes', exported: 'Export download requested',
+  }[exportState];
+  document.title = `${exportState === 'unexported' ? '• ' : ''}Rune Factory 4 Special · Save editor`;
   if (loaded) {
     $('platform-badge').textContent = save.kind === 'system' ? 'System save' : words(save.platform);
     $('date-value').previousElementSibling.textContent = slotSave() ? 'In-game date' : 'System state';
@@ -715,7 +713,6 @@ function openDocument(next, isDemo = false) {
     marriageUi.clear();
     $('bag-container').value = 'bag';
     lastContainer = 'bag';
-    lastExport = undefined;
     flagDrafts.clear();
     playerDrafts.clear();
     bagDrafts.clear();
@@ -752,7 +749,7 @@ function openDocument(next, isDemo = false) {
     const issues = save.calendarIssues();
     notify(isDemo ? 'Demo mode. Open your own save when ready.' : !save.crcValid ? 'Original checksum mismatch. Repair will not recover missing or damaged game data.' : issues.length ? `Save loaded. ${issues.join(' ')}` : 'Save loaded. Your original file stays untouched.', !save.crcValid || Boolean(issues.length));
   };
-  if (hasUnexportedEdits() || pendingDrafts()) {
+  if (save?.exportState === 'unexported' || pendingDrafts()) {
     pendingReplacement = apply;
     $('replace-confirm').hidden = false;
     $('cancel-replace').focus();
@@ -788,7 +785,7 @@ function exportSave() {
     if (pendingDrafts()) throw new Error('Apply or clear draft fields before exporting.');
     const output = save.build(exportOptions());
     download(output, exportFilename());
-    lastExport = save.data.slice();
+    save.markExported();
     render();
     notify('Export download requested. Keep a backup before replacing your game save.');
   });
@@ -1167,10 +1164,10 @@ const observer = new IntersectionObserver(entries => {
 }, { rootMargin: '-5% 0px -60% 0px', threshold: 0 });
 for (const section of document.querySelectorAll('main>section, main>details')) observer.observe(section);
 window.addEventListener('beforeunload', event => {
-  if (hasUnexportedEdits() || pendingDrafts()) { event.preventDefault(); event.returnValue = ''; }
+  if (save?.exportState === 'unexported' || pendingDrafts()) { event.preventDefault(); event.returnValue = ''; }
 });
 window.rf4sHasPendingChanges = pendingDrafts;
-window.rf4sHasUnsavedChanges = () => Boolean(hasUnexportedEdits() || pendingDrafts());
+window.rf4sHasUnsavedChanges = () => Boolean(save?.exportState === 'unexported' || pendingDrafts());
 window.addEventListener('keydown', event => {
   if (!(event.ctrlKey || event.metaKey)) return;
   const key = event.key.toLowerCase();

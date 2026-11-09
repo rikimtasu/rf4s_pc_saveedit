@@ -49,6 +49,26 @@ test('native save seam has no browser globals, server or arbitrary-code operatio
   assert.equal(call('constants').inventories.fridge.slots, 990);
 });
 
+test('native state exposes the shared export lifecycle and failed opens retain the document', () => {
+  fixture();
+  assert.equal(call('state').exportState, 'original');
+  call('setPlayer', { changes: { money: 1234 } });
+  assert.equal(call('state').exportState, 'unexported');
+  assert.equal(call('markExported'), 'exported');
+  const before = call('state');
+  assert.throws(() => call('open', { bytes: [0], name: 'bad.sav' }));
+  assert.deepEqual(call('state'), before);
+  assert.throws(() => call('applyOperations', { operations: [{ operation: 'markExported' }] }), /Invalid edit batch/);
+  assert.deepEqual(call('state'), before);
+  call('undo');
+  assert.equal(call('state').dirty, false);
+  assert.equal(call('state').exportState, 'unexported');
+  call('redo');
+  assert.equal(call('state').exportState, 'exported');
+  fixture();
+  assert.equal(call('state').exportState, 'original');
+});
+
 test('native dating cleanup previews its targets and applies only on opted-in export', () => {
   fixture();
   call('setNumber', { offset: 0x1db48, type: 'u32', value: 0x400302 });

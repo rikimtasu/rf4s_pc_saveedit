@@ -4,12 +4,12 @@ import os
 import re
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QSignalBlocker, Signal, QSaveFile, QIODevice, QSettings, QLocale, QEvent, QSize
-from PySide6.QtGui import QAction, QKeySequence
-from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
-    QGridLayout, QLabel, QPushButton, QCheckBox, QLineEdit, QComboBox, QGroupBox,
-    QScrollArea, QStackedWidget, QListWidget, QTableWidget, QTableWidgetItem,
-    QHeaderView, QAbstractItemView, QFileDialog, QMessageBox, QPlainTextEdit, QSplitter, QSizePolicy, QTabWidget, QSpacerItem)
+from PySide6.QtCore import Qt, QSignalBlocker, Signal, QSaveFile, QIODevice, QSettings, QLocale, QEvent, QSize, QAbstractListModel, QModelIndex, QRect
+from PySide6.QtGui import QAction, QKeySequence, QPalette, QColor
+from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFormLayout,
+    QGridLayout, QLabel, QPushButton, QToolButton, QCheckBox, QLineEdit, QComboBox, QCompleter, QGroupBox,
+    QScrollArea, QStackedWidget, QListWidget, QListView, QStyledItemDelegate, QStyle,
+    QAbstractItemView, QFileDialog, QMessageBox, QPlainTextEdit, QSplitter, QSizePolicy, QTabWidget, QSpacerItem)
 
 from native_save import NativeSave, local_references
 from native_export import atomic_write, export_to_game_folder, game_save_directory
@@ -29,8 +29,104 @@ def system_ui_language(locale_name=None):
     return 'zh-CN' if (locale_name or QLocale.system().name()).lower().startswith('zh') else 'en'
 
 
+class _ItemChoices(QAbstractListModel):
+    """One indexed catalog per choice family; icons are requested only when drawn."""
+    def __init__(self, choices, window):
+        super().__init__(window)
+        self.rows = list(choices)
+        self.positions = {value: index for index, (_label, value) in enumerate(self.rows)}
+        self.window = window
+
+    def rowCount(self, parent=QModelIndex()):
+        return 0 if parent.isValid() else len(self.rows)
+
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        if not index.isValid(): return None
+        label, value = self.rows[index.row()]
+        if role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole): return self.window.ui.text(label)
+        if role == Qt.ItemDataRole.UserRole: return value
+        if role == Qt.ItemDataRole.DecorationRole: return self.window.icons.icon('items', value)
+        return None
+
+    def index_for(self, value):
+        if value not in self.positions:
+            row = len(self.rows)
+            self.beginInsertRows(QModelIndex(), row, row)
+            self.positions[value] = row
+            self.rows.append((f'Unrecognized stored ID {value}', value))
+            self.endInsertRows()
+        return self.positions[value]
+
+
+class _InventoryRows(QAbstractListModel):
+    """Saved-slot identity and lazy display data; never creates per-slot widgets."""
+    def __init__(self, window):
+        super().__init__(window)
+        self.window = window
+        self.rows = []
+        self.positions = {}
+
+    def set_rows(self, rows):
+        self.beginResetModel()
+        self.rows = rows
+        self.positions = {item['slot']: row for row, item in enumerate(rows)}
+        self.endResetModel()
+
+    def rowCount(self, parent=QModelIndex()):
+        return 0 if parent.isValid() else len(self.rows)
+
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        if not index.isValid(): return None
+        item = self.rows[index.row()]
+        if role == Qt.ItemDataRole.UserRole: return item['slot']
+        if role == Qt.ItemDataRole.UserRole + 1: return item
+        if role == Qt.ItemDataRole.DecorationRole: return self.window.icons.icon('items', item['id'])
+        name = self.window.item_name(item['id']) if item['id'] else self.window.ui.text('Empty')
+        if role == Qt.ItemDataRole.DisplayRole: return name
+        if role in (Qt.ItemDataRole.ToolTipRole, Qt.ItemDataRole.AccessibleTextRole):
+            return f'{name}\n' + self.window.ui.text('Saved slot') + f' {item["slot"] + 1} · ' + self.window.ui.text('Quantity') + f' {item["quantity"]}\n' + self.window.ui.text('Levels') + ': ' + ', '.join(map(str, item['levels']))
+        return None
+
+
+class _ItemTile(QStyledItemDelegate):
+    def sizeHint(self, option, index):
+        return QSize(120, 128)
+
+    def paint(self, painter, option, index):
+        item = index.data(Qt.ItemDataRole.UserRole + 1)
+        palette = index.model().window.palette()
+        selected = bool(option.state & QStyle.StateFlag.State_Selected)
+        tile = option.rect.adjusted(4, 4, -4, -4)
+        painter.save()
+        painter.setRenderHint(painter.RenderHint.Antialiasing)
+        painter.setBrush(palette.highlight() if selected else palette.base())
+        painter.setPen(palette.highlight().color() if selected else palette.mid().color())
+        painter.drawRoundedRect(tile, 8, 8)
+        index.data(Qt.ItemDataRole.DecorationRole).paint(painter, QRect(tile.center().x() - 28, tile.top() + 8, 56, 56))
+        painter.setFont(option.font)
+        painter.setPen(palette.highlightedText().color() if selected else palette.text().color())
+        name = option.fontMetrics.elidedText(index.data(Qt.ItemDataRole.DisplayRole), Qt.TextElideMode.ElideRight, tile.width() - 12)
+        painter.drawText(tile.adjusted(6, 67, -6, -24), Qt.AlignmentFlag.AlignCenter, name)
+        painter.drawText(tile.adjusted(8, 0, -8, -5), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom, f'Lv{item["level"]}' if item['id'] else '')
+        painter.drawText(tile.adjusted(8, 0, -8, -5), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom, str(item['slot'] + 1))
+        if item['quantity'] > 1:
+            badge = QRect(tile.right() - 33, tile.top() + 5, 29, 24)
+            painter.setBrush(palette.text()); painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRoundedRect(badge, 5, 5)
+            painter.setPen(palette.base().color())
+            painter.drawText(badge, Qt.AlignmentFlag.AlignCenter, f'×{item["quantity"]}')
+        if option.state & QStyle.StateFlag.State_HasFocus:
+            painter.setBrush(Qt.BrushStyle.NoBrush); painter.setPen(palette.highlightedText().color())
+            painter.drawRoundedRect(tile.adjusted(2, 2, -2, -2), 6, 6)
+        painter.restore()
+
+
 def combo_options(combo, choices, selected=None):
     with QSignalBlocker(combo):
+        if isinstance(choices, _ItemChoices):
+            if combo.model() is not choices: combo.setModel(choices)
+            combo.setCurrentIndex(choices.index_for(selected))
+            return
         combo.clear()
         for choice in choices:
             label, value = choice[:2]
@@ -83,6 +179,7 @@ class EditForm(QWidget):
                 if field.get('search'):
                     control.setEditable(True)
                     control.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+                    control.completer().setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
                     control.completer().setFilterMode(Qt.MatchFlag.MatchContains)
                     control.completer().setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
                     control.lineEdit().textEdited.connect(lambda _value, key=key: self.track(key))
@@ -156,6 +253,7 @@ class EditForm(QWidget):
         self.draftChanged.emit()
 
     def set_ready(self, ready):
+        if self.allow.isEnabled() == ready: return
         self.allow.setEnabled(ready)
         self.enabled_changed()
 
@@ -196,7 +294,7 @@ class EditForm(QWidget):
             if isinstance(control, QCheckBox):
                 control.setChecked(bool(value))
             elif isinstance(control, QComboBox):
-                index = control.findData(value)
+                index = control.model().index_for(value) if isinstance(control.model(), _ItemChoices) else control.findData(value)
                 if index < 0:
                     control.addItem(f'Unrecognized stored ID {value}', value)
                     index = control.count() - 1
@@ -209,10 +307,13 @@ class EditForm(QWidget):
         try:
             for key, control in self.controls.items():
                 current = self.drafts.get(key, values.get(key))
+                typed = control.currentText() if isinstance(control, QComboBox) and control.isEditable() and key in self.drafts and control.currentText() != control.itemText(control.currentIndex()) else None
                 if choices and key in choices:
                     combo_options(control, choices[key], current)
                 self.base[key] = values.get(key)
                 self.write(key, current)
+                if typed is not None:
+                    with QSignalBlocker(control): control.setEditText(typed)
         finally:
             self.syncing = False
 
@@ -232,6 +333,57 @@ class EditForm(QWidget):
 class NativeWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseStyleSheetPropagationInWidgetStyles, True)
+        if QApplication.style().objectName().lower() != 'fusion': QApplication.setStyle('Fusion')
+        font = self.font(); font.setPointSize(max(12, font.pointSize()))
+        QApplication.setFont(font)
+        self.setFont(font)
+        palette = self.palette()
+        for role, color in [(QPalette.ColorRole.Window, '#2e3440'), (QPalette.ColorRole.WindowText, '#eceff4'),
+                            (QPalette.ColorRole.Base, '#2e3440'), (QPalette.ColorRole.Text, '#eceff4'),
+                            (QPalette.ColorRole.Button, '#434c5e'), (QPalette.ColorRole.ButtonText, '#eceff4'),
+                            (QPalette.ColorRole.Highlight, '#88c0d0'), (QPalette.ColorRole.HighlightedText, '#2e3440'),
+                            (QPalette.ColorRole.Mid, '#4c566a'), (QPalette.ColorRole.AlternateBase, '#3b4252'),
+                            (QPalette.ColorRole.Light, '#4c566a'), (QPalette.ColorRole.Midlight, '#434c5e'),
+                            (QPalette.ColorRole.Dark, '#2e3440'), (QPalette.ColorRole.Shadow, '#2e3440'),
+                            (QPalette.ColorRole.ToolTipBase, '#3b4252'), (QPalette.ColorRole.ToolTipText, '#eceff4'),
+                            (QPalette.ColorRole.Link, '#88c0d0'), (QPalette.ColorRole.LinkVisited, '#b48ead'),
+                            (QPalette.ColorRole.PlaceholderText, '#a6afbe')]:
+            palette.setColor(role, QColor(color))
+        for role in (QPalette.ColorRole.WindowText, QPalette.ColorRole.Text, QPalette.ColorRole.ButtonText):
+            palette.setColor(QPalette.ColorGroup.Disabled, role, QColor('#a6afbe'))
+        QApplication.setPalette(palette)
+        self.setPalette(palette)
+        self.setStyleSheet('''
+            QWidget { color: #eceff4; }
+            QScrollArea { border: none; background: #2e3440; }
+            QWidget#editorPage { background: #2e3440; }
+            QToolBar { border: none; spacing: 6px; background: #3b4252; }
+            QToolButton { padding: 6px; border-radius: 5px; }
+            QToolButton:hover { background: #4c566a; }
+            QToolButton#learnAllRecipes { background: #88c0d0; color: #2e3440; padding: 8px 12px; }
+            QToolButton#learnAllRecipes:disabled { background: #434c5e; color: #a6afbe; }
+            QAbstractItemView { background: #2e3440; color: #eceff4; selection-background-color: #88c0d0; selection-color: #2e3440; }
+            QMenu, QToolTip { background: #3b4252; color: #eceff4; border: 1px solid #4c566a; }
+            QMenu::item:selected { background: #88c0d0; color: #2e3440; }
+            QListWidget#navigation { background: #3b4252; color: #eceff4; border: none; padding: 4px; }
+            QListWidget#navigation::item { padding: 9px 6px; border-radius: 5px; }
+            QListWidget#navigation::item:selected { background: #88c0d0; color: #2e3440; }
+            QListWidget#navigation::item:disabled { color: #a6afbe; }
+            QListView#inventoryGrid { background: #3b4252; border: 2px solid #4c566a; border-radius: 10px; }
+            QLineEdit, QComboBox, QPlainTextEdit { background: #2e3440; color: #eceff4; border: 1px solid #4c566a; border-radius: 5px; padding: 4px 7px; }
+            QLineEdit, QComboBox { min-height: 28px; }
+            QLineEdit:focus, QComboBox:focus { border: 2px solid #88c0d0; }
+            QLineEdit:disabled, QComboBox:disabled { color: #a6afbe; background: #3b4252; }
+            QPushButton { background: #434c5e; color: #eceff4; border: 1px solid #4c566a; border-radius: 6px; padding: 6px 10px; min-height: 24px; }
+            QPushButton:hover { background: #4c566a; border-color: #88c0d0; }
+            QPushButton:disabled { color: #a6afbe; background: #3b4252; }
+            QGroupBox { border: 1px solid #4c566a; border-radius: 8px; margin-top: 14px; padding-top: 10px; }
+            QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 5px; }
+            QTabBar::tab { background: #3b4252; padding: 7px 12px; border: 1px solid #4c566a; }
+            QTabBar::tab:selected { background: #2e3440; color: #88c0d0; }
+            QSplitter::handle { background: #4c566a; }
+        ''')
         self.settings = QSettings('RF4S Save Editor', 'Native')
         self.ui_language_mode = self.settings.value('uiLanguageMode', 'auto')
         if self.ui_language_mode not in ('auto', 'en', 'zh-CN'): self.ui_language_mode = 'auto'
@@ -243,8 +395,11 @@ class NativeWindow(QMainWindow):
         self.languages = {}
         self.language = 'en'
         self.item_names = {}
+        self.inventory_choices = None
+        self.inventory_rows_key = None
+        self.inventory_view_key = None
+        self.inventory_items = []
         self.source_path = None
-        self.last_export = None
         self.closing = False
         self.demo_mode = False
         self.forms = []
@@ -273,12 +428,14 @@ class NativeWindow(QMainWindow):
         toolbar.setMovable(False)
         toolbar.addWidget(QLabel('Interface: '))
         self.ui_language_combo = QComboBox()
+        self.ui_language_combo.setMinimumWidth(80)
         self.ui_language_combo.setMaximumWidth(180)
         combo_options(self.ui_language_combo, [('Follow system', 'auto'), ('English', 'en'), ('简体中文', 'zh-CN')], self.ui_language_mode)
         self.ui_language_combo.currentIndexChanged.connect(self.select_ui_language)
         toolbar.addWidget(self.ui_language_combo)
         toolbar.addWidget(QLabel('Game names: '))
         self.language_combo = QComboBox()
+        self.language_combo.setMinimumWidth(80)
         self.language_combo.setMaximumWidth(180)
         self.language_combo.setProperty('gameNames', True)
         self.language_combo.currentIndexChanged.connect(self.select_language)
@@ -291,6 +448,7 @@ class NativeWindow(QMainWindow):
         self.splitter = splitter
         self.compact_navigation = None
         self.navigation = QListWidget()
+        self.navigation.setObjectName('navigation')
         self.navigation.setMinimumWidth(110)
         self.navigation.setMaximumWidth(210)
         self.navigation.setWordWrap(True)
@@ -323,6 +481,8 @@ class NativeWindow(QMainWindow):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         if not hasattr(self, 'splitter'): return
+        if hasattr(self, 'inventory_grid'):
+            self.inventory_grid.setFixedHeight(140 if self.height() < 600 else 268)
         compact = self.width() < 900
         if compact != self.compact_navigation:
             self.compact_navigation = compact
@@ -335,6 +495,9 @@ class NativeWindow(QMainWindow):
         self.ui.code = system_ui_language() if self.ui_language_mode == 'auto' else self.ui_language_mode
         self.settings.setValue('uiLanguageMode', self.ui_language_mode)
         self.ui.apply(self)
+        if self.inventory_choices:
+            for model in self.inventory_choices.values():
+                model.dataChanged.emit(model.index(0), model.index(model.rowCount() - 1))
         # Keep controls intact, including half-typed values and disabled drafts.
         current = next((key for key, (_widget, _layout, index) in self.pages.items() if index == self.stack.currentIndex()), None)
         if current == 'inventory': self.render_item_preview()
@@ -344,9 +507,10 @@ class NativeWindow(QMainWindow):
 
     def page(self, key, title, note=''):
         widget = QWidget()
+        widget.setObjectName('editorPage')
         layout = QVBoxLayout(widget)
         heading = QLabel(title)
-        font = heading.font(); font.setPointSize(17); font.setBold(True); heading.setFont(font)
+        font = heading.font(); font.setPointSize(20); font.setBold(True); heading.setFont(font)
         layout.addWidget(heading)
         if note: heading.setToolTip(note)
         self.pages[key] = (widget, layout, self.navigation.count())
@@ -401,6 +565,12 @@ class NativeWindow(QMainWindow):
         state = self.backend.state()
         self.export_action.setEnabled(bool(state) and not self.demo_mode)
         self.export_action.setToolTip(self.ui.text('Save pending edits to the game folder and create a backup.'))
+        if not state: text = 'No save loaded'
+        elif self.demo_mode: text = 'Demo · export disabled'
+        elif self.pending(): text = 'Pending edit · saved on export'
+        else:
+            text = {'original': 'Original loaded · no edits', 'unexported': 'Unexported changes', 'exported': 'Current edits exported'}[state['exportState']]
+        self.ui.set_text(self.document_status, text)
 
     def select_page(self, index):
         if index < 0:
@@ -419,6 +589,7 @@ class NativeWindow(QMainWindow):
         self.undo_action.setEnabled(bool(state and state['undo']))
         self.redo_action.setEnabled(bool(state and state['redo']))
         slot = bool(state and state['kind'] == 'slot')
+        self.learn_all_recipes_action.setEnabled(slot and bool(self.backend.call('recipes')))
         always = {'overview', 'reference', 'review', 'player-name'}
         for key, (_widget, _layout, index) in self.pages.items():
             available = key in always or bool(state) and (key in {'raw'} or slot and key != 'system' or not slot and key == 'system')
@@ -435,8 +606,8 @@ class NativeWindow(QMainWindow):
 
     def open_bytes(self, data, name, path=None, demo=False):
         self.backend.open(data, name)
+        self.inventory_rows_key = None
         self.source_path = path
-        self.last_export = None
         self.demo_mode = demo
         self.export_platform.setCurrentIndex(self.export_platform.findData('keep'))
         self.export_gender.setCurrentIndex(self.export_gender.findData('keep'))
@@ -469,7 +640,7 @@ class NativeWindow(QMainWindow):
 
     def discard_confirmation(self):
         state = self.backend.state()
-        if not self.pending() and not (state and state['dirty'] and self.last_export != bytes(self.backend.call('working'))):
+        if not self.pending() and not (state and state['exportState'] == 'unexported'):
             return True
         return self.question('Unexported changes', 'Discard unexported edits and drafts?', QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel) == QMessageBox.StandardButton.Discard
 
@@ -482,6 +653,7 @@ class NativeWindow(QMainWindow):
 
     def make_overview(self):
         layout = self.page('overview', 'Save overview', 'Native desktop controls · offline · no browser or local server. Back up your save folder and close the game before editing.')
+        self.document_status = QLabel(); self.document_status.setWordWrap(True); layout.addWidget(self.document_status)
         self.overview_status = QLabel(); self.overview_status.setWordWrap(True); self.overview_status.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(self.overview_status)
         for title, callback in [('Open save', self.open_file), ('Reload game references (optional)', self.read_game), ('Read extracted item tables', lambda: self.read_tables('importItems')), ('Read extracted recipe tables', lambda: self.read_tables('importRecipes')), ('Read extracted language names', self.read_languages)]:
             button = QPushButton(title); button.clicked.connect(callback); layout.addWidget(button)
@@ -523,6 +695,8 @@ class NativeWindow(QMainWindow):
                     files.append({'name': path.name, 'bytes': list(path.read_bytes())})
                 self.backend.call(operation, files=files)
                 self.item_names = {item['id']: item['name'] for item in self.backend.call('items')}
+                self.inventory_choices = None
+                self.inventory_rows_key = None
             self.attempt(load); self.refresh()
 
     def read_languages(self):
@@ -542,12 +716,15 @@ class NativeWindow(QMainWindow):
         if paths: self.attempt(load)
 
     def update_languages(self):
+        self.inventory_choices = None
+        self.inventory_rows_key = None
         choices = [('English', 'en')] + [(entry['label'], code) for code, entry in self.languages.items() if code != 'en']
         if self.language not in {code for _label, code in choices}: self.language = 'en'
         combo_options(self.language_combo, choices, self.language)
 
     def select_language(self):
         self.language = self.language_combo.currentData() or 'en'
+        self.inventory_choices = None
         self.refresh_page()
 
     def name(self, kind, index, fallback):
@@ -646,20 +823,30 @@ class NativeWindow(QMainWindow):
         combo_options(self.container_combo, [(spec['label'], key) for key, spec in self.constants['inventories'].items()], 'bag')
         self.container_combo.currentIndexChanged.connect(self.change_container)
         self.inventory_search = QLineEdit(); self.inventory_search.setPlaceholderText('Filter saved items by name or slot')
-        self.inventory_search.textChanged.connect(self.render_inventory_table)
-        self.all_slots = QCheckBox('Show empty slots'); self.all_slots.toggled.connect(self.render_inventory_table)
+        self.inventory_search.textChanged.connect(self.render_inventory_grid)
+        self.all_slots = QCheckBox('Show empty slots'); self.all_slots.setChecked(True); self.all_slots.toggled.connect(self.render_inventory_grid)
         top.addWidget(self.container_combo); top.addWidget(self.inventory_search, 1); top.addWidget(self.all_slots)
         layout.addWidget(top)
-        self.inventory_table = QTableWidget(0, 4)
-        self.inventory_table.setHorizontalHeaderLabels(['Saved slot', 'Item', 'Quantity', 'Levels'])
-        self.inventory_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.inventory_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        self.inventory_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        self.inventory_table.setMaximumHeight(240)
-        self.inventory_table.itemSelectionChanged.connect(self.change_inventory_slot)
-        layout.addWidget(self.inventory_table)
+        self.inventory_grid = QListView()
+        self.inventory_grid.setObjectName('inventoryGrid')
+        self.inventory_model = _InventoryRows(self)
+        self.inventory_grid.setModel(self.inventory_model)
+        self.inventory_grid.setItemDelegate(_ItemTile(self.inventory_grid))
+        self.inventory_grid.setViewMode(QListView.ViewMode.IconMode)
+        self.inventory_grid.setResizeMode(QListView.ResizeMode.Adjust)
+        self.inventory_grid.setMovement(QListView.Movement.Static)
+        self.inventory_grid.setUniformItemSizes(True)
+        self.inventory_grid.setGridSize(QSize(120, 128))
+        self.inventory_grid.setIconSize(QSize(56, 56))
+        self.inventory_grid.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.inventory_grid.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.inventory_grid.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.inventory_grid.setFixedHeight(268)
+        self.inventory_grid.selectionModel().currentChanged.connect(self.change_inventory_slot)
+        layout.addWidget(self.inventory_grid)
         self.slot_label = QLabel(); self.slot_label.setWordWrap(True); self.slot_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-        self.slot_icon = QLabel(); self.slot_icon.setFixedSize(48, 48)
+        self.slot_icon = QLabel(); self.slot_icon.setFixedSize(64, 64)
+        font = self.slot_label.font(); font.setPointSize(14); font.setBold(True); self.slot_label.setFont(font)
         slot_row = QHBoxLayout(); slot_row.addWidget(self.slot_icon); slot_row.addWidget(self.slot_label, 1); layout.addLayout(slot_row)
         preview = QGroupBox('Item effect preview'); preview_row = QVBoxLayout(preview)
         preview.setCheckable(True); preview.setChecked(True)
@@ -677,7 +864,14 @@ class NativeWindow(QMainWindow):
         fields = [{'key': 'id', 'label': 'Item (type to search)', 'kind': 'choice', 'search': True}, {'key': 'quantity', 'label': 'Quantity'}, {'key': 'level', 'label': 'Set all item levels', 'optional': True}, {'key': 'element', 'label': 'Weapon / tool element', 'kind': 'choice', 'choices': [('Keep existing', None)] + [(item['name'], item['value']) for item in self.constants['elements']]}, {'key': 'inherited', 'label': 'Inherited equipment', 'kind': 'choice', 'search': True}, {'key': 'totalLevel', 'label': 'Total-level bonus (0–150)'}, {'key': 'rarityBonus', 'label': 'Rarity bonus (0–200)'}, *[{'key': f'craft{i}', 'label': f'Crafting attachment {i + 1}', 'kind': 'choice', 'search': True} for i in range(3)], *[{'key': f'upgrade{i}', 'label': f'Upgrade {i + 1} · level {i + 2}', 'kind': 'choice', 'search': True} for i in range(9)]]
         self.inventory_form = self.form(layout, fields, self.apply_inventory, 'Attachment IDs are 10-bit (0–1023), equipment only. Unchanged fields are preserved; 0 removes an attachment. Blank level preserves mixed unit levels.')
         for control in self.inventory_form.controls.values():
-            if isinstance(control, QComboBox): control.setIconSize(QSize(24, 24))
+            if isinstance(control, QComboBox):
+                control.setIconSize(QSize(40, 40))
+                control.view().setIconSize(QSize(40, 40))
+                control.view().setUniformItemSizes(True)
+                if control.isEditable():
+                    control.completer().popup().setIconSize(QSize(40, 40))
+                    control.completer().popup().setUniformItemSizes(True)
+                if control is not self.inventory_form.controls['element']: control.setProperty('gameNames', True)
         self.inventory_form.controls['id'].currentIndexChanged.connect(self.inventory_id_changed)
         self.inventory_form.draftChanged.connect(self.render_item_preview)
         self.renderers['inventory'] = self.render_inventory
@@ -692,14 +886,14 @@ class NativeWindow(QMainWindow):
         self.inventory_container = selected; self.inventory_slot = 0; self.render_inventory()
 
     def change_inventory_slot(self):
-        selected = self.inventory_table.selectedItems()
-        if not selected: return
-        slot = selected[0].data(Qt.ItemDataRole.UserRole)
+        selected = self.inventory_grid.currentIndex()
+        if not selected.isValid(): return
+        slot = selected.data(Qt.ItemDataRole.UserRole)
         if slot == self.inventory_slot: return
         if self.inventory_form.drafts:
             try: self.apply_form(self.inventory_form, self.apply_inventory)
             except ValueError as error:
-                self.statusBar().showMessage(self.ui.text(str(error))); self.render_inventory_table(); return
+                self.statusBar().showMessage(self.ui.text(str(error))); self.render_inventory_grid(); return
         self.inventory_slot = slot; self.render_inventory()
 
     def inventory_id_changed(self):
@@ -713,37 +907,44 @@ class NativeWindow(QMainWindow):
             form.track('quantity')
         self.attempt(update)
 
-    def render_inventory_table(self):
+    def render_inventory_grid(self):
         state = self.backend.state()
         if not state or state['kind'] != 'slot': return
-        items = self.backend.call('inventory', container=self.inventory_container)
+        key = self.backend.revision, self.inventory_container, self.language
+        if self.inventory_rows_key != key:
+            self.inventory_items = self.backend.call('inventory', container=self.inventory_container)
+            self.inventory_rows_key = key
+            self.inventory_view_key = None
         query = self.inventory_search.text().casefold().strip()
-        items = [item for item in items if (item['id'] or self.all_slots.isChecked()) and (not query or query in f'{item["slot"] + 1} {self.item_name(item["id"])}'.casefold())]
-        with QSignalBlocker(self.inventory_table):
-            self.inventory_table.setRowCount(len(items))
-            for row, item in enumerate(items):
-                values = [item['slot'] + 1, self.item_name(item['id']) if item['id'] else 'Empty', item['quantity'], ', '.join(map(str, item['levels']))]
-                for column, value in enumerate(values):
-                    cell = QTableWidgetItem(str(value)); cell.setData(Qt.ItemDataRole.UserRole, item['slot'])
-                    if column == 1: cell.setIcon(self.icons.icon('items', item['id']))
-                    self.inventory_table.setItem(row, column, cell)
-                if item['slot'] == self.inventory_slot: self.inventory_table.selectRow(row)
+        view_key = key, query, self.all_slots.isChecked()
+        with QSignalBlocker(self.inventory_grid.selectionModel()):
+            if self.inventory_view_key != view_key:
+                rows = [item for item in self.inventory_items if (item['id'] or self.all_slots.isChecked()) and (not query or query in f'{item["slot"] + 1} {self.item_name(item["id"])}'.casefold())]
+                self.inventory_model.set_rows(rows)
+                self.inventory_view_key = view_key
+            row = self.inventory_model.positions.get(self.inventory_slot)
+            self.inventory_grid.setCurrentIndex(self.inventory_model.index(row) if row is not None else QModelIndex())
 
     def render_inventory(self):
         state = self.backend.state(); ready = bool(state and state['kind'] == 'slot'); self.inventory_form.set_ready(ready)
         if not ready: return
         with QSignalBlocker(self.container_combo): self.container_combo.setCurrentIndex(self.container_combo.findData(self.inventory_container))
-        self.render_inventory_table()
+        self.render_inventory_grid()
         item = self.backend.call('item', container=self.inventory_container, slot=self.inventory_slot)
-        available = self.backend.call('items', editableOnly=True)
-        choices = [(self.item_name(entry['id']), entry['id']) for entry in available]
-        choices.sort(key=lambda choice: choice[0].casefold())
-        attachments = [('None / remove · 0', 0)] + [(f'{label} · {value}', value) for label, value in choices if value <= 1023]
-        inherited = [('None · 0', 0)] + [(f'{self.item_name(entry["id"])} · {entry["id"]}', entry['id']) for entry in available if entry['id'] <= 1023 and entry['category'] in (15,16,17,18,19,24,25,26,27,28,29,30,31,32,33,34,35,36,37)]
-        options = {key: attachments for key in self.inventory_form.controls if key.startswith(('craft', 'upgrade'))}
-        options.update(id=[('Empty / clear slot · 0', 0)] + [(f'{label} · {value}', value) for label, value in choices], inherited=inherited)
-        options = {key: self.icon_choices(entries, 'items') for key, entries in options.items()}
+        retired_models = []
+        if self.inventory_choices is None:
+            retired_models = {control.model() for control in self.inventory_form.controls.values() if isinstance(control, QComboBox) and isinstance(control.model(), _ItemChoices)}
+            available = self.backend.call('items', editableOnly=True)
+            choices = sorted([(self.item_name(entry['id']), entry['id']) for entry in available], key=lambda choice: choice[0].casefold())
+            self.inventory_choices = {
+                'id': _ItemChoices([('Empty / clear slot · 0', 0)] + [(f'{label} · {value}', value) for label, value in choices], self),
+                'attachment': _ItemChoices([('None / remove · 0', 0)] + [(f'{label} · {value}', value) for label, value in choices if value <= 1023], self),
+                'inherited': _ItemChoices([('None · 0', 0)] + [(f'{self.item_name(entry["id"])} · {entry["id"]}', entry['id']) for entry in available if entry['id'] <= 1023 and entry['category'] in (15,16,17,18,19,24,25,26,27,28,29,30,31,32,33,34,35,36,37)], self),
+            }
+        options = {key: self.inventory_choices['attachment'] for key in self.inventory_form.controls if key.startswith(('craft', 'upgrade'))}
+        options.update(id=self.inventory_choices['id'], inherited=self.inventory_choices['inherited'])
         self.inventory_form.set_data({'id': item['id'], 'quantity': item['quantity'], 'level': None, 'element': None, **item['details']}, options)
+        for model in retired_models: model.deleteLater()
         self.slot_label.setText(f'Saved slot {self.inventory_slot + 1} · {self.item_name(item["id"])} · current element: {next((entry["name"] for entry in self.constants["elements"] if entry["value"] == item["element"]), "not recognized / not a weapon")}.')
         self.render_item_preview()
         self.ui.apply(self.pages['inventory'][0])
@@ -785,7 +986,7 @@ class NativeWindow(QMainWindow):
         try:
             form = self.inventory_form
             basic, details = self.inventory_changes(form.drafts) if form.drafts else ({}, {})
-            self.slot_icon.setPixmap(self.icons.icon('items', basic.get('id', form.base.get('id', 0))).pixmap(48, 48))
+            self.slot_icon.setPixmap(self.icons.icon('items', basic.get('id', form.base.get('id', 0))).pixmap(64, 64))
             result = self.backend.call('previewItem', container=self.inventory_container, slot=self.inventory_slot, changes=basic, details=details)
             self.item_preview_before.setPlainText(self.effect_preview_text('Current item', result['before']))
             self.item_preview_after.setPlainText(self.effect_preview_text('Draft result', result['after']))
@@ -811,7 +1012,10 @@ class NativeWindow(QMainWindow):
         for key, (title, fields, note) in specs.items():
             layout = self.page(key, title, note)
             selector = QComboBox()
-            selector.setIconSize(QSize(24, 24))
+            selector.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+            selector.setMinimumContentsLength(12)
+            selector.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            selector.setIconSize(QSize(40, 40))
             selector.setProperty('gameNames', key != 'trophies')
             layout.addWidget(selector)
             self.record_selectors[key] = selector
@@ -824,6 +1028,15 @@ class NativeWindow(QMainWindow):
                 self.recipe_search.textChanged.connect(self.filter_recipes)
                 row.addWidget(self.recipe_group); row.addWidget(self.recipe_search, 1); layout.addWidget(row)
                 row = ResponsiveRow()
+                self.learn_all_recipes_action = QAction('Learn all recipes', self)
+                self.learn_all_recipes_action.setShortcut(QKeySequence('Ctrl+Shift+L'))
+                self.learn_all_recipes_action.setToolTip('Learn all loaded recipes, ignoring filters (Ctrl+Shift+L).')
+                self.learn_all_recipes_action.triggered.connect(lambda: self.attempt(lambda: self.bulk_recipes(True, all_recipes=True)))
+                self.addAction(self.learn_all_recipes_action)
+                self.learn_all_recipes_button = QToolButton()
+                self.learn_all_recipes_button.setObjectName('learnAllRecipes')
+                self.learn_all_recipes_button.setDefaultAction(self.learn_all_recipes_action)
+                row.addWidget(self.learn_all_recipes_button)
                 for title, known in [('Learn filtered recipes', True), ('Forget filtered recipes', False)]:
                     button = QPushButton(title); button.clicked.connect(lambda _checked=False, known=known: self.attempt(lambda: self.bulk_recipes(known))); row.addWidget(button)
                 layout.addWidget(row)
@@ -949,11 +1162,20 @@ class NativeWindow(QMainWindow):
             record = next(record for record in self.backend.call('recipes') if f'{record["kind"]}:{record["index"]}' == selected)
             self.backend.call('setRecipes', recipes=[record], known=bool(changes['known']))
 
-    def bulk_recipes(self, known):
-        if self.record_forms['recipes'].drafts: self.apply_form(self.record_forms['recipes'], self.record_forms['recipes'].apply_callback)
-        records = list({record['bitOffset']: record for record in self.filtered_recipes()}.values())
-        self.backend.call('setRecipes', recipes=records, known=known)
+    def bulk_recipes(self, known, *, all_recipes=False):
+        state = self.backend.state()
+        if not state or state['kind'] != 'slot': raise ValueError('Open a slot save first.')
+        source = self.backend.call('recipes') if all_recipes else self.filtered_recipes()
+        records = list({record['bitOffset']: record for record in source}.values())
+        if not records: raise ValueError('Read recipe tables first.' if all_recipes else 'No recipes match the current filters.')
+        form = self.record_forms['recipes']
+        callbacks = [lambda: form.apply_callback(form.changes())] if form.drafts else []
+        callbacks.append(lambda: self.backend.call('setRecipes', recipes=records, known=known))
+        self.backend.apply_callbacks(callbacks)
+        form.drafts.clear(); form.status.setText(self.ui.text('No draft'))
         self.refresh()
+        if all_recipes and known:
+            self.statusBar().showMessage(self.ui.text('All loaded recipes learned in memory. Export to save.'), 10000)
 
     def make_marriage(self):
         layout = self.page('marriage', 'Marriage flags', 'Flags only—not a complete marry/divorce operation. Wedding events, pregnancy, children, schedules and system unlocks are not simulated. Back up and test the exported copy.')
@@ -1216,7 +1438,8 @@ class NativeWindow(QMainWindow):
             if (state['kind'] == 'system') != (self.target_save_combo.currentData() == 'rf4_sys.sav'): raise ValueError('Choose a target filename matching the save type.')
             target, backup = export_to_game_folder(self.target_save_combo.currentData(), data, bytes(self.backend.call('original')))
             self.source_path = target
-            self.last_export = bytes(self.backend.call('working'))
+            self.backend.call('markExported')
+            self.update_export()
             self.statusBar().showMessage(self.ui.text('Saved: ') + str(target) + self.ui.text(' · Backup: ') + str(backup), 15000)
         self.attempt(export)
 
@@ -1225,7 +1448,8 @@ class NativeWindow(QMainWindow):
             data = self.export_bytes()
             filename = self.target_save_combo.currentData() or Path(self.backend.state()['name']).stem + '.edited.sav'
             if self.write_dialog(data, str(game_save_directory() / filename), 'RF4S save (*.sav)'):
-                self.last_export = bytes(self.backend.call('working'))
+                self.backend.call('markExported')
+                self.update_export()
         self.attempt(export)
 
     def original_file(self):

@@ -7,6 +7,7 @@ from unittest.mock import patch
 import zlib
 
 from PySide6.QtCore import QTimer
+from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import QCheckBox, QPushButton
 from native_save import local_references
 
@@ -82,6 +83,15 @@ def run(app, window, destination, game=None):
                 checks['systemCrcAndOriginal'] = valid(reset) and bytes(window.backend.call('original')) == bytes(system)
                 window.write_file(output / 'synthetic.system-default.sav', reset)
                 window.grab().save(str(output / 'desktop-player-name.png'))
+            window.open_bytes(original, 'rf4_s01.sav')
+            page('recipes')
+            popup = window.record_selectors['recipes'].view(); popup.ensurePolished()
+            checks['nordPopupPalette'] = popup.palette().color(QPalette.ColorRole.Base).name() == '#2e3440' and popup.palette().color(QPalette.ColorRole.Text).name() == '#eceff4'
+            window.learn_all_recipes_action.trigger()
+            checks['learnAllRecipes'] = all(recipe['known'] for recipe in window.backend.call('recipes')) and window.backend.state()['undo'] == 1
+            window.grab().save(str(output / 'desktop-recipes.png'))
+            window.backend.call('undo')
+            checks['learnAllUndo'] = bytes(window.backend.call('working')) == original
             if not all(checks.values()) or window.test_errors: raise AssertionError((checks, window.test_errors))
             (output / 'desktop-test.json').write_text(json.dumps({'passed': True, 'native': True, 'checks': checks}, indent=2), encoding='utf-8')
             window.closing = True; app.exit(0)

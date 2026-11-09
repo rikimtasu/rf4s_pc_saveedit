@@ -1,6 +1,7 @@
 """Native save-operation seam, reusing the tested binary algorithms without a browser."""
 import json
 import gzip
+from copy import deepcopy
 from pathlib import Path
 
 from PySide6.QtCore import QObject, Slot
@@ -32,6 +33,8 @@ class Codec(QObject):
 class NativeSave:
     def __init__(self):
         self._batch = None
+        self._state = None
+        self.revision = 0
         self.engine = QJSEngine()
         self.codec = Codec()
         self.engine.globalObject().setProperty('nativeCodec', self.engine.newQObject(self.codec))
@@ -46,12 +49,19 @@ class NativeSave:
         return result
 
     def call(self, operation, **args):
+        if operation == 'state' and self._state is not None:
+            return deepcopy(self._state)
         if self._batch is not None and (operation.startswith('set') or operation == 'patchBytes'):
             self._batch.append({'operation': operation, 'args': args})
             return True
         encoded = json.dumps(args, ensure_ascii=True, separators=(',', ':'))
         result = self._evaluate(f'JSON.stringify(RF4SNative.nativeInvoke({json.dumps(operation)}, {encoded}))')
-        return json.loads(result.toString())
+        value = json.loads(result.toString())
+        if operation.startswith('set') or operation in ('open', 'patchBytes', 'undo', 'redo', 'reset', 'applyOperations', 'applyProfile', 'markExported'):
+            self._state = deepcopy(value) if operation == 'open' else None
+            self.revision += 1
+        elif operation == 'state': self._state = deepcopy(value)
+        return value
 
     def apply_callbacks(self, callbacks):
         """Collect editor writes, then validate/apply them as one atomic undo entry."""
