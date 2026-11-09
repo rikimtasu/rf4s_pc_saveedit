@@ -38,12 +38,24 @@ test('system named flags retain every other bit and payload, and share undo/redo
   const output = save.build();
   assert.equal(new SaveDocument(output).crcValid, true);
   assert.deepEqual(output.subarray(0, 4), save.original.subarray(0, 4));
-  assert.deepEqual(output.subarray(12), save.original.subarray(12));
+  assert.deepEqual(output.subarray(8, 16), save.original.subarray(8, 16));
+  assert.deepEqual(output.subarray(20), save.original.subarray(20));
   assert.equal(save.changedBytes, save.changes().reduce((count, range) => count + range.after.length, 0));
   save.undo();
   assert.deepEqual(save.data, save.original);
   save.redo();
   assert.deepEqual(save.build(), output);
+});
+
+test('system unlock flags use the actual getter/setter word, not the save-slot bitmaps', () => {
+  const save = new SaveDocument(systemFixture());
+  save.setNumber(8, 'u32', 0x1f);
+  save.setNumber(12, 'u32', 0x12);
+  save.setNumber(16, 'u32', 0x400);
+  const before = save.data.slice();
+  save.setSystemFlags({ 0: 1, 5: 1 });
+  assert.equal(save.readNumber(16, 'u32'), 0x421);
+  assert.deepEqual(save.data.subarray(8, 16), before.subarray(8, 16));
 });
 
 test('system signature/checksum are protected and typed/raw bounds use system size', () => {

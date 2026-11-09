@@ -5,8 +5,12 @@ import { ItemCatalog, ItemTable, detectItemTable } from './game-reference.js';
 import { SaveReferences, parseRecipes, RECIPE_FILES } from './save-reference.js';
 import { MarriageEditor, MARRIAGE_CANDIDATES, MARRIAGE_FIELDS } from './marriage-core.js';
 import { itemDetails, editInventoryItem, equipmentItem, equipmentElement, ELEMENTS } from './item-details.js';
+import { previewItemEdit } from './item-effects.js';
 import { ProgressCatalog } from './progress-core.js';
 import { SAVE_METADATA } from './save-metadata.js';
+import { flagHelp, previewFlagEdit } from './flag-help.js';
+import { RelationshipEditor, NICKNAME_COUNT } from './relationship-core.js';
+import { PlayerNameEditor, NAME_RECORD_COUNT } from './player-name-core.js';
 
 let save = null;
 let catalog = new ItemCatalog();
@@ -18,7 +22,7 @@ const marriage = () => new MarriageEditor(requireSave(), progress.variables);
 
 export function nativeInvoke(operation, args = {}) {
   switch (operation) {
-    case 'constants': return { player: PLAYER_FIELDS, inventories: INVENTORIES, systemFlags: SYSTEM_FLAGS, seasons: SEASONS, skills: SKILLS, people: PEOPLE_NAMES, stats: STAT_FIELDS, trophies: TROPHIES, candidates: MARRIAGE_CANDIDATES, marriage: MARRIAGE_FIELDS, elements: ELEMENTS, recipeGroups: RECIPE_FILES };
+    case 'constants': return { player: PLAYER_FIELDS, inventories: INVENTORIES, systemFlags: SYSTEM_FLAGS, seasons: SEASONS, skills: SKILLS, people: PEOPLE_NAMES, stats: STAT_FIELDS, trophies: TROPHIES, candidates: MARRIAGE_CANDIDATES, marriage: MARRIAGE_FIELDS, elements: ELEMENTS, recipeGroups: RECIPE_FILES, nicknameCount: NICKNAME_COUNT };
     case 'open': save = new SaveDocument(args.bytes, args.name); return nativeInvoke('state');
     case 'demoBytes': return Array.from(createDemo().original);
     case 'state': return !save ? null : { name: save.name, kind: save.kind, platform: save.platform, size: save.size, crcValid: save.crcValid, dirty: save.dirty, changedBytes: save.changedBytes, undo: save.undoStack.length, redo: save.redoStack.length, playerProfile: save.playerProfile, calendar: save.kind === 'slot' ? { day: save.get('day'), season: save.get('season'), year: save.get('year') } : null, gender: save.kind === 'slot' ? save.gender() : null };
@@ -51,15 +55,21 @@ export function nativeInvoke(operation, args = {}) {
       return { ...item, details, equipment: equipmentItem(definition), element, stack: definition ? bagStackLimit(definition) : null };
     }
     case 'setItem': return editInventoryItem(requireSave(), args.container, args.slot, args.changes, catalog.bagDefinition(args.changes.id), catalog, args.details || {});
+    case 'previewItem': return previewItemEdit(requireSave(), args.container, args.slot, args.changes || {}, args.details || {}, catalog);
     case 'player': return Object.fromEntries(Object.keys(PLAYER_FIELDS).map(key => [key, requireSave().player(key)]));
     case 'setPlayer': return requireSave().setPlayer(args.changes);
     case 'setCalendar': return requireSave().setCalendar(args.changes);
     case 'marriage': return { ...marriage().values(), ...marriage().events(args.candidate) };
     case 'setMarriage': return marriage().apply(args.changes, args.candidate);
+    case 'datingCleanup': return requireSave().datingCleanup(args.gender);
     case 'skills': return SKILLS.map(skill => extra().skill(skill.id));
     case 'setSkill': return extra().setSkill(args.id, args.changes);
     case 'friendship': return Array.from({ length: 25 }, (_, i) => extra().friendship(i + 1));
     case 'setFriendship': return extra().setFriendship(args.id, args.level);
+    case 'relationships': return Array.from({ length: 23 }, (_, i) => new RelationshipEditor(requireSave()).values(i + 1));
+    case 'setRelationship': return new RelationshipEditor(requireSave()).apply(args.id, args.changes);
+    case 'playerNames': return Array.from({ length: NAME_RECORD_COUNT }, (_, i) => new PlayerNameEditor(requireSave()).values(i));
+    case 'setPlayerName': return new PlayerNameEditor(requireSave()).apply(args.id, args.name);
     case 'stats': return extra().stats(args.kind, args.id);
     case 'setStats': return extra().setStats(args.kind, args.id, args.changes);
     case 'monsters': return extra().monsters().filter(monster => monster.occupied);
@@ -70,7 +80,8 @@ export function nativeInvoke(operation, args = {}) {
     case 'setTrophy': return extra().setTrophy(args.name, args.value);
     case 'system': return SYSTEM_FLAGS.map(field => ({ ...field, value: requireSave().systemFlag(field.bit) }));
     case 'setSystem': return requireSave().setSystemFlags(args.changes);
-    case 'flags': return progress.variables.map(field => ({ ...field, value: requireSave().flag(field) }));
+    case 'flags': return progress.variables.map(field => ({ ...field, value: requireSave().flag(field), help: flagHelp(field) }));
+    case 'flagImpact': return previewFlagEdit(requireSave(), progress.byName.get(args.name), args.value);
     case 'setFlag': return requireSave().setFlag(progress.byName.get(args.name), args.value);
     case 'importSymbols': {
       const next = new ProgressCatalog(parseEmdeb(args.bytes));

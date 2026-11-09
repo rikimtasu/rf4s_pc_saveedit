@@ -1,6 +1,7 @@
 export const SAVE_SIZE = 140424;
 export const SWITCH_SAVE_SIZE = 140416;
 export const SYSTEM_SAVE_SIZE = 9304;
+export const SYSTEM_FLAGS_OFFSET = 0x10;
 export const SWITCH_CRC_END = SWITCH_SAVE_SIZE - 224;
 export const CRC_START = 4;
 export const CRC_LENGTH = 140196;
@@ -37,6 +38,13 @@ export const APPEARANCE_FLAGS_OFFSET = 0x38;
 export const APPEARANCE_OVERRIDE_OFFSET = 0x20740;
 export const OUTFIT_OFFSET = 0x74;
 export const OUTFIT_MASK = 0xfc0000;
+export const DATING_CANDIDATES = [
+  [1, 'Vishnal', 'male'], [5, 'Kiel', 'male'], [8, 'Dylas', 'male'],
+  [9, 'Arthur', 'male'], [15, 'Doug', 'male'], [20, 'Leon', 'male'],
+  [2, 'Clorica', 'female'], [4, 'Forte', 'female'], [7, 'Margaret', 'female'],
+  [11, 'Xiao Pai', 'female'], [13, 'Amber', 'female'], [17, 'Dolce', 'female'],
+].map(([id, name, gender]) => ({ id, name, gender }));
+const SPOUSE_REGISTER = { bitOffset: 198, width: 5 };
 export const BAG_OFFSET = 0x5bd8;
 export const BAG_SLOTS = 60;
 export const ITEM_RECORD_SIZE = 28;
@@ -231,10 +239,22 @@ export class SaveDocument {
     return { gender: selected, code: selected === 'female' ? 1 : 0, resetAppearance };
   }
 
+  datingCleanup(gender) {
+    this.requireSlot();
+    if (!['male', 'female'].includes(gender)) throw new Error('Choose male or female before cleaning dating state.');
+    const people = DATING_CANDIDATES.filter(person => person.gender === gender);
+    const spouse = this.flag(SPOUSE_REGISTER);
+    if (spouse && (!DATING_CANDIDATES.some(person => person.id === spouse) || people.some(person => person.id === spouse))) throw new Error('Dating cleanup cannot handle this spouse. Resolve marriage separately; family/event state will not be erased.');
+    return people.map(person => {
+      const offset = 0x1db40 + (person.id - 1) * 44;
+      return { id: person.id, name: person.name, offset, dating: Boolean(this.readNumber(offset + 8, 'u32') & 0x400000), npcCallsPlayer: (gender === 'male' ? 23 : 70) + person.id, playerCallsNpc: (gender === 'male' ? 0 : 47) + person.id };
+    });
+  }
+
   systemFlag(bitInput, bytes = this.data) {
     if (this.kind !== 'system') throw new Error('Open rf4_sys.sav first.');
     const bit = integer(bitInput, 0, 31, 'System flag bit');
-    return (this.view(bytes).getUint32(8, true) >>> bit) & 1;
+    return (this.view(bytes).getUint32(SYSTEM_FLAGS_OFFSET, true) >>> bit) & 1;
   }
 
   setSystemFlags(values) {
@@ -242,9 +262,9 @@ export class SaveDocument {
     const parsed = Object.entries(values).map(([bit, value]) => [integer(bit, 0, 31, 'System flag bit'), integer(value, 0, 1, 'System flag')]);
     return this.transact('System flags', next => {
       const view = this.view(next);
-      let flags = view.getUint32(8, true);
+      let flags = view.getUint32(SYSTEM_FLAGS_OFFSET, true);
       for (const [bit, value] of parsed) flags = value ? flags | (1 << bit) : flags & ~(1 << bit);
-      view.setUint32(8, flags >>> 0, true);
+      view.setUint32(SYSTEM_FLAGS_OFFSET, flags >>> 0, true);
     });
   }
 
@@ -486,13 +506,16 @@ export class SaveDocument {
     return issues;
   }
 
-  build({ repair = false, platform = this.platform, experimental = false, gender = 'keep', resetAppearance = false } = {}) {
+  build({ repair = false, platform = this.platform, experimental = false, gender = 'keep', resetAppearance = false, resetDating = false } = {}) {
     if (!this.crcValid && !repair) throw new Error('Acknowledge checksum repair before exporting this damaged save.');
     const issues = this.calendarIssues();
     if (issues.length) throw new Error(issues.join(' '));
     const playerIssues = this.playerProfile ? this.playerIssues() : [];
     if (playerIssues.length) throw new Error(playerIssues.join(' '));
     const correction = this.genderCorrection(gender, resetAppearance);
+    if (typeof resetDating !== 'boolean') throw new Error('Dating cleanup must be a checkbox value.');
+    if (resetDating && !correction) throw new Error('Enable gender correction before cleaning dating state.');
+    const dating = resetDating ? this.datingCleanup(correction.gender) : [];
     const output = this.data.slice();
     if (correction) {
       output[GENDER_OFFSET] = correction.code;
@@ -502,6 +525,12 @@ export class SaveDocument {
         view.setUint32(OUTFIT_OFFSET, (view.getUint32(OUTFIT_OFFSET, true) & ~OUTFIT_MASK) >>> 0, true);
         view.setInt32(APPEARANCE_OVERRIDE_OFFSET, 0, true);
       }
+    }
+    const view = this.view(output);
+    for (const person of dating) {
+      view.setUint32(person.offset + 8, (view.getUint32(person.offset + 8, true) & ~0x400000) >>> 0, true);
+      output[person.offset + 12] = person.npcCallsPlayer;
+      view.setUint32(person.offset + 20, (view.getUint32(person.offset + 20, true) & ~0x7f80 | person.playerCallsNpc << 7) >>> 0, true);
     }
     this.view(output).setUint32(this.crcOffset, crc32(output.subarray(this.crcStart, this.crcEnd)), true);
     if (platform === this.platform) return output;

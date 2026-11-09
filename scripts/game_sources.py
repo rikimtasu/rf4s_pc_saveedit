@@ -11,6 +11,8 @@ import bplist
 LANGUAGES = {'eng': ('en', 'English'), 'jpn': ('ja', '日本語'), 'fra': ('fr', 'Français'),
              'deu': ('de', 'Deutsch'), 'kor': ('ko', '한국어'),
              'twn': ('zh-Hant', '繁體中文'), 'chn': ('zh-Hans', '简体中文')}
+NAME_TABLES = {'rf3TxtItem_split2_1': 'items', 'rf3TxtNpc_split2_1': 'people',
+               'rf3TxtSkill_split2_1': 'skills', 'rf3TxtHeroNickName': 'nicknames'}
 
 
 class GameSource:
@@ -58,14 +60,21 @@ def parse_text(data):
     return result
 
 
+def parse_name_table(kind, data):
+    names = parse_text(data)
+    if kind == 'nicknames' and len(names) != 186:
+        raise ValueError('Unrecognized nickname table layout.')
+    return names
+
+
 def language_references(source):
     languages = {}
     for suffix, (code, label) in LANGUAGES.items():
         tables = {}
-        for kind, name in [('items', 'Item'), ('people', 'Npc'), ('skills', 'Skill')]:
-            data = source.read(f'rf3Txt{name}_split2_1.{suffix}')
+        for name, kind in NAME_TABLES.items():
+            data = source.read(f'{name}.{suffix}')
             if data is not None:
-                tables[kind] = parse_text(data)
+                tables[kind] = parse_name_table(kind, data)
         if tables:
             languages[code] = {'label': label, **tables}
     return {'languages': languages}

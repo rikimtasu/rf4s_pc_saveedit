@@ -85,6 +85,14 @@ python tests/replay_appearance.py "<game-folder>/RF4S.exe" "<slot.sav>" --expect
 
 Fully restart the game before an acceptance test so a previously loaded swapped actor cannot remain resident. Do not overwrite the original without a separate backup.
 
+### Female-specific NPC text after Frey-to-Lest conversion: diagnostic limitation
+
+The reported save has male byte `0x36 = 0`, no swap flag, outfit 0, selector 0 and a valid CRC. The user confirmed that it was originally Frey and that the symptom persists after a complete game restart. The later screenshot identifies Vishnal's pink relationship nameplate and “Good morning, Master.” See the independent dating/address fields in `docs/extended-layout.md`; this does not establish a missing protagonist-gender byte.
+
+The appearance replay does **not** run player initialization or NPC dialogue selection. Its historical default is an initially male actor; this assumption is now explicit in its output and configurable with `--initial-gender`. With the reported save and `--initial-gender female --expect male`, the replay fails: the branch makes no calls and leaves the actor female. This is a limitation of the isolated branch, **not** a reproduction of a cold-start dialogue bug. The male/default path does not force an already female actor to male. An initially male actor passing the replay therefore cannot prove that conversion fixes NPC dialogue.
+
+`tests/test_replay_appearance.py` locks down this distinction using synthetic slot bytes and the actual audited instructions. Set `RF4S_EXE` and run `python -m unittest discover -s tests -p test_replay_appearance.py`. `tests/replay_relationships.py` separately tests actual saved NPC relationship loading, the game's dating query and address selection; it does not render the dialogue UI or execute story scenes.
+
 ## Bag records
 
 `0x5BD8 + slot * 28`, with zero-based slots 0–59. The final record starts at `0x624C`; the bag ends exactly at `0x6268`, where a different compact spell table begins. The 11 preceding 28-byte entries are not bag slots. The cheap waterpot at `0x5AC0` is in that preceding equipped / held area; its position label remains unknown.

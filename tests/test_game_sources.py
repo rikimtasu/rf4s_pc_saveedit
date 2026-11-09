@@ -3,7 +3,7 @@ import struct
 import tempfile
 import unittest
 
-from scripts.game_sources import parse_text, language_references, GameSource
+from scripts.game_sources import parse_text, parse_name_table, language_references, GameSource
 
 
 class GameSourceTests(unittest.TestCase):
@@ -42,6 +42,16 @@ class GameSourceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 source.read('test.eng')
             self.assertIsNone(source.read('missing.eng'))
+
+    def test_nickname_tables_are_loaded_with_their_original_ids_and_tokens(self):
+        names = [''] * 186; names[24] = '＠しゅじんこうくん＠'; names[97] = 'Master'; names[133] = 'Vin'
+        data = self.table(names)
+        class Source:
+            def read(self, name):
+                return data if name == 'rf3TxtHeroNickName.eng' else None
+        refs = language_references(Source())['languages']['en']
+        self.assertEqual(refs['nicknames'], names)
+        with self.assertRaises(ValueError): parse_name_table('nicknames', self.table(['Unknown']))
 
 
 if __name__ == '__main__':

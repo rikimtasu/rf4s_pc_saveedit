@@ -6,11 +6,11 @@ A local, offline save editor for **PC / Steam**, **extracted Switch saves**, and
 
 ### Portable Windows app — no installation
 
-Download **v0.1** from [GitHub Releases](https://github.com/rikimtasu/rf4s_pc_saveedit/releases/tag/v0.1). Extract the portable Windows package and open `RF4S Save Editor.exe`. Public builds exclude personal references; use **Read game folder** to load yours.
+Download **v0.2** from [GitHub Releases](https://github.com/rikimtasu/rf4s_pc_saveedit/releases/tag/v0.2). Extract **RF4S-Save-Editor-v0.2-win-x64.zip** and open `RF4S Save Editor.exe`. Public builds exclude personal references; use **Read game folder** to load yours.
 
 Double-click **`dist/RF4S Save Editor.exe`**. This is a **native Qt Widgets GUI**, not a browser-based app: no Chromium, WebView, HTML interface or local server. Python and required native Qt libraries are bundled, so nothing needs installing. Windows 10/11 x64 is supported. First launch unpacks its runtime into a temporary folder.
 
-`start.bat` also opens the native EXE. The current private build is **27.3 MiB**, reduced from approximately 203 MiB by removing the unused browser and rendering runtime.
+`start.bat` also opens a locally built native EXE. The v0.2 executable is approximately **28 MiB**, reduced from approximately 203 MiB by removing the unused browser and rendering runtime.
 
 Use **Read game folder** in its toolbar to select your RF4S installation. This reads item definitions, recipes and available language names without changing the game. Private builds may already contain these references. Save files remain in the editor until you explicitly export a new file.
 
@@ -38,6 +38,8 @@ The editor opens in your browser, normally at `http://127.0.0.1:8764`. Keep the 
 | Bag and storage | Items, quantities, levels, inherited equipment, 3 crafting attachments, 9 upgrade attachments, level/rarity bonuses and crystal-based weapon/tool elements |
 | Skills and recipes | 38 skill levels and XP; learned recipes individually or by group |
 | Friendship and people | Friendship levels and stored character stats |
+| Dating & nicknames (v0.2+) | Per-candidate dating flag; NPC-to-player and player-to-NPC nickname pickers |
+| Player name (v0.2+) | Edit/reset the selected name in `rf4_sys.sav`; 6 characters / 18 UTF-8 bytes |
 | Marriage | Spouse register, anniversary, ring acceptance, wedding memory and per-candidate marriage / newlywed event flags |
 | Monsters | Stats and friendship for existing tamed monsters |
 | Trophy records | 25 recorded achievement / festival fields—not Steam achievements |
@@ -46,7 +48,13 @@ The editor opens in your browser, normally at `http://127.0.0.1:8764`. Keep the 
 
 Undo, redo, original-file exports and JSON change reports are included. Native pages require explicit editing opt-in. Hidden or disabled editors keep drafts and block export until applied or cleared.
 
-**Game names** offers English, Japanese, French, German, Korean, Traditional Chinese and Simplified Chinese when present in your game. It changes item, recipe-result, character and skill names; editor instructions remain in English. Missing names fall back to English. Choose a different language without changing save bytes.
+**Game names** offers English, Japanese, French, German, Korean, Traditional Chinese and Simplified Chinese when present in your game. It changes item, recipe-result, character and skill names; missing names fall back to English. Choose a different language without changing save bytes.
+
+v0.2 also offers an independent **Interface / 界面** selector: **Follow system** chooses Simplified Chinese for Chinese Windows locales, English otherwise. Manual English/Chinese overrides are remembered. Switching captions preserves drafts, IDs and save bytes. On launch the save picker starts at `%APPDATA%\Rune Factory 4 Special` (home-folder fallback); no save is automatically loaded.
+
+Compact windows are supported down to **640×480**. Forms reflow instead of clipping labels, and long pages scroll vertically through the Apply/Clear controls. Item previews use current/draft tabs; uncheck their heading to collapse the preview. Resizing does not discard drafts.
+
+v0.2 fixes blank confirmation buttons and Barrett / Raven friendship offsets. All 25 NPC friendship writes and every main-NPC level threshold are checked against the audited game code. **Reapply guest friendship edits from a pre-edit backup**: older builds wrote into the guest-block header, which is not automatically repaired. These corrections are not included in the original v0.1 release. See [friendship layout evidence](docs/extended-layout.md#friendship).
 
 ## Edit and export safely
 
@@ -59,6 +67,10 @@ Undo, redo, original-file exports and JSON change reports are included. Native p
 Your save is **not uploaded or automatically overwritten**. Edits stay in application memory until exported. Export rebuilds the checksum; unapplied drafts block export, even when their editor is hidden or disabled.
 
 For gender correction, use **Review & export → Character gender**. The optional appearance reset also clears cosmetic overrides and outfits; it never renames the player. Both options affect only the exported copy.
+
+v0.2 also offers **Clear incompatible dating and their special nicknames (keep friendship)**. Lest export clears the six bachelors; Frey export clears the six bachelorettes. This opt-in preserves friendship, other NPCs and story/date history, and refuses incompatible spouses. See [relationship evidence](docs/extended-layout.md#dating-and-special-forms-of-address). It is not a full romance-event reset or included in the original v0.1 release.
+
+For individual edits use **Dating & nicknames**; load your game folder for localized nickname choices. For **Player name**, open **`rf4_sys.sav`** and select the bank/slot—the name is not stored in an individual slot file. Reset prepares an empty-name draft so the game generates its default at next load. All edits remain undoable and export-only. v0.2 also corrects system unlock flags to offset `0x10`, preserving the slot bitmaps; reapply older system-flag edits from a pre-edit backup. See [name/relationship usage and evidence](docs/player-name-and-relationships.md).
 
 ## Enable item and recipe editing
 
@@ -77,6 +89,10 @@ Replace `<game-folder>` with your installation folder, then restart or reload th
 Extracted `rf3TxtItem_split2_1.*`, `rf3TxtNpc_split2_1.*` and `rf3TxtSkill_split2_1.*` TEXT tables can also be imported in **Overview → Game references & languages**. Do not choose `_split2_2` description tables.
 
 For equipment attachments, enable editing in **Bag & storage**. Unchanged fields are preserved; 0 removes an attachment. Leave level blank to preserve mixed unit levels. Attached IDs are limited to 1023 by their 10-bit storage. Element selection adds crystals to unused upgrade slots without removing existing attachments and raises the level accordingly. Full equipment is refused. Element selection is for weapons/tools, not armor resistances.
+
+The native **Item effect preview / 物品效果预览** compares current and drafted items without applying an edit. Read your game tables for base equipment/use effects, inheritance references, individual material bonuses and the planned element. It is **definition-based, not a final-stat simulator**: material-level scaling, repetition penalties, special multipliers and total-level/rarity bonuses are explicitly not calculated.
+
+**Expert: story flags** has group filters, Chinese/English meanings, original developer symbols/descriptions, evidence levels and a read-only byte/condition preview. Script-witness stages are not playable presets; unresolved participant queries stay unknown. See [the new story investigation](docs/story-flag-investigation.md).
 
 ## Important limits
 

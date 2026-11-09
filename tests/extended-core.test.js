@@ -46,11 +46,55 @@ test('friendship levels follow executable thresholds including high levels', () 
   assert.equal(editor.friendship(1).level, 11);
   assert.equal(save.readNumber(0x1db44, 'u32'), 0);
   save.undo();
-  save.setNumber(0x1df38, 'u16', 3);
+  save.setNumber(0x1df6c, 'u16', 3);
   editor.setFriendship(24, 10);
-  assert.equal(save.readNumber(0x1df38, 'u16'), 43);
+  assert.equal(save.readNumber(0x1df6c, 'u16'), 43);
   assert.equal(editor.friendship(24).level, 10);
   assert.throws(() => editor.setFriendship(1, 10001));
+});
+
+test('every NPC friendship edit changes only its audited field and supports undo, redo and CRC', () => {
+  for (let id = 1; id <= 25; id++) {
+    const { save, editor } = fixture();
+    const guest = id >= 24;
+    const offset = guest ? 0x1df68 + (id - 24) * 8 + 4 : 0x1db40 + (id - 1) * 44;
+    const size = guest ? 2 : 4;
+    save.transact('Seed unrelated record bytes', bytes => {
+      bytes.fill(0xa5, 0x1df34, 0x1e028);
+      for (let npc = 1; npc <= 23; npc++) save.view(bytes).setInt32(0x1db40 + (npc - 1) * 44, 16, true);
+      save.view(bytes).setUint16(0x1df6c, 7, true);
+      save.view(bytes).setUint16(0x1df74, 6, true);
+    });
+    const before = save.data.slice();
+    editor.setFriendship(id, 27);
+    assert.equal(editor.friendship(id).offset, offset);
+    assert.equal(save.readNumber(offset, guest ? 'u16' : 'i32'), guest ? 108 | (before[offset] & 3) : 7057);
+    for (let i = 0; i < before.length; i++) {
+      if (i < offset || i >= offset + size) assert.equal(save.data[i], before[i], `NPC ${id} changed unrelated byte ${i.toString(16)}`);
+    }
+    const edited = save.data.slice();
+    for (const platform of ['pc', 'switch']) {
+      const output = new SaveDocument(save.build({ platform, experimental: true }));
+      assert.equal(output.crcValid, true);
+      assert.equal(new ExtendedSave(output).friendship(id).level, 27);
+    }
+    save.undo(); assert.deepEqual(save.data, before);
+    save.redo(); assert.deepEqual(save.data, edited);
+  }
+});
+
+test('guest friendship reads the real records and preserves all bottom-two-bit combinations', () => {
+  for (const id of [24, 25]) for (const bits of [0, 1, 2, 3]) {
+    const { save, editor } = fixture();
+    const offset = id === 24 ? 0x1df6c : 0x1df74;
+    save.setNumber(offset, 'u16', 4 * 17 | bits);
+    assert.equal(editor.friendship(id).level, 17);
+    for (const level of [0, 10, 10000]) {
+      editor.setFriendship(id, level);
+      assert.equal(save.readNumber(offset, 'u16'), 4 * level | bits);
+      assert.equal(editor.friendship(id).level, level);
+    }
+  }
 });
 
 test('existing monster friendship does not change name, species, barn, flags or other records', () => {

@@ -24,7 +24,33 @@ Spell tables, equipped / held positions, the later 150-record array and shipping
 
 Main-character ids 1–23 have 44-byte records at `0x1DB40 + (id - 1) * 44`. Friendship points are signed 32-bit integers at +0, copied from runtime record +0xC at `0x7E6B6..0x7E6BD`. Only nonnegative values within the executable's `0x333E71` limit are interpreted. `Npc_FriendshipPointsToLevel` (`0x2279B0`) uses thresholds `[0,16,42,83,140,226,322,429,704,1009,1345]` through level 10; higher thresholds are `level * 336 - 2015`, with a level ceiling of 10,000.
 
-Guest ids 24 / 25 (Barrett / Raven) use the array at `0x1DF34`, 8-byte records indexed by `id - 24`; the u16 at +4 stores level shifted left by two, with the bottom two bits preserved. `0x227A6F..0x227AAD` decodes it. Editing points does not run event / dating / marriage / achievement handlers. Children are labelled son / daughter rather than assuming personal names.
+Guest ids 24 / 25 (Barrett / Raven) use 8-byte records at `0x1DF68 + (id - 24) * 8`; the u16 at +4 stores level shifted left by two, with the bottom two bits preserved. Their packed level fields are **`0x1DF6C` / `0x1DF74`**. The loader at `0x7FC96..0x7FD2E` copies 244 bytes from save `0x1DF34` to runtime `0xE9E3B0`, but that block has a **0x34-byte header**: the getter at `0x227A6F..0x227AAD` indexes runtime `0xE9E3E4`, then reads +4. Earlier editor builds incorrectly wrote `0x1DF38` / `0x1DF40` inside the header. Reapply intended guest levels with the corrected build; header edits in previously exported saves are not automatically repaired or guessed.
+
+`tests/replay_friendship.py` runs the actual main-NPC load loop (`0x7FD73..0x7FE88`), guest block copy and level getter (`0x227A40`) in a read-only emulator. Export regressions cover all 23 main NPCs and both guests, and verify every main-NPC threshold through level 10,000 against `0x2279B0`. Byte-level tests additionally check unrelated fields, guest low bits, undo/redo and PC / extracted Switch CRCs. This does not execute UI, event / dating / marriage / achievement handlers or verify gameplay prerequisites. Children are labelled son / daughter rather than assuming personal names.
+
+### Dating and special forms of address
+
+Changing the protagonist gender does not clear existing NPC romance state. The screenshot's Vishnal relationship status is reproduced by the audited game's dating query: it returns true despite saved gender 0. All six bachelors retain active dating status. His NPC-to-player address selector is 97, which the game's English `rf3TxtHeroNickName.eng` table resolves to **Master**. This is saved relationship/address state, not evidence that the runtime protagonist is female.
+
+Fields within each main NPC's 44-byte record:
+
+| Field | Record offset | Verified write mask |
+| --- | --- | --- |
+| Active dating | +8 u32 | Bit 22, `0x00400000` only |
+| NPC calls player | +12 u8 | Address-table index |
+| Player calls NPC | +20 u32 | Bits 7–14, `0x00007F80` only |
+
+Serializer `0x7E6DC..0x7E711` saves runtime NPC +`0x34`, +`0x39` and +`0x38`; loader `0x7FDA5..0x7FDC9` restores them independently of protagonist gender. The script-facing dating query `0x227AB0..0x227ADD` reads runtime bit 22. Address selection `0x2082F4..0x208366` reads runtime +`0x39`. Initialization `0x1EE702..0x1EE76F` sets default NPC-to-player indices to `23 + id` for Lest / `70 + id` for Frey, and player-to-NPC indices to `id` / `47 + id` respectively. Default indices may contain player-name substitution tokens; they must not be treated as literal translated names.
+
+`SaveDocument.build({gender:'male', resetDating:true})` optionally clears dating and resets both addresses for Vishnal, Kiel, Dylas, Arthur, Doug and Leon. Female export similarly targets the six bachelorettes. Consent is off by default, requires a gender choice and refuses a spouse among the targets (or an unknown spouse). Friendship, other flag bits, greeting progression, other NPCs, marriage, story/event history, date counts, achievements and the trailer are preserved. Cleanup is an export-only copy operation, not a simulated breakup or full romance-event reset.
+
+`tests/relationship-cleanup.test.js` checks exact byte preservation, both genders, consent, spouse guards and conversion. `tests/replay_relationships.py` runs the actual NPC load loop, dating query and saved-address selection in Unicorn. Before cleanup, `--expect-no-dating 1 --expect-default-address 1` fails on the supplied save; clearing just the dating bit makes the query false but leaves “Master,” while resetting the separate address fields also fixes the selection. Run on an exported copy:
+
+```powershell
+python tests/replay_relationships.py "<game-folder>/RF4S.exe" "<corrected-slot.sav>" --expect-no-dating 1 5 8 9 15 20 --expect-default-address 1 5 8 9 15 20
+```
+
+Replay is read-only, build-specific and does not render UI or execute every scene. Test the corrected copy after restarting RF4S; do not overwrite the original without a backup.
 
 ## People and tamed monsters
 

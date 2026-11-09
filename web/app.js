@@ -1,4 +1,4 @@
-import { SaveDocument, createDemo, parseEmdeb, STORY_REGISTER, SEASONS, SAVE_SIZE, SWITCH_SAVE_SIZE, SYSTEM_SAVE_SIZE, SWITCH_CRC_END, CRC_END, SYSTEM_FLAGS, NUMBER_TYPES, PLAYER_FIELDS, INVENTORIES, ITEM_RECORD_SIZE, bagStackLimit, hex, equalBytes, integer } from './save-core.js';
+import { SaveDocument, createDemo, parseEmdeb, STORY_REGISTER, SEASONS, SAVE_SIZE, SWITCH_SAVE_SIZE, SYSTEM_SAVE_SIZE, SWITCH_CRC_END, CRC_END, SYSTEM_FLAGS, SYSTEM_FLAGS_OFFSET, NUMBER_TYPES, PLAYER_FIELDS, INVENTORIES, ITEM_RECORD_SIZE, bagStackLimit, hex, equalBytes, integer } from './save-core.js';
 import { VENTI_TABLES } from './game-schema.js';
 import { ItemCatalog, ItemTable, ITEM_GROUPS, detectItemTable, categoryName, decodeItemFlags, semanticValue } from './game-reference.js';
 import { LOCAL_GAME_DATA } from './local-game-data.js';
@@ -79,12 +79,12 @@ function conversionIssue() {
 
 function exportOptions(repair = $('repair-crc').checked) {
   const correctGender = slotSave() && $('correct-gender').checked;
-  return { repair, platform: $('export-platform').value, experimental: $('allow-conversion').checked, gender: correctGender ? $('export-gender').value : 'keep', resetAppearance: correctGender && $('reset-appearance').checked };
+  return { repair, platform: $('export-platform').value, experimental: $('allow-conversion').checked, gender: correctGender ? $('export-gender').value : 'keep', resetAppearance: correctGender && $('reset-appearance').checked, resetDating: correctGender && $('reset-dating').checked };
 }
 
 function genderIssue() {
   if (!save) return '';
-  try { const options = exportOptions(); save.genderCorrection(options.gender, options.resetAppearance); return ''; }
+  try { const options = exportOptions(); const correction = save.genderCorrection(options.gender, options.resetAppearance); if (options.resetDating) save.datingCleanup(correction.gender); return ''; }
   catch (error) { return error.message; }
 }
 
@@ -616,15 +616,17 @@ function renderGender() {
   $('gender-export-fields').hidden = !enabled;
   $('export-gender').disabled = !enabled;
   $('reset-appearance').disabled = !enabled;
+  $('reset-dating').disabled = !enabled;
   if (!slotSave()) { $('gender-preview').textContent = 'No slot save loaded'; return; }
   const label = value => value === 'male' ? 'Male · Lest' : value === 'female' ? 'Female · Frey' : 'Unrecognized';
   try {
-    const { gender, resetAppearance } = exportOptions();
+    const { gender, resetAppearance, resetDating } = exportOptions();
     const correction = save.genderCorrection(gender, resetAppearance);
     const appearance = save.appearance();
     const swapped = appearance.swapped || appearance.override !== 0;
     $('gender-preview').textContent = correction ? `Export: ${label(correction.gender)}.${resetAppearance ? ' Appearance, portrait and outfit will be reset to this protagonist.' : swapped ? ' Appearance override is active; enable reset to match the model and portrait too.' : ''}` : `Saved gender: ${label(save.gender())}.${swapped ? ' A separate appearance override is active.' : ''} Original is not overwritten.`;
-    $('gender-preview').classList.toggle('warning-text', Boolean(correction && (resetAppearance || swapped)));
+    if (resetDating) $('gender-preview').textContent += ` Dating and special addresses will be cleared for: ${save.datingCleanup(correction.gender).map(person => person.name).join(', ')}. Friendship and event history stay unchanged.`;
+    $('gender-preview').classList.toggle('warning-text', Boolean(correction && (resetAppearance || resetDating || swapped)));
   } catch (error) {
     $('gender-preview').textContent = error.message;
     $('gender-preview').classList.add('warning-text');
@@ -679,7 +681,7 @@ function render({ syncCalendar = false } = {}) {
     $('integrity-detail').textContent = save.crcValid ? 'Original CRC-32 verified' : 'Repair requires consent';
     const season = slotSave() ? SEASONS[save.get('season')] || 'Invalid season' : '';
     $('date-value').textContent = slotSave() ? `${season} ${save.get('day')}` : 'System settings';
-    $('date-detail').textContent = slotSave() ? `Year ${save.get('year')}` : `Flags ${hex(save.readNumber(8, 'u32'), 8)}`;
+    $('date-detail').textContent = slotSave() ? `Year ${save.get('year')}` : `Flags ${hex(save.readNumber(SYSTEM_FLAGS_OFFSET, 'u32'), 8)}`;
     try { $('export-crc').textContent = hex(save.view(save.build(exportOptions(true))).getUint32(save.crcOffset, true), 8); }
     catch { $('export-crc').textContent = 'Export blocked'; }
     $('export-name').textContent = demo ? 'Demo exports are disabled.' : `Downloads as ${exportFilename()}`;
@@ -725,6 +727,7 @@ function openDocument(next, isDemo = false) {
     $('correct-gender').checked = false;
     $('export-gender').value = 'original';
     $('reset-appearance').checked = false;
+    $('reset-dating').checked = false;
     $('expert-tools').open = false;
     $('export-platform').value = save.platform;
     $('raw-offset').value = save.kind === 'system' ? '0x00008' : '0x00014';
@@ -826,7 +829,7 @@ $('reset').addEventListener('click', () => { save?.reset(); extraUi.clear(); mar
 $('allow-system').addEventListener('change', renderSystem);
 $('expert-tools').addEventListener('toggle', () => { refreshLayout(); updateExportButton(); });
 document.querySelector('.nav-link[href="#expert-tools"]').addEventListener('click', () => { $('expert-tools').open = true; });
-for (const id of ['correct-gender', 'export-gender', 'reset-appearance']) $(id).addEventListener('change', render);
+for (const id of ['correct-gender', 'export-gender', 'reset-appearance', 'reset-dating']) $(id).addEventListener('change', render);
 $('story-ack').addEventListener('change', renderProgress);
 $('story-stage').addEventListener('input', () => {
   storyValueDraft = slotSave() && $('story-stage').value !== '' && Number($('story-stage').value) === save.flag(STORY_REGISTER) ? undefined : $('story-stage').value;
@@ -1116,7 +1119,7 @@ $('download-report').addEventListener('click', () => {
     outputBytes: output?.length ?? null,
     conversionExperimental: $('export-platform').value !== save.platform,
     conversionNote: 'Only container conversion and common field layouts checked. In-game acceptance untested.',
-    genderCorrection: slotSave() ? { mode: exportOptions().gender, resetAppearance: exportOptions().resetAppearance, original: save.gender(save.original), edited: save.gender(), exported: output ? save.gender(output) : null, originalAppearance: save.appearance(save.original), editedAppearance: save.appearance(), exportedAppearance: output ? save.appearance(output) : null } : null,
+    genderCorrection: slotSave() ? { mode: exportOptions().gender, resetAppearance: exportOptions().resetAppearance, resetDating: exportOptions().resetDating, original: save.gender(save.original), edited: save.gender(), exported: output ? save.gender(output) : null, originalAppearance: save.appearance(save.original), editedAppearance: save.appearance(), exportedAppearance: output ? save.appearance(output) : null } : null,
     originalChecksumValid: save.crcValid,
     originalChecksum: hex(save.originalCrc, 8),
     exportChecksum: output ? hex(save.view(output).getUint32(save.crcOffset, true), 8) : null,
@@ -1126,7 +1129,7 @@ $('download-report').addEventListener('click', () => {
     inventories: slotSave() ? Object.fromEntries(Object.keys(INVENTORIES).map(container => [container, save.inventoryItems(container).filter(item => !equalBytes(save.data.subarray(item.offset, item.offset + ITEM_RECORD_SIZE), save.original.subarray(item.offset, item.offset + ITEM_RECORD_SIZE))).map(item => ({ slot: item.slot + 1, original: save.inventorySlot(container, item.slot, save.original), edited: item }))])) : null,
     progress: slotSave() ? progressCatalog.variables.filter(variable => save.flag(variable) !== save.flag(variable, save.original)).map(variable => ({ name: variable.name, original: save.flag(variable, save.original), edited: save.flag(variable) })) : null,
     changedBytes: save.changedBytes,
-    changesScope: 'Working save payload only. Export-only gender/appearance overrides are recorded separately; CRC is rebuilt on export.',
+    changesScope: 'Working save payload only. Export-only gender/appearance/dating overrides are recorded separately; CRC is rebuilt on export.',
     changes: save.changes().map(range => ({ offset: hex(range.offset), before: bytesText(range.before), after: bytesText(range.after) })),
   };
   download(JSON.stringify(report, null, 2), save.name.replace(/\.sav$/i, '') + '.changes.json', 'application/json');

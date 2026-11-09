@@ -1,3 +1,35 @@
+# v0.2 — Names, relationships and Chinese interface
+
+Download **RF4S-Save-Editor-v0.2-win-x64.zip**, extract it and run **RF4S Save Editor.exe**. Windows 10/11 x64, approximately 28 MiB. No installation, Python, Node, browser or local server is required.
+
+## New features
+
+- English / Simplified Chinese interface, system-language detection and remembered manual overrides. Game-name language remains independent.
+- Compact layouts down to 640×480, wrapped labels and collapsible current/draft item previews; resizing and language switching retain drafts.
+- Individual dating status for the 12 marriage candidates, plus both nickname pickers for the 23 main NPCs. Read your game folder to load localized nickname labels.
+- Player-name edit and game-default reset: open **rf4_sys.sav**, select the bank/slot, then Apply and export. Names allow 6 characters / 18 UTF-8 bytes. Reset uses the game's default at next load; individual slot files do not contain this name field.
+- Optional export-only cleanup of incompatible dating and special addresses during gender correction; friendship and story/date history are preserved.
+- Definition-based item-effect previews, bilingual flag help/evidence and read-only flag-impact previews. Exact derived stats and playable story checkpoints are not promised.
+- Save picker starts in `%APPDATA%\Rune Factory 4 Special`; no save is auto-loaded.
+
+## Fixes and important backup warning
+
+- Corrected Barrett / Raven friendship fields; checked all 25 NPC friendship writes and all main-NPC thresholds through level 10,000 against the audited game code.
+- Fixed blank standard dialog buttons and truncated confirmation titles.
+- Corrected system unlock flags to **offset 0x10**, preserving the save-slot availability bitmaps.
+
+**If an older build edited Barrett/Raven friendship or system flags, reapply those edits from a pre-edit backup.** Older guest edits wrote into unrelated header bytes; older system-flag edits could change slot availability. v0.2 does not guess how to repair those changes.
+
+## Safety and verification
+
+Back up the entire save folder and close the game first. All edits remain opt-in, undoable and export-only. Dating, nickname, marriage and story edits do not simulate events or prerequisites. A valid checksum does not guarantee in-game acceptance; PC ↔ extracted Switch conversion remains experimental.
+
+115 JavaScript tests and 55 Python tests were verified across the native/replay environments, including 12 read-only executable replays. Actual native GUI/export and portable-executable checks passed. Public packages exclude personal saves and game-reference data; use **Read game folder** for your own references.
+
+Documentation and runtime/source license notices are included. The previous v0.1 release remains available.
+
+---
+
 # v0.1 — Native Windows save editor
 
 First public native desktop release for Rune Factory 4 Special.

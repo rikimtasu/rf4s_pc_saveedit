@@ -72,7 +72,9 @@ export class ExtendedSave {
     this.slot();
     const id = integer(idInput, 1, 25, 'Person');
     const guest = id >= 24;
-    const offset = guest ? 0x1df34 + (id - 24) * 8 + 4 : 0x1db40 + (id - 1) * 44;
+    // The guest block at 0x1DF34 has a 0x34-byte header. The game getter
+    // indexes runtime 0xE9E3E4, not the copied block base 0xE9E3B0.
+    const offset = guest ? 0x1df68 + (id - 24) * 8 + 4 : 0x1db40 + (id - 1) * 44;
     const points = this.document.readNumber(offset, guest ? 'u16' : 'i32', bytes);
     return { id, name: PEOPLE_NAMES[id], offset, points, level: guest ? Math.min(10000, points >>> 2) : points >= 0 && points <= 0x333e71 ? friendshipLevel(points) : null, guest };
   }

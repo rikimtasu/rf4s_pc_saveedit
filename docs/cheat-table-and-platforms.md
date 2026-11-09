@@ -46,7 +46,7 @@ Flag-copy evidence: serializer `0x7E798..0x7E7C7` copies the live bit buffer int
 
 ## System flags
 
-`RF4S.exe` system-buffer RVA is `0xE704A0`; script-visible config flags are at `0xE704A8`, corresponding to system save offset 8. Signature / CRC generation is visible at `0x8230F..0x82345`: magic `0x44344652`, CRC over 0x2450 bytes starting eight bytes into the container.
+`RF4S.exe` system-buffer RVA is `0xE704A0`; script-visible config flags are at **`0xE704B0`, corresponding to system save offset `0x10`**. For example, setter `0x21F690` ends at `0x21F697`; adding its RIP displacement `0xC50E19` yields `0xE704B0`, not `0xE704A8`. Offset 8 and offset 12 are the two save-slot availability bitmaps, modified by the save-record writer at `0x80440`. Earlier editor builds/docs incorrectly used offset 8 for the named config flags; current builds preserve both bitmaps. Reapply older system-flag edits from a pre-edit backup; no guessed bitmap repair is performed. Signature / CRC generation remains visible at `0x8230F..0x82345`: magic `0x44344652`, CRC over 0x2450 bytes starting eight bytes into the container.
 
 The pinned upstream opcode reference supplies semantic evidence, checked against matching handlers in the supplied executable:
 
@@ -68,3 +68,5 @@ Town-event registers include `REG_SUBEV_RSV` (bit 153, width 9), `REG_SUBEV_NOW`
 The editor now supplies named groups, full-width numeric stage editing, atomic named-value profiles and scoped donor snapshots. Main-story scope includes main symbols and mapped barriers; quest scope includes town-event / request flags. The all-flags scope can alter unrelated discovery / relationship / chest state. Neither scope automatically copies NPC records, request payloads, party/location, reward history or inventory.
 
 A fully playable jump to any checkpoint is not implemented or claimed. Complete presets require controlled before / after saves or comprehensive path-dependent script analysis, followed by in-game validation. Checksum correctness and a reversible profile alone do not prove that a story jump is safe.
+
+The [continued story investigation](story-flag-investigation.md) adds script-witness stages, Memories / 回忆 and The Running Sign / 会跑的广告牌 conditions, separate completion-bit arithmetic, and start/finish cleanup evidence. Native flag help now keeps developer descriptions alongside English/Chinese translations and evidence labels. Read-only previews show byte changes and only resolved numeric/completion conditions; participant-enable queries are deliberately unknown rather than guessed as friendship checks. No dependency flags are automatically changed.

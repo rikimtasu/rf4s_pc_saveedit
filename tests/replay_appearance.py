@@ -23,7 +23,9 @@ PORTRAIT_IDS = {'male': 0x4c2, 'female': 0x4d2}
 AUDITED_EXE_SHA256 = 'cb64f88be1f40ac932607188de85dab98c44f43a6a023c92a85e17dd18a2b803'
 
 
-def replay(executable, data):
+def replay(executable, data, initial_gender='male'):
+    if initial_gender not in BODY_IDS:
+        raise ValueError('Initial actor gender must be male or female.')
     if hashlib.sha256(executable.read_bytes()).hexdigest() != AUDITED_EXE_SHA256:
         raise ValueError('This replay is scoped to the audited RF4S.exe build; re-audit addresses for another build.')
     if len(data) not in (140424, 140416) or struct.unpack_from('<I', data)[0] != zlib.crc32(data[4:-224]):
@@ -41,9 +43,9 @@ def replay(executable, data):
     machine.mem_write(base + 0xe94f6c, struct.pack('<I', 0))
     machine.mem_write(base + 0xe15078, struct.pack('<Q', actor))
     machine.mem_write(base + 0xe9ac38, data[0x20740:0x20744])
-    machine.mem_write(actor + 0x238, struct.pack('<I', 0x08000000))
-    machine.mem_write(actor + 0x220, struct.pack('<HH', 0x4c1, 0x38a1))
-    machine.mem_write(actor + 0x22c, struct.pack('<I', 0x4c2))
+    machine.mem_write(actor + 0x238, struct.pack('<I', 0x08000000 if initial_gender == 'male' else 0))
+    machine.mem_write(actor + 0x220, struct.pack('<HH', BODY_IDS[initial_gender], 0x38a1 if initial_gender == 'male' else 0x37af))
+    machine.mem_write(actor + 0x22c, struct.pack('<I', PORTRAIT_IDS[initial_gender]))
     machine.reg_write(UC_X86_REG_RSP, stack + 0x8000)
     machine.reg_write(UC_X86_REG_RSI, 0)
     decoder = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
@@ -74,6 +76,8 @@ def replay(executable, data):
     if machine.reg_read(UC_X86_REG_RIP) != base + 0x841b1:
         raise RuntimeError('Replay did not finish the appearance branch')
     result = {
+        'scope': 'Appearance branch only; excludes player initialization and NPC dialogue.',
+        'initialActorGender': initial_gender,
         'storedGender': data[0x36],
         'swapFlag': struct.unpack_from('<I', data, 0x38)[0] & 1,
         'outfit': (struct.unpack_from('<I', data, 0x74)[0] >> 18) & 63,
@@ -92,6 +96,7 @@ def main():
     parser.add_argument('executable', type=Path)
     parser.add_argument('save', type=Path)
     parser.add_argument('--expect', choices=['male', 'female'], required=True)
+    parser.add_argument('--initial-gender', choices=['male', 'female'], default='male', help='Actor state before the appearance branch (default: male). Not a full save-load simulation.')
     parser.add_argument('--export-reset', action='store_true', help='Replay current SaveDocument.build gender + appearance reset in memory')
     args = parser.parse_args()
     original = args.save.read_bytes()
@@ -100,14 +105,14 @@ def main():
         program = "import {readFileSync} from 'node:fs'; import {SaveDocument} from './web/save-core.js'; const save=new SaveDocument(readFileSync(process.argv[1])); process.stdout.write(Buffer.from(save.build({gender:process.argv[2],resetAppearance:true})).toString('base64'));"
         import base64
         data = base64.b64decode(subprocess.check_output(['node', '--input-type=module', '-e', program, str(args.save), args.expect], cwd=ROOT))
-    result = replay(args.executable, data)
+    result = replay(args.executable, data, args.initial_gender)
     assert args.save.read_bytes() == original, 'Original save changed during replay'
     result['originalSha256'] = hashlib.sha256(original).hexdigest()
     print(json.dumps(result, indent=2))
     assert result['actorGender'] == args.expect, 'Actor gender did not match requested gender'
     assert result['bodyResource'] == BODY_IDS[args.expect], 'Body still selects the opposite protagonist resource'
     assert result['portraitResource'] == PORTRAIT_IDS[args.expect], 'Portrait still selects the opposite protagonist resource'
-    print('PASS: actual load branch selects matching protagonist body and portrait; original unchanged.')
+    print('PASS: appearance branch matches from the stated initial actor; player initialization and NPC dialogue are NOT tested. Original unchanged.')
 
 
 if __name__ == '__main__':

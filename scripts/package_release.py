@@ -29,9 +29,10 @@ def validate_public(executable):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('executable', type=Path)
-    parser.add_argument('--version', default='v0.1')
-    parser.add_argument('--output', type=Path, default=ROOT / 'dist' / 'RF4S-Save-Editor-v0.1-win-x64.zip')
+    parser.add_argument('--version', default='v0.2')
+    parser.add_argument('--output', type=Path)
     args = parser.parse_args()
+    if not args.output: args.output = ROOT / 'dist' / f'RF4S-Save-Editor-{args.version}-win-x64.zip'
     validate_public(args.executable)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     notices = {}
@@ -44,7 +45,27 @@ def main():
     folder = f'RF4S-Save-Editor-{args.version}'
     with ZipFile(args.output, 'w', compression=ZIP_DEFLATED, compresslevel=9) as package:
         package.write(args.executable, f'{folder}/RF4S Save Editor.exe')
-        package.write(ROOT / 'docs' / 'native-desktop.md', f'{folder}/README.md')
+        package.writestr(f'{folder}/README.md', f'''# RF4S Save Editor {args.version}
+
+Extract this folder and open **RF4S Save Editor.exe**. Windows 10/11 x64;
+no installation, Python, Node or browser is needed.
+
+Back up the entire save folder and close the game before editing. Saves are
+not uploaded or automatically overwritten; enable editing, Apply, then export.
+Use **Read game folder** to load your own item/recipe/name references.
+
+For player-name editing, open **rf4_sys.sav** and select the matching bank/slot.
+For dating and nickname editing, open an individual slot save.
+
+If an older build edited Barrett/Raven friendship or system flags, reapply
+those edits from a pre-edit backup; unrelated old changes are not guessed away.
+
+See [native usage](docs/native-desktop.md), [name/relationship guidance](docs/player-name-and-relationships.md)
+and [release notes](RELEASE_NOTES.md). Source: https://github.com/rikimtasu/rf4s_pc_saveedit
+''')
+        package.write(ROOT / 'RELEASE_NOTES.md', f'{folder}/RELEASE_NOTES.md')
+        for document in sorted((ROOT / 'docs').glob('*.md')):
+            package.write(document, f'{folder}/docs/{document.name}')
         package.write(ROOT / 'ATTRIBUTION.md', f'{folder}/ATTRIBUTION.md')
         package.write(ROOT / 'COPYING', f'{folder}/licenses/Editor-GPL-3.0.txt')
         package.write(ROOT / 'vendor' / 'rf4-modkit' / 'LICENSE', f'{folder}/licenses/rf4-modkit-MIT.txt')

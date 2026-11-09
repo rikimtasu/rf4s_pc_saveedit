@@ -11,6 +11,7 @@ if os.name == 'nt':
     ctypes.WinDLL(str(Path(os.environ['SystemRoot']) / 'System32' / 'icuuc.dll'))
 
 from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QTimer
 from native_ui import NativeWindow
 
 
@@ -21,12 +22,15 @@ def main():
     args = parser.parse_args()
     app = QApplication(sys.argv)
     app.setApplicationName('RF4S Save Editor')
-    app.setApplicationVersion('0.1.0')
+    app.setApplicationVersion('0.2.0')
     window = NativeWindow()
     if args.self_test:
         from scripts.desktop_smoke import run
         run(app, window, args.self_test, args.self_test_game)
     window.show()
+    if not args.self_test:
+        # Open the save picker at the RF4S roaming folder, never auto-load a save.
+        QTimer.singleShot(0, window.open_file)
     return app.exec()
 
 

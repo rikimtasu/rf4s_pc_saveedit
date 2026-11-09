@@ -48,3 +48,27 @@ test('native save seam has no browser globals, server or arbitrary-code operatio
   assert.equal(call('monsters').length, 0);
   assert.equal(call('constants').inventories.fridge.slots, 990);
 });
+
+test('native dating cleanup previews its targets and applies only on opted-in export', () => {
+  fixture();
+  call('setNumber', { offset: 0x1db48, type: 'u32', value: 0x400302 });
+  call('patchBytes', { offset: 0x1db4c, text: '61' });
+  const before = call('working');
+  assert.deepEqual(call('datingCleanup', { gender: 'male' }).map(person => person.id), [1, 5, 8, 9, 15, 20]);
+  const output = new SaveDocument(call('build', { gender: 'male', resetDating: true }));
+  assert.equal(output.crcValid, true);
+  assert.equal(output.readNumber(0x1db48, 'u32'), 0x302);
+  assert.equal(output.data[0x1db4c], 24);
+  assert.deepEqual(call('working'), before);
+});
+
+test('native operations expose dating and both nickname fields without altering friendship', () => {
+  fixture();
+  const before = call('working');
+  call('setRelationship', { id: 1, changes: { dating: 1, npcCallsPlayer: 97, playerCallsNpc: 133 } });
+  const person = call('relationships')[0];
+  assert.deepEqual([person.dating, person.npcCallsPlayer, person.playerCallsNpc], [1, 97, 133]);
+  assert.equal(call('friendship')[0].points, 0);
+  assert.equal(call('relationships').length, 23);
+  call('undo'); assert.deepEqual(call('working'), before);
+});

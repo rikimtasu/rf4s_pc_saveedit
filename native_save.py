@@ -14,6 +14,7 @@ if (!Array.prototype.findLastIndex) Object.defineProperty(Array.prototype,'findL
 if (!Array.prototype.flat) Object.defineProperty(Array.prototype,'flat',{value:function(depth){depth=depth===undefined?1:Math.max(0,Math.trunc(depth));var result=[];this.forEach(function(value){if(Array.isArray(value)&&depth>0)result.push.apply(result,value.flat(depth-1));else result.push(value);});return result;}});
 if (!String.prototype.replaceAll) Object.defineProperty(String.prototype,'replaceAll',{value:function(from,to){return this.split(from).join(to);}});
 var TextDecoder = class { decode(bytes) { return nativeCodec.decode(JSON.stringify(Array.from(bytes))); } };
+var TextEncoder = class { encode(text) { return Uint8Array.from(JSON.parse(nativeCodec.encode(text))); } };
 """
 
 
@@ -21,6 +22,10 @@ class Codec(QObject):
     @Slot(str, result=str)
     def decode(self, text):
         return bytes(json.loads(text)).decode('utf-8', errors='replace')
+
+    @Slot(str, result=str)
+    def encode(self, text):
+        return json.dumps(list(text.encode('utf-8')))
 
 
 class NativeSave:
