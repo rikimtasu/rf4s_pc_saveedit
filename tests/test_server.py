@@ -74,16 +74,27 @@ class ServerTests(unittest.TestCase):
             status, _, body = self.request('/local-save-reference.js')
         self.assertEqual(status, 200)
         self.assertIn(b'LOCAL_SAVE_REFERENCE = null', body)
+        with patch.object(editor.Path, 'is_file', return_value=False):
+            status, _, body = self.request('/local-languages.js')
+        self.assertEqual(status, 200)
+        self.assertIn(b'LOCAL_LANGUAGES = null', body)
+
+    def test_windowed_runtime_has_no_stderr_and_still_serves_pages(self):
+        with patch.object(QuietHandler, 'log_message', editor.EditorHandler.log_message), patch.object(editor.sys, 'stderr', None):
+            status, _, body = self.request('/')
+        self.assertEqual(status, 200)
+        self.assertIn(b'Save editor', body)
 
     def test_relocated_public_assets_without_personal_reference_modules(self):
         with tempfile.TemporaryDirectory(prefix='editor with spaces ', dir=ROOT) as folder:
             destination = Path(folder) / 'web'
-            shutil.copytree(editor.WEB, destination, ignore=shutil.ignore_patterns('local-game-data.js', 'local-save-reference.js'))
+            shutil.copytree(editor.WEB, destination, ignore=shutil.ignore_patterns('local-game-data.js', 'local-save-reference.js', 'local-languages.js'))
             with patch.object(editor, 'WEB', destination):
                 self.assertEqual(self.request('/')[0], 200)
                 self.assertEqual(self.request('/extended-ui.js')[0], 200)
                 self.assertIn(b'LOCAL_GAME_DATA = null', self.request('/local-game-data.js')[2])
                 self.assertIn(b'LOCAL_SAVE_REFERENCE = null', self.request('/local-save-reference.js')[2])
+                self.assertIn(b'LOCAL_LANGUAGES = null', self.request('/local-languages.js')[2])
 
     def test_loopback_host_guard(self):
         self.assertEqual(self.request('/', host='attacker.invalid')[0], 403)

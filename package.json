@@ -1,10 +1,11 @@
 {
   "name": "rf4s-save-editor",
-  "version": "1.2.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Offline RF4S PC / Switch save editor with skills, recipes, friendship, actors and storage",
   "scripts": {
+    "build:native-core": "npx --yes esbuild@0.25.12 web/native-core.js --bundle --format=iife --global-name=RF4SNative --target=es2016 --outfile=web/native-bundle.js",
     "start": "python serve.py",
     "test": "node --test tests/*.test.js"
   },

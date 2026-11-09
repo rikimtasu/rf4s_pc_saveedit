@@ -5,8 +5,8 @@ const $ = id => document.getElementById(id);
 export const EXTENDED_SECTIONS = ['skills', 'recipes', 'friendship', 'people', 'monsters', 'trophies'];
 
 export class ExtendedUI {
-  constructor({ getSave, references, itemName, changed, draftChanged, notify }) {
-    Object.assign(this, { getSave, references, itemName, changed, draftChanged, notify });
+  constructor({ getSave, references, itemName, personName = (_id, name) => name, skillName = (_id, name) => name, changed, draftChanged, notify }) {
+    Object.assign(this, { getSave, references, itemName, personName, skillName, changed, draftChanged, notify });
     this.drafts = new Map(EXTENDED_SECTIONS.map(id => [id, new Map()]));
     this.selected = { skills: '0', friendship: '1', people: '1', monsters: '', trophies: TROPHIES[0].name, recipes: '' };
     this.recipeGroup = 'all';
@@ -124,12 +124,12 @@ export class ExtendedUI {
     const skillOptions = [];
     for (const group of [...new Set(SKILLS.map(skill => skill.group))]) {
       const node = document.createElement('optgroup'); node.label = group;
-      node.append(...SKILLS.filter(skill => skill.group === group).map(skill => new Option(skill.name, skill.id)));
+      node.append(...SKILLS.filter(skill => skill.group === group).map(skill => new Option(this.skillName(skill.id, skill.name), skill.id)));
       skillOptions.push(node);
     }
     $('skill-id').replaceChildren(...skillOptions); $('skill-id').value = this.selected.skills;
-    this.options('friendship', 'friend-person', PEOPLE_NAMES.slice(1, 26).map((name, i) => new Option(name, i + 1)));
-    this.options('people', 'person-id', PEOPLE_NAMES.slice(1).map((name, i) => new Option(name, i + 1)));
+    this.options('friendship', 'friend-person', PEOPLE_NAMES.slice(1, 26).map((name, i) => new Option(i + 1 >= 22 && i + 1 <= 23 ? name : this.personName(i + 1, name), i + 1)));
+    this.options('people', 'person-id', PEOPLE_NAMES.slice(1).map((name, i) => new Option(i + 1 >= 22 && i + 1 <= 23 ? name : this.personName(i + 1, name), i + 1)));
     const monsters = this.slot() ? this.editor().monsters().filter(monster => monster.occupied) : [];
     this.options('monsters', 'monster-id', monsters.map(monster => new Option(`${monster.id + 1} · ${monster.name || 'Unnamed'} · species ${monster.species}`, monster.id)));
     this.options('trophies', 'trophy-id', TROPHIES.map(trophy => new Option(trophy.label, trophy.name)));

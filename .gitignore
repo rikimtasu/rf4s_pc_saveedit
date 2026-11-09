@@ -5,6 +5,12 @@ node_modules/
 *.changes.json
 web/local-game-data.js
 web/local-save-reference.js
+web/local-languages.js
+web/native-bundle.js
+/dist/
+/build/
+*.spec
+/.venv-desktop/
 /ct/
 /switch_save/
 /exports/

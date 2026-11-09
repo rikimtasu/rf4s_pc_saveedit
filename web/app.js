@@ -7,6 +7,10 @@ import { ProgressCatalog, STORY_MARKERS, progressGroup } from './progress-core.j
 import { ExtendedUI } from './extended-ui.js';
 import { SaveReferences } from './save-reference.js';
 import { LOCAL_SAVE_REFERENCE } from './local-save-reference.js';
+import { LOCAL_LANGUAGES } from './local-languages.js';
+import { LanguageCatalog, languageTable } from './language-core.js';
+import { MarriageUI } from './marriage-ui.js';
+import { equipmentItem, itemDetails, editInventoryItem, equipmentElement, ELEMENTS } from './item-details.js';
 
 const $ = id => document.getElementById(id);
 const bytesText = bytes => Array.from(bytes, byte => byte.toString(16).toUpperCase().padStart(2, '0')).join(' ');
@@ -27,8 +31,11 @@ let bagSlot = 0;
 let bagPage = 0;
 const BAG_PAGE_SIZE = 10;
 const PAGE_SIZE = 8;
-const catalog = new ItemCatalog(LOCAL_GAME_DATA);
-const extraUi = new ExtendedUI({ getSave: () => save, references: new SaveReferences(LOCAL_SAVE_REFERENCE), itemName: id => catalog.name(id), changed: message => { render(); notify(message); }, draftChanged: updateExportButton, notify });
+const languages = new LanguageCatalog(LOCAL_LANGUAGES);
+const catalog = new ItemCatalog(LOCAL_GAME_DATA, languages);
+const extraUi = new ExtendedUI({ getSave: () => save, references: new SaveReferences(LOCAL_SAVE_REFERENCE), itemName: id => catalog.name(id), personName: (id, name) => languages.name('people', id, name), skillName: (id, name) => languages.name('skills', id, name), changed: message => { render(); notify(message); }, draftChanged: updateExportButton, notify });
+const marriageUi = new MarriageUI({ getSave: () => save, getSymbols: () => symbols, personName: (id, name) => languages.name('people', id, name), changed: message => { render(); notify(message, true); }, draftChanged: updateExportButton, notify });
+const detailInputs = new Map();
 const words = value => String(value).replace(/([a-z])([A-Z])/g, '$1 $2').replaceAll('_', ' ').toLowerCase().replace(/^./, char => char.toUpperCase());
 const slotSave = () => save?.kind === 'slot';
 const selectedContainer = () => $('bag-container').value;
@@ -53,7 +60,7 @@ function dateDraft() {
 }
 
 function pendingDrafts() {
-  return extraUi.pending() || dateDraft() || storyValueDraft !== undefined || Boolean(profileDraft) || flagDrafts.size > 0 || playerDrafts.size > 0 || bagDrafts.size > 0 || (save && $('allow-raw').checked && ($('raw-value').value.trim() || $('typed-value').value.trim()));
+  return extraUi.pending() || marriageUi.pending() || dateDraft() || storyValueDraft !== undefined || Boolean(profileDraft) || flagDrafts.size > 0 || playerDrafts.size > 0 || bagDrafts.size > 0 || (save && $('allow-raw').checked && ($('raw-value').value.trim() || $('typed-value').value.trim()));
 }
 
 function exportFilename() {
@@ -355,6 +362,49 @@ function bagChanges() {
   return { changes, definition, max };
 }
 
+function setupEquipmentDetails() {
+  const specs = [['inherited', 'Inherited equipment abilities'], ['totalLevel', 'Total-level bonus (0–150)'], ['rarityBonus', 'Rarity bonus (0–200)'], ...Array.from({ length: 3 }, (_, i) => [`craft${i}`, `Crafting attachment ${i + 1}`]), ...Array.from({ length: 9 }, (_, i) => [`upgrade${i}`, `Upgrade attachment ${i + 1} · level ${i + 2}`])];
+  for (const [key, title] of specs) {
+    const label = document.createElement('label'); label.append(title);
+    const input = document.createElement(key === 'totalLevel' || key === 'rarityBonus' ? 'input' : 'select');
+    input.id = `detail-${key}`;
+    if (input.tagName === 'INPUT') { input.type = 'number'; input.min = 0; input.max = key === 'totalLevel' ? 150 : 200; input.step = 1; }
+    input.addEventListener(input.tagName === 'SELECT' ? 'change' : 'input', () => {
+      if (input.value === '') bagDrafts.delete(`detail:${key}`); else bagDrafts.set(`detail:${key}`, input.value);
+      updateExportButton();
+    });
+    label.append(input); $('equipment-detail-inputs').append(label); detailInputs.set(key, input);
+  }
+  $('bag-element').append(...ELEMENTS.map(element => new Option(element.name, element.value)));
+  $('bag-element').addEventListener('change', () => {
+    if ($('bag-element').value === '') bagDrafts.delete('detail:element'); else bagDrafts.set('detail:element', $('bag-element').value);
+    updateExportButton();
+  });
+}
+
+function renderEquipmentDetails() {
+  let definition;
+  try { definition = catalog.bagDefinition(Number($('bag-id').value)); } catch {}
+  const supported = slotSave() && equipmentItem(definition);
+  $('equipment-details').hidden = !supported;
+  if (!supported) return;
+  const item = inventorySlot(bagSlot);
+  const current = item.id === Number($('bag-id').value) ? itemDetails(save, selectedContainer(), bagSlot) : {};
+  const choices = catalog.browse({ editableOnly: true }).filter(item => item.id <= 1023);
+  for (const [key, input] of detailInputs) {
+    if (input.tagName === 'SELECT') {
+      const matches = key === 'inherited' ? choices.filter(item => equipmentItem(catalog.bagDefinition(item.id))) : choices;
+      input.replaceChildren(new Option(`Keep · ${current[key] ? `${catalog.name(current[key])} (${current[key]})` : 'None'}`, ''), new Option('None / remove · 0', 0), ...matches.map(item => new Option(`${item.name} · ${item.id}`, item.id)));
+    } else input.placeholder = `Keep · ${current[key] || 0}`;
+    input.value = bagDrafts.get(`detail:${key}`) ?? '';
+  }
+  $('bag-element').value = bagDrafts.get('detail:element') ?? '';
+  let value = null;
+  try { value = equipmentElement(Number($('bag-id').value), current, catalog); } catch {}
+  $('bag-element').disabled = value === null;
+  $('bag-element-current').textContent = value === null ? 'Weapon / tool element requires equipment definitions.' : `Current: ${ELEMENTS.find(element => element.value === value)?.name || `Mixed mask ${value}`}`;
+}
+
 function updateBagPreview() {
   $('bag-name').textContent = 'Invalid item ID';
   $('bag-limit').textContent = 'Definition required';
@@ -371,7 +421,7 @@ function updateBagPreview() {
     $('bag-quantity').max = max;
     $('bag-limit').textContent = id ? `Maximum ${max} per slot` : 'Quantity must be 0';
     bagChanges();
-    $('bag-edit-note').textContent = !id ? 'Applying removes this item.' : id !== current.id ? 'Replacement clears upgrade metadata; blank level starts at 1.' : $('bag-level').value !== '' ? 'Sets every unit’s level; equipment bonuses are not recalculated.' : current.mixedLevels ? `Mixed levels kept: ${current.levels.join(', ')}.` : 'Existing levels and upgrade metadata are kept.';
+    $('bag-edit-note').textContent = !id ? 'Applying removes this item.' : id !== current.id ? 'Replacement clears previous metadata; blank level starts at 1.' : $('bag-level').value !== '' ? 'Sets every unit’s level; review attached upgrade materials too.' : current.mixedLevels ? `Mixed levels kept: ${current.levels.join(', ')}.` : 'Existing levels and metadata are kept unless you edit attachments below.';
     $('bag-edit-note').classList.toggle('warning-text', id !== current.id || !id);
   } catch (error) {
     $('bag-edit-note').textContent = error.message;
@@ -415,7 +465,7 @@ function renderBag() {
   const definitions = (catalog.count('item') ?? 0) > 0;
   $('allow-bag').disabled = !save || !save.playerProfile || !definitions;
   $('bag-fields').disabled = $('allow-bag').disabled || !$('allow-bag').checked;
-  $('bag-source').textContent = !definitions ? 'Load item definitions in Expert tools to enable editing.' : !save?.playerProfile && save ? 'Original player layout needs verification.' : '';
+  $('bag-source').textContent = !definitions ? 'Read item tables in Overview, or use Read game folder in the Windows app.' : !save?.playerProfile && save ? 'Original player layout needs verification.' : '';
   $('bag-summary').textContent = slotSave() ? `${items.filter(item => item.id).length} occupied / ${INVENTORIES[selectedContainer()].slots} saved slots` : 'No slot save loaded';
   $('container-count').textContent = `${INVENTORIES[selectedContainer()].slots} saved slots`;
   const itemIndex = new Map(catalog.browse().map(item => [item.id, item.group]));
@@ -469,6 +519,7 @@ function renderBag() {
   for (const name of ['id', 'quantity', 'level']) $(`bag-${name}`).value = bagDrafts.get(name) ?? (name === 'level' ? '' : slotSave() ? inventorySlot(bagSlot)[name] : '');
   updateBagPreview();
   renderBagChoices();
+  renderEquipmentDetails();
 }
 
 function selectBagSlot(slot) {
@@ -583,7 +634,7 @@ function renderGender() {
 function refreshLayout() {
   const loaded = Boolean(save);
   const system = save?.kind === 'system';
-  const visibility = { calendar: slotSave(), player: slotSave() && save.playerProfile, bag: slotSave() && save.playerProfile, system, progress: slotSave(), flags: slotSave(), 'system-expert': system, review: loaded, 'expert-tools': loaded };
+  const visibility = { calendar: slotSave(), player: slotSave() && save.playerProfile, bag: slotSave() && save.playerProfile, marriage: slotSave(), system, progress: slotSave(), flags: slotSave(), 'system-expert': system, review: loaded, 'expert-tools': loaded };
   for (const [id, visible] of Object.entries(visibility)) {
     $(id).hidden = !visible;
     const link = document.querySelector(`.nav-link[href="#${id}"]`);
@@ -650,6 +701,7 @@ function render({ syncCalendar = false } = {}) {
   renderConversion();
   renderGender();
   extraUi.render();
+  marriageUi.render();
   updateExportButton();
 }
 
@@ -658,6 +710,7 @@ function openDocument(next, isDemo = false) {
     save = next;
     demo = isDemo;
     extraUi.clear();
+    marriageUi.clear();
     $('bag-container').value = 'bag';
     lastContainer = 'bag';
     lastExport = undefined;
@@ -769,7 +822,7 @@ $('calendar-form').addEventListener('submit', event => {
 for (const name of ['day', 'season', 'year']) $(name).addEventListener('input', updateDatePreview);
 $('undo').addEventListener('click', () => { save?.undo(); render({ syncCalendar: true }); notify('Last edit undone.'); });
 $('redo').addEventListener('click', () => { save?.redo(); render({ syncCalendar: true }); notify('Last edit redone.'); });
-$('reset').addEventListener('click', () => { save?.reset(); extraUi.clear(); $('raw-value').value = ''; $('typed-value').value = ''; flagDrafts.clear(); playerDrafts.clear(); bagDrafts.clear(); storyValueDraft = undefined; profileDraft = undefined; render({ syncCalendar: true }); notify('Original restored in memory. You can undo this.'); });
+$('reset').addEventListener('click', () => { save?.reset(); extraUi.clear(); marriageUi.clear(); $('raw-value').value = ''; $('typed-value').value = ''; flagDrafts.clear(); playerDrafts.clear(); bagDrafts.clear(); storyValueDraft = undefined; profileDraft = undefined; render({ syncCalendar: true }); notify('Original restored in memory. You can undo this.'); });
 $('allow-system').addEventListener('change', renderSystem);
 $('expert-tools').addEventListener('toggle', () => { refreshLayout(); updateExportButton(); });
 document.querySelector('.nav-link[href="#expert-tools"]').addEventListener('click', () => { $('expert-tools').open = true; });
@@ -879,7 +932,7 @@ $('bag-next').addEventListener('click', () => { bagPage++; renderBag(); });
 for (const name of ['id', 'quantity', 'level']) $(`bag-${name}`).addEventListener('input', () => {
   if (!save) return;
   trackBagDraft(name);
-  if (name === 'id') renderBagChoices();
+  if (name === 'id') { renderBagChoices(); renderEquipmentDetails(); }
   updateBagPreview();
   updateExportButton();
 });
@@ -893,6 +946,7 @@ $('bag-results').addEventListener('change', () => {
     $('bag-id').value = id;
     if (id !== inventorySlot(bagSlot).id || !id) { $('bag-quantity').value = id ? 1 : 0; trackBagDraft('quantity'); }
     trackBagDraft('id');
+    renderEquipmentDetails();
     updateBagPreview();
     updateExportButton();
   });
@@ -903,10 +957,11 @@ $('bag-form').addEventListener('submit', event => {
   attempt(() => {
     if (!$('allow-bag').checked || $('bag-fields').disabled) throw new Error('Enable bag editing and load item definitions first.');
     const { changes, definition } = bagChanges();
-    save.setInventoryItem(selectedContainer(), bagSlot, changes, definition);
+    const details = Object.fromEntries([...bagDrafts].filter(([key]) => key.startsWith('detail:')).map(([key, value]) => [key.slice(7), value]));
+    editInventoryItem(save, selectedContainer(), bagSlot, changes, definition, catalog, details);
     bagDrafts.clear();
     render();
-    notify(`${INVENTORIES[selectedContainer()].label} slot applied in memory. Replacements reset metadata; same-item edits preserve it.`);
+    notify(`${INVENTORIES[selectedContainer()].label} item and selected attachments applied as one undoable edit.`);
   });
 });
 $('load-symbols').addEventListener('click', () => $('symbol-input').click());
@@ -919,11 +974,13 @@ $('symbol-input').addEventListener('change', async event => {
     const parsed = parseEmdeb(await file.arrayBuffer());
     const main = parsed.find(v => v.name === STORY_REGISTER.name);
     if (!main || main.bitOffset !== 0 || main.width !== 9) throw new Error('Unexpected story-register layout. Symbols were not loaded.');
-    if (profileDraft || flagDrafts.size) throw new Error('Apply or clear progress drafts before replacing developer symbols.');
+    marriageUi.validateSymbols(parsed);
+    if (profileDraft || flagDrafts.size || marriageUi.pending()) throw new Error('Apply or clear progress and marriage drafts before replacing developer symbols.');
     progressCatalog = new ProgressCatalog(parsed);
     symbols = progressCatalog.variables;
     flagPage = 0;
     renderFlags();
+    marriageUi.render();
     notify(`Loaded ${symbols.length.toLocaleString()} developer symbols. Story changes remain opt-in.`);
   } catch (error) { notify(error.message, true); }
 });
@@ -986,11 +1043,13 @@ $('use-reference-id').addEventListener('click', () => attempt(() => {
   notify('Item ID copied to a draft. Enter a verified save offset; nothing was written.');
 }));
 $('read-item-tables').addEventListener('click', () => $('item-table-input').click());
+$('read-bag-tables').addEventListener('click', () => $('item-table-input').click());
 $('item-table-input').addEventListener('change', async event => {
   const files = [...event.target.files];
   event.target.value = '';
   if (!files.length) return;
   try {
+    if (bagDrafts.size) throw new Error('Apply or clear item drafts before replacing definitions.');
     if (files.length > 4 || files.some(file => file.size > 16 * 1024 * 1024)) throw new Error('Read at most four reference tables, each smaller than 16 MiB.');
     const tables = await Promise.all(files.map(async file => new ItemTable(await file.arrayBuffer(), detectItemTable(file.name))));
     for (const table of tables) catalog.add(table);
@@ -999,6 +1058,42 @@ $('item-table-input').addEventListener('change', async event => {
     notify('Reference tables read locally. Your save and game files were not changed.');
   } catch (error) { notify(error.message, true); }
 });
+
+function renderLanguages() {
+  $('game-language').replaceChildren(...languages.options().map(locale => new Option(locale.label, locale.code)));
+  $('game-language').value = languages.code;
+  $('language-source').textContent = `${languages.languages.size} game languages loaded · missing names fall back to English`;
+  document.documentElement.lang = languages.code;
+}
+$('game-language').addEventListener('change', () => attempt(() => {
+  languages.select($('game-language').value); catalog.itemIndex = null;
+  try { localStorage.setItem('rf4s-language', languages.code); } catch {}
+  renderLanguages(); render();
+}));
+$('read-language-tables').addEventListener('click', () => $('language-input').click());
+$('language-input').addEventListener('change', async event => {
+  const files = [...event.target.files]; event.target.value = '';
+  if (!files.length) return;
+  try {
+    if (files.length > 21 || files.some(file => file.size > 16 * 1024 * 1024)) throw new Error('Read up to 21 extracted name tables, each smaller than 16 MiB.');
+    const tables = await Promise.all(files.map(async file => languageTable(file.name, await file.arrayBuffer())));
+    const staged = new LanguageCatalog(); staged.languages = new Map(languages.languages);
+    for (const table of tables) staged.add(table);
+    languages.languages = staged.languages; catalog.itemIndex = null;
+    renderLanguages(); render(); notify('Game-language names imported. Choose the language at the top; save bytes were not changed.');
+  } catch (error) { notify(error.message, true); }
+});
+window.addEventListener('rf4s-game-references', event => attempt(() => {
+  if (pendingDrafts()) throw new Error('Apply or clear all drafts before reading another game folder.');
+  const data = event.detail;
+  const nextLanguages = new LanguageCatalog(data.languages);
+  const nextRecipes = new SaveReferences(data.recipes);
+  languages.languages = nextLanguages.languages;
+  if (!languages.options().some(locale => locale.code === languages.code)) languages.code = 'en';
+  catalog.local = data.items; catalog.tables.clear(); catalog.itemIndex = null;
+  extraUi.references = nextRecipes;
+  renderLanguages(); render(); notify('Item definitions, recipes and language names read from your game folder. No game files were modified.');
+}));
 $('repair-crc').addEventListener('change', updateExportButton);
 $('export-save').addEventListener('click', exportSave);
 $('download-original').addEventListener('click', () => {
@@ -1071,6 +1166,8 @@ for (const section of document.querySelectorAll('main>section, main>details')) o
 window.addEventListener('beforeunload', event => {
   if (hasUnexportedEdits() || pendingDrafts()) { event.preventDefault(); event.returnValue = ''; }
 });
+window.rf4sHasPendingChanges = pendingDrafts;
+window.rf4sHasUnsavedChanges = () => Boolean(hasUnexportedEdits() || pendingDrafts());
 window.addEventListener('keydown', event => {
   if (!(event.ctrlKey || event.metaKey)) return;
   const key = event.key.toLowerCase();
@@ -1084,5 +1181,8 @@ window.addEventListener('keydown', event => {
   }
 });
 setupPlayer();
+setupEquipmentDetails();
+try { languages.select(localStorage.getItem('rf4s-language') || 'en'); } catch {}
+renderLanguages();
 referenceFields();
 render();

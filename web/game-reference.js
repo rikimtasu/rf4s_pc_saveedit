@@ -60,10 +60,11 @@ export class ItemTable {
 }
 
 export class ItemCatalog {
-  constructor(local = null) {
+  constructor(local = null, languages = null) {
     this.tables = new Map();
     this.local = local;
     this.itemIndex = null;
+    this.languages = languages;
   }
 
   add(table) {
@@ -84,7 +85,7 @@ export class ItemCatalog {
     return table.records[id];
   }
 
-  name(id) { return ITEM_NAMES[id] || `Unknown item ${id}`; }
+  name(id) { return this.languages?.name('items', id, ITEM_NAMES[id] || `Unknown item ${id}`) || ITEM_NAMES[id] || `Unknown item ${id}`; }
 
   browse({ query = '', group = 'all', editableOnly = false } = {}) {
     if (group !== 'all' && !ITEM_GROUPS.some(entry => entry.id === group)) throw new Error('Unknown item group.');
@@ -94,7 +95,7 @@ export class ItemCatalog {
       this.itemIndex = ids.map(id => {
         const record = this.record('item', id);
         return Object.freeze({ id, name: this.name(id), category: record?.category ?? null, group: itemGroup(record?.category).id, editable: Boolean(record && record.category !== 55) });
-      }).sort((a, b) => a.name.localeCompare(b.name, 'en') || a.id - b.id);
+      }).sort((a, b) => a.name.localeCompare(b.name, this.languages?.code || 'en') || a.id - b.id);
     }
     const text = String(query).trim().toLowerCase();
     return this.itemIndex.filter(item => (!editableOnly || item.editable) && (group === 'all' || item.group === group) && (!text || `${item.id} ${item.name}`.toLowerCase().includes(text)));

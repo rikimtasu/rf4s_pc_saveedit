@@ -9,6 +9,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 import webbrowser
+import sys
 
 WEB = Path(__file__).resolve().parent / 'web'
 mimetypes.add_type('text/javascript', '.js')
@@ -16,6 +17,12 @@ mimetypes.add_type('font/woff2', '.woff2')
 
 
 class EditorHandler(SimpleHTTPRequestHandler):
+    def log_message(self, format, *args):
+        # Windowed executables have no stderr; the standard logger would fail
+        # before sending the requested static page.
+        if sys.stderr is not None:
+            super().log_message(format, *args)
+
     def do_GET(self):
         if not self.safe_request():
             return
@@ -31,7 +38,7 @@ class EditorHandler(SimpleHTTPRequestHandler):
         super().do_HEAD()
 
     def empty_reference_module(self, head=False):
-        modules = {'/local-game-data.js': 'LOCAL_GAME_DATA', '/local-save-reference.js': 'LOCAL_SAVE_REFERENCE'}
+        modules = {'/local-game-data.js': 'LOCAL_GAME_DATA', '/local-save-reference.js': 'LOCAL_SAVE_REFERENCE', '/local-languages.js': 'LOCAL_LANGUAGES'}
         path = urlsplit(self.path).path
         if path not in modules or (WEB / path.lstrip('/')).is_file():
             return False

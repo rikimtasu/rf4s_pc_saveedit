@@ -15,7 +15,7 @@
   <a class="skip-link" href="#main">Skip to editor</a>
   <header class="app-header">
     <a class="brand" href="#overview"><span class="brand-icon"><i class="ti ti-plant-2" aria-hidden="true"></i></span><span>Rune Factory 4 Special<span class="brand-subtitle">Save editor</span></span></a>
-    <div class="header-actions"><span class="local-label"><span class="status-dot"></span>Local only</span><label class="theme-picker"><i class="ti ti-device-desktop" aria-hidden="true" id="theme-icon"></i><select id="theme" aria-label="Color theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></div>
+    <div class="header-actions"><span class="local-label"><span class="status-dot"></span>Local only</span><label class="language-picker">Game names<select id="game-language" aria-label="Game name language"><option value="en">English</option></select></label><label class="theme-picker"><i class="ti ti-device-desktop" aria-hidden="true" id="theme-icon"></i><select id="theme" aria-label="Color theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></div>
   </header>
   <div class="app-layout">
     <aside class="sidebar">
@@ -28,7 +28,8 @@
         <a class="nav-link" href="#bag"><i class="ti ti-briefcase" aria-hidden="true"></i>Bag & storage</a>
         <a class="nav-link" href="#skills" hidden>Skills</a>
         <a class="nav-link" href="#recipes" hidden>Recipes</a>
-        <a class="nav-link" href="#friendship" hidden>Friendship</a>
+         <a class="nav-link" href="#friendship" hidden>Friendship</a>
+         <a class="nav-link" href="#marriage" hidden>Marriage</a>
         <a class="nav-link" href="#people" hidden>People</a>
         <a class="nav-link" href="#monsters" hidden>Monsters</a>
         <a class="nav-link" href="#trophies" hidden>Trophy records</a>
@@ -54,6 +55,7 @@
            <span class="file-hint" id="file-hint">PC / Switch slot or rf4_sys.sav</span>
         </div>
         <div class="import-footer"><span class="small muted"><i class="ti ti-lock" aria-hidden="true"></i>Files never leave your browser</span><button class="text-button" id="load-demo">Try a demo<i class="ti ti-arrow-right" aria-hidden="true"></i></button></div>
+        <details class="card reference-import"><summary>Game references & languages</summary><p class="small muted">Names come from your game, not machine translations. Editor instructions remain in English. In the Windows app, use Read game folder in the toolbar to load names, items and recipes without extracting files.</p><div class="button-group"><button id="read-language-tables" type="button">Read language tables</button><button id="read-bag-tables" type="button">Read item tables</button></div><input id="language-input" type="file" multiple class="visually-hidden" accept=".eng,.jpn,.fra,.deu,.kor,.twn,.chn" aria-label="Choose extracted game name tables"><span id="language-source" class="small muted"></span></details>
         <div class="notice" id="notice" role="status" aria-live="polite"></div>
         <div class="confirm-panel" id="replace-confirm" hidden><span>Discard unexported edits?</span><div class="button-group"><button id="cancel-replace">Keep editing</button><button id="confirm-replace">Discard & open</button></div></div>
         <div class="metrics"><div class="metric"><span class="metric-label">Save integrity</span><span class="metric-value" id="integrity-value">Not checked</span><span class="small muted" id="integrity-detail">CRC-32 checksum</span></div><div class="metric"><span class="metric-label">In-game date</span><span class="metric-value" id="date-value">—</span><span class="small muted" id="date-detail">Waiting for a save</span></div><div class="metric"><span class="metric-label">Your changes</span><span class="metric-value" id="changes-value">0 bytes</span><span class="small muted" id="changes-detail">Original stays untouched</span></div></div>
@@ -82,6 +84,7 @@
             <label class="bag-choice">Item<select id="bag-results" aria-label="Matching bag items"><option value="">Choose an item</option></select></label>
             <div class="form-grid"><label>Quantity<input id="bag-quantity" type="number" min="0" max="9" step="1" required><span class="field-hint" id="bag-limit">Definition required</span></label><label>Set item level<input id="bag-level" type="number" min="1" max="10" step="1" placeholder="Keep existing levels"><span class="field-hint">Blank preserves each unit</span></label></div>
             <details class="manual-item-id"><summary>Manual item ID</summary><label>Item ID<input id="bag-id" type="number" min="0" max="2047" step="1" required><span class="field-hint" id="bag-name">0 clears this slot</span></label></details>
+            <details id="equipment-details" class="equipment-details"><summary>Attached items & element</summary><p class="small muted">Equipment only. Each attached ID is a 10-bit field (0–1023). Blank preserves it; 0 removes it. Element changes append crystals to unused upgrade slots and raise the item level; existing attachments are never removed automatically.</p><div id="equipment-detail-inputs" class="form-grid"></div><div class="form-grid"><label>Set weapon / tool element<select id="bag-element"><option value="">Keep existing element</option></select></label><span id="bag-element-current" class="small muted"></span></div><span class="small warning-text">Attachment edits need in-game testing. Special material effects and bonuses are calculated by the game on load.</span></details>
             <div id="bag-edit-note" class="small muted bag-edit-note" role="status"></div><div class="card-footer"><span class="small muted" id="bag-offset">No slot selected</span><div class="button-group"><button id="clear-bag" type="button" class="text-button">Clear draft</button><button type="submit">Apply slot<i class="ti ti-check" aria-hidden="true"></i></button></div></div>
           </fieldset></form>
         </div>
@@ -104,6 +107,15 @@
           <label class="check-label"><input id="allow-friendship" type="checkbox">Enable friendship editing</label>
           <form id="friendship-form"><fieldset id="friendship-fields" disabled><div class="form-grid"><label>Person<select id="friend-person"></select></label><label>Friendship level<input id="friend-level" type="number" min="0" max="10000" step="1" required></label></div><div class="card-footer"><span id="friendship-note" class="small muted" role="status"></span><div class="button-group"><button id="clear-friendship" type="button" class="text-button">Clear draft</button><button type="submit">Apply friendship</button></div></div></fieldset></form>
         </details>
+      </section>
+      <section id="marriage" class="editor-section" hidden>
+        <h2>Marriage</h2><div class="card"><span id="marriage-summary" class="small muted"></span><p class="warning-strip">Changing flags does not run proposal / wedding events or initialize family state. Back up your save and test an exported copy.</p><label class="check-label"><input id="allow-marriage" type="checkbox" disabled>I understand the risks; enable marriage flag editing</label>
+          <form id="marriage-form"><fieldset id="marriage-fields" disabled>
+            <label>Spouse recorded in this slot<select id="marriage-spouse"></select></label><div class="form-grid"><label>Anniversary season<select id="marriage-season"></select></label><label>Anniversary day (0 = unset)<input id="marriage-day" type="number" min="0" max="30" step="1" required></label></div>
+            <label class="check-label"><input id="marriage-proposal" type="checkbox">Can receive engagement ring</label><label class="check-label"><input id="marriage-anniversaryTalk" type="checkbox">Anniversary conversation recorded</label><label class="check-label"><input id="marriage-weddingMemory" type="checkbox">Wedding memory flag</label>
+            <h3>Candidate event records</h3><label>Candidate (does not change spouse)<select id="marriage-candidate"></select></label><label class="check-label"><input id="marriage-marriageEvent" type="checkbox">Marriage event cleared</label><label class="check-label"><input id="marriage-newlywedEvent" type="checkbox">Newlywed event cleared</label>
+            <div class="card-footer"><span id="marriage-note" class="small muted" role="status"></span><div class="button-group"><button id="clear-marriage" type="button" class="text-button">Clear draft</button><button type="submit">Apply marriage flags</button></div></div>
+          </fieldset></form></div>
       </section>
       <section id="people" class="editor-section" hidden>
         <h2>People</h2><details class="card extended-card"><summary>Edit stored person stats</summary>

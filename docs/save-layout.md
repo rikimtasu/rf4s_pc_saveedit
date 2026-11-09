@@ -96,11 +96,27 @@ Fully restart the game before an acceptance test so a previously loaded swapped 
 | 0–1, bit 15 | Unknown flag, preserved for same-ID edits |
 | 2–3 | Unmapped metadata, preserved for same-ID edits |
 | 4 onward | Zero-based item level entries |
-| Remaining bytes | Unmapped metadata, preserved for same-ID edits |
+| Remaining bytes | Equipment attachments / bonus metadata (see below), otherwise preserved |
 
 The initializer clears all 28 bytes and initializes one level entry for nonstackable items or nine for stackable items. `max_stack > 1` selects the nine-entry representation; otherwise the limit is one. Level bytes are exposed as 1–10. Explicit level edits initialize every entry in that representation; blank preserves existing individual levels and newly added units inherit the first unit's level. Same-ID quantity writes use the `0x87FF` preserve mask. Removal and replacement clear the whole record, including flag and upgrade metadata.
 
-The GUI requires real item-definition records, checks index bounds and rejects category 55 (category placeholders). It does not infer material names, equipment upgrade fields, other container labels or capacity unlock flags from asset offsets. All 60 serialized records are exposed, which does not establish that every slot is currently accessible in-game.
+The GUI requires real item-definition records, checks index bounds and rejects category 55 (category placeholders). Attachment editing is limited to nonstackable equipment whose category is used by the game's equipment-parameter reader; it is never applied to stacked level arrays. All 60 serialized records are exposed, which does not establish that every slot is currently accessible in-game.
+
+### Equipment attachment fields
+
+The supplied CTs describe the embedded item record (inert labels only, no scripts executed). Executable `0x7E1E0..0x7E203` copies its 28 bytes directly to saved bag records; other saved containers use the same copy. `0x43E10..0x43E5E` and `0x43F10..0x43F22` read inherited equipment from low 10 bits at +8. `0x441BF..0x44255` reads the packed crafting / upgrade materials. These fields are not pointers to game definitions.
+
+| Record-relative field | Storage |
+| --- | --- |
+| Inherited equipment abilities | +8, bits 0–9 |
+| Rarity bonus | +8, bits 10–17; UI 0–200 |
+| Total-level bonus | +6 u8; UI 0–150 |
+| Three crafting attachments | +12 u32, bits 0–9 / 10–19 / 20–29 |
+| Nine upgrade attachments | +16 / +20 / +24 u32, three 10-bit IDs per word |
+
+Writes mask only the selected fields, preserving the top two bits of each material word and every unrelated byte. Updating upgrade IDs raises (never automatically lowers) the level to include the highest occupied upgrade slot. Blank controls preserve saved values, including unknown IDs; replacement still clears prior metadata before applying explicitly selected attachments. Changes are one atomic undo entry.
+
+Weapon/tool elements derive from inherited/base `equipment.gear_params & 127` followed by crystal attachments, not an invented saved element byte. The executable's element switch at `0x448D3..0x4491A`, table `0x44EA4 / 0x44EC4`, and handlers `0x44DF9..0x44E83` map Earth 839, Wind 862, Water 870, Fire 872, Light 880, Dark 881 and Love 882. Adding a different crystal first clears a conflicting element; repeating it sets the desired element. The editor appends crystals after existing upgrades and refuses insufficient capacity or an unrecognized element mask. Special effects / full stat recalculation remain the game's responsibility; **in-game acceptance remains untested**.
 
 ## Integrity
 
