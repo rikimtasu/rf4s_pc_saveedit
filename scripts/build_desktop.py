@@ -8,6 +8,7 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
+FONT_ASSETS = ('NotoSans.ttf', 'NotoSansCJKsc-Medium.otf', 'NotoSans-OFL.txt', 'NotoSansCJK-OFL.txt', 'NotoSans-README.md')
 
 
 def main():
@@ -22,6 +23,9 @@ def main():
     builtin = ROOT / 'builtin'
     if not (builtin / 'references.json.gz').is_file() or not (builtin / 'icons.zip').is_file():
         parser.error('Prepare the standalone catalog/icons with python -m scripts.generate_builtin <game-folder>, or use --game.')
+    fonts = ROOT / 'web' / 'assets' / 'fonts'
+    if any(not (fonts / filename).is_file() for filename in FONT_ASSETS):
+        parser.error('Bundled Noto interface fonts/licenses are missing from web/assets/fonts.')
     subprocess.run([shutil.which('npm.cmd') or 'npm', 'run', 'build:native-core'], cwd=ROOT, check=True)
     temp_base = Path(tempfile.gettempdir()) / 'opencode'
     with tempfile.TemporaryDirectory(prefix='rf4s-native-package-', dir=temp_base if temp_base.is_dir() else None) as temp:
@@ -37,6 +41,7 @@ def main():
             if args.include_local and source.is_file(): shutil.copy2(source, web / filename)
             else: (web / filename).write_text(f'export const {symbol} = null;\n', encoding='utf-8')
         datas = [(str(web), 'web'), (str(ROOT / 'vendor' / 'venti' / 'schema.json'), 'vendor/venti')]
+        datas.extend((str(fonts / filename), 'web/assets/fonts') for filename in FONT_ASSETS)
         datas.extend((str(builtin / filename), 'builtin') for filename in ['references.json.gz', 'icons.zip'])
         datas.extend((str(ROOT / filename), '.') for filename in ['COPYING', 'ATTRIBUTION.md'])
         spec = staging / 'RF4S Save Editor.spec'

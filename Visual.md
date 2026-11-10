@@ -33,7 +33,7 @@ Rules:
 - No emoji. Icons = Tabler outline webfont (5800+, already loaded): <i class="ti ti-home"></i>. Outline only — never use -filled suffixes (ti-heart-filled etc. are not loaded and will render blank). Inherits color + font-size from parent. Decorative icons get aria-hidden="true"; icon-only buttons get aria-label. Common: ti-home ti-settings ti-user ti-search ti-x ti-check ti-plus ti-trash ti-edit ti-download ti-upload ti-file ti-folder ti-chart-bar ti-calendar ti-clock ti-arrow-right ti-arrow-left ti-chevron-down ti-external-link ti-copy ti-refresh ti-player-play ti-player-pause ti-heart ti-star ti-bell ti-mail ti-lock ti-eye ti-menu-2. Don't hand-draw icon SVG paths.
 - No gradients, drop shadows, blur, glow, or neon effects
 - No dark/colored backgrounds on outer containers (transparent only — host provides the bg)
-- Typography: The default font is Inter. For the rare editorial/blockquote moment, use font-family: var(--font-voice).
+- Typography: The default font is Noto Sans Medium (500), paired with bundled Noto Sans CJK SC Medium for consistent Chinese/English text. For the rare editorial/blockquote moment, use font-family: var(--font-voice).
 - Headings: h1 = 22px, h2 = 18px, h3 = 16px — all font-weight: 500. Heading color is pre-set to var(--text-primary) — don't override it. Body text = 16px, weight 400, line-height: 1.7. Two weights only: 400 regular, 500 bold. Never use 600 or 700 — they look heavy against the host UI.
 - Sentence case always. Never Title Case, never ALL CAPS. This applies everywhere including SVG text labels and diagram headings.
 - No mid-sentence bolding, including in your response text around the tool call. Entity names, class names, function names go in code style not bold. Bold is for headings and labels only.

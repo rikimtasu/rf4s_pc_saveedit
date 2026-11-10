@@ -36,3 +36,17 @@ test('expert-only flags, references and raw editing are collapsed off the main i
   assert.ok(html.includes('id="correct-gender"'), 'Export needs opt-in gender correction');
   assert.ok(html.includes('<div id="player-inputs"></div>'), 'Player groups must stack instead of nesting the groups inside a form grid');
 });
+
+test('offline typography uses local Noto Latin/CJK faces and Medium body/control weights', () => {
+  const css = readFileSync(new URL('../web/styles.css', import.meta.url), 'utf8');
+  assert.ok(!css.includes('Inter'));
+  assert.match(css, /--font-sans:'Noto Sans','Noto Sans CJK SC'/);
+  assert.match(css, /body\{[^}]*font:500 16px/);
+  assert.match(css, /button,input,select,textarea\{font:500 14px/);
+  for (const filename of ['NotoSans.ttf', 'NotoSansCJKsc-Medium.otf']) {
+    assert.ok(css.includes(`assets/fonts/${filename}`));
+    const bytes = readFileSync(new URL(`../web/assets/fonts/${filename}`, import.meta.url));
+    assert.ok(bytes.length > 100000);
+    assert.ok(bytes.subarray(0, 4).equals(Buffer.from([0, 1, 0, 0])) || bytes.subarray(0, 4).toString() === 'OTTO');
+  }
+});

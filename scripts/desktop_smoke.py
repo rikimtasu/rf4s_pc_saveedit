@@ -7,7 +7,7 @@ from unittest.mock import patch
 import zlib
 
 from PySide6.QtCore import QTimer
-from PySide6.QtGui import QPalette
+from PySide6.QtGui import QPalette, QTextLayout
 from PySide6.QtWidgets import QCheckBox, QPushButton
 from native_save import local_references
 
@@ -28,6 +28,11 @@ def run(app, window, destination, game=None):
             # packaged catalog must provide the actual definitions and icons.
             original = bytes(window.backend.call('demoBytes'))
             window.open_bytes(original, 'rf4_s01.sav')
+            checks['notoMediumFont'] = window.font().families() == ['Noto Sans', 'Noto Sans CJK SC'] and window.font().weight() == 500
+            layout = QTextLayout('English 中文 剧情编辑 繁體字', window.font())
+            layout.beginLayout(); line = layout.createLine(); line.setLineWidth(1000); layout.endLayout()
+            runs = layout.glyphRuns()
+            checks['notoChineseAndEnglish'] = {run.rawFont().familyName() for run in runs} == {'Noto Sans', 'Noto Sans CJK SC'} and all(run.rawFont().weight() == 500 and 0 not in run.glyphIndexes() for run in runs)
             checks['standaloneLanguages'] = window.language_combo.count() == 7 and len(window.nickname_names()) == 186
             references = local_references()
             expected_items = references['items']['tables']['item']['count'] - 1
@@ -69,6 +74,16 @@ def run(app, window, destination, game=None):
                 person = window.backend.call('relationships')[1]
                 checks['datingAndNicknames'] = (person['dating'], person['npcCallsPlayer'], person['playerCallsNpc']) == (1, 94, 136)
                 window.write_file(output / 'synthetic.edited.sav', edited)
+                reset_before = window.backend.call('working')
+                window.nickname_reset_buttons['both'].click()
+                defaults = window.backend.call('relationshipDefaults', id=2)['defaults']
+                checks['nicknameResetDraft'] = window.backend.call('working') == reset_before and form.value('npcCallsPlayer') == defaults['npcCallsPlayer'] and form.value('playerCallsNpc') == defaults['playerCallsNpc']
+                window.apply_form(form, form.apply_callback)
+                person = window.backend.call('relationships')[1]
+                checks['nicknameResetPreservesDating'] = person['dating'] == 1 and all(person[key] == value for key, value in defaults.items())
+                window.backend.call('undo'); window.refresh()
+                checks['nicknameResetUndo'] = window.backend.call('working') == reset_before
+                window.grab().save(str(output / 'desktop-nickname-reset.png'))
                 system = bytearray(9304); system[:4] = b'RF4D'; struct.pack_into('<I', system, 8, 3)
                 system[0x504:0x508] = b'Lest'; struct.pack_into('<I', system, 4, zlib.crc32(system[8:]))
                 window.open_bytes(system, 'rf4_sys.sav')
@@ -92,8 +107,38 @@ def run(app, window, destination, game=None):
             window.grab().save(str(output / 'desktop-recipes.png'))
             window.backend.call('undo')
             checks['learnAllUndo'] = bytes(window.backend.call('working')) == original
+            checks['compactTypography'] = window.font().pointSize() == 11 and window.inventory_grid.gridSize().width() == 104 and window.inventory_form.controls['id'].iconSize().width() == 24
+            window.resize(1000, 720)
+            page('flags'); window.endgame_button.click()
+            checks['endgameStagedOnly'] = window.story_form.value('target') == '511' and bytes(window.backend.call('working')) == original
+            edit(window.story_form, 'acknowledgeRisk', 1)
+            window.apply_form(window.story_form, window.story_form.apply_callback)
+            checks['endgameApplied'] = window.backend.call('storyJumpPreview', target=511)['from'] == 511
+            window.backend.call('undo')
+            page('soil'); edit(window.soil_form, 'health', 255); edit(window.soil_form, 'all', 1)
+            window.apply_form(window.soil_form, window.soil_form.apply_callback)
+            checks['soilBulk'] = all(window.backend.call('soil', farm=0, patch=i)['values']['health'] == 255 for i in range(18))
+            window.grab().save(str(output / 'desktop-soil.png'))
+            window.backend.call('undo')
+            page('relationships'); window.record_selectors['relationships'].setCurrentIndex(2)
+            form = window.record_forms['relationships']; edit(form, 'experimental', 1); edit(form, 'dating', 1)
+            window.apply_form(form, form.apply_callback)
+            checks['experimentalDating'] = window.backend.call('relationships')[2]['dating'] == 1
+            window.backend.call('undo')
+            page('marriage'); edit(window.marriage_form, 'spouse', 21); edit(window.marriage_form, 'experimental', 1)
+            window.apply_form(window.marriage_form, window.marriage_form.apply_callback)
+            checks['experimentalSpouse'] = window.backend.call('marriage', candidate=1)['spouse'] == 21
+            window.backend.call('undo')
+            window.backend.call('setFlag', name='REG_MON_HOUSE0_L_LV', value=1)
+            page('roster'); form = window.roster_form
+            edit(form, 'species', 3); edit(form, 'name', '沃尔卡农'); edit(form, 'acknowledgeRisk', 1)
+            window.apply_form(form, form.apply_callback)
+            checks['experimentalRoster'] = window.backend.call('monsters')[0]['species'] == 3 and window.backend.call('roster')['housing'][0]['free'] == 3
+            window.grab().save(str(output / 'desktop-roster.png'))
+            window.backend.call('undo'); window.backend.call('undo')
+            checks['newEditorsUndo'] = bytes(window.backend.call('working')) == original and not window.pending()
             if not all(checks.values()) or window.test_errors: raise AssertionError((checks, window.test_errors))
-            (output / 'desktop-test.json').write_text(json.dumps({'passed': True, 'native': True, 'checks': checks}, indent=2), encoding='utf-8')
+            (output / 'desktop-test.json').write_text(json.dumps({'passed': True, 'native': True, 'version': app.applicationVersion(), 'checks': checks}, indent=2), encoding='utf-8')
             window.closing = True; app.exit(0)
         except Exception as error:
             (output / 'desktop-test.json').write_text(json.dumps({'passed': False, 'error': str(error), 'checks': checks}, indent=2), encoding='utf-8')

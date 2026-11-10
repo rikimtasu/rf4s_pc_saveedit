@@ -85,3 +85,37 @@ test('invalid and mixed-invalid edits fail atomically without adding undo entrie
   new DataView(data.buffer).setUint32(4, crc32(data.subarray(8)), true);
   assert.throws(() => new RelationshipEditor(new SaveDocument(data)).values(1), /slot/);
 });
+
+test('current-gender nickname defaults cover all main NPCs and never alter bytes/history', () => {
+  for (const gender of ['male', 'female']) for (let id = 1; id <= 23; id++) {
+    const { save, editor } = fixture(id);
+    save.setNumber(0x36, 'u8', gender === 'female' ? 1 : 0);
+    save.setPlayer({ money: 123 }); save.undo();
+    const bytes = save.data.slice(), undo = structuredClone(save.undoStack), redo = structuredClone(save.redoStack);
+    const result = editor.currentGenderDefaults(id);
+    assert.deepEqual(result, { id, gender, defaults: gender === 'male' ? { npcCallsPlayer: 23 + id, playerCallsNpc: id } : { npcCallsPlayer: 70 + id, playerCallsNpc: 47 + id } });
+    assert.deepEqual(save.data, bytes); assert.deepEqual(save.undoStack, undo); assert.deepEqual(save.redoStack, redo);
+    const dating = editor.values(id).dating, friendship = save.readNumber(offset(id), 'i32');
+    editor.apply(id, result.defaults);
+    assert.equal(editor.values(id).dating, dating); assert.equal(save.readNumber(offset(id), 'i32'), friendship);
+    assert.equal(editor.values(id).npcCallsPlayer, result.defaults.npcCallsPlayer);
+    assert.equal(editor.values(id).playerCallsNpc, result.defaults.playerCallsNpc);
+    save.undo(); assert.deepEqual(save.data, bytes);
+  }
+});
+
+test('nickname defaults use current saved gender, never appearance/original/export overrides or a guess', () => {
+  const { save, editor } = fixture();
+  save.build({ gender: 'female', resetAppearance: true });
+  assert.equal(editor.currentGenderDefaults(1).gender, 'male');
+  save.setNumber(0x20740, 'i32', 9999);
+  assert.equal(editor.currentGenderDefaults(1).gender, 'male');
+  save.setNumber(0x36, 'u8', 1);
+  assert.equal(save.gender(save.original), 'male');
+  assert.equal(editor.currentGenderDefaults(1).gender, 'female');
+  save.setNumber(0x36, 'u8', 2);
+  const before = save.data.slice(), depth = save.undoStack.length;
+  assert.throws(() => editor.currentGenderDefaults(1), /unrecognized/);
+  assert.deepEqual(save.data, before); assert.equal(save.undoStack.length, depth);
+  for (const id of [0, 24, 25, 26]) assert.throws(() => editor.currentGenderDefaults(id));
+});

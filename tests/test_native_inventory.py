@@ -47,11 +47,13 @@ class NativeInventoryTests(unittest.TestCase):
         self.app.processEvents()
 
     def test_default_text_and_item_picker_icons_are_readable(self):
-        self.assertGreaterEqual(self.window.font().pointSizeF(), 12, 'The native default text is too small')
-        self.assertGreaterEqual(self.window.inventory_form.labels['id'].font().pointSizeF(), 12)
-        self.assertGreaterEqual(self.window.inventory_grid.font().pointSizeF(), 12)
-        self.assertGreaterEqual(self.window.inventory_form.controls['id'].iconSize().width(), 40,
-                                'Item choices need game-sized icons, not tiny menu glyphs')
+        self.assertEqual(self.window.font().pointSizeF(), 11, 'Use the compact, readable default without inherited scale inflation')
+        self.assertEqual(self.window.inventory_form.labels['id'].font().pointSizeF(), 11)
+        self.assertEqual(self.window.inventory_grid.font().pointSizeF(), 11)
+        self.assertEqual(self.window.inventory_grid.gridSize().width(), 104)
+        self.assertEqual(self.window.inventory_form.controls['id'].iconSize().width(), 24)
+        self.assertEqual(self.window.inventory_form.controls['id'].view().iconSize().width(), 24,
+                         'Keep picker rows compact while the selected item has a separate larger icon')
 
     def test_nord_recipe_and_search_popups_have_consistent_readable_colors(self):
         from PySide6.QtGui import QPalette
@@ -100,7 +102,7 @@ class NativeInventoryTests(unittest.TestCase):
         from PySide6.QtCore import Qt
         form = self.window.inventory_form
         self.assertEqual(self.window.inventory_model.rowCount(), 990)
-        self.assertGreaterEqual(self.window.inventory_grid.iconSize().width(), 56)
+        self.assertEqual(self.window.inventory_grid.iconSize().width(), 40)
         form.write('quantity', 'abc'); form.track('quantity')
         self.window.inventory_grid.setCurrentIndex(self.window.inventory_model.index(5))
         self.assertEqual(self.window.inventory_slot, 0)

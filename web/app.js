@@ -11,6 +11,7 @@ import { LOCAL_LANGUAGES } from './local-languages.js';
 import { LanguageCatalog, languageTable } from './language-core.js';
 import { MarriageUI } from './marriage-ui.js';
 import { equipmentItem, itemDetails, editInventoryItem, equipmentElement, ELEMENTS } from './item-details.js';
+import { previewStoryJump, applyStoryJump, explainStoryJump, ENDGAME_SHORTCUT } from './story-jump.js';
 
 const $ = id => document.getElementById(id);
 const bytesText = bytes => Array.from(bytes, byte => byte.toString(16).toUpperCase().padStart(2, '0')).join(' ');
@@ -569,6 +570,7 @@ function renderProgress() {
   $('story-fields').disabled = !enabled;
   $('story-stage').value = storyValueDraft ?? (slotSave() ? save.flag(STORY_REGISTER) : '');
   $('story-current').textContent = slotSave() ? `Current stage ${save.flag(STORY_REGISTER)}${storyValueDraft !== undefined ? ' · draft not applied' : ''}` : 'No slot save loaded';
+  renderStoryJump();
   $('save-profile').disabled = !slotSave() || demo;
   $('save-profile').firstChild.textContent = profileDraft ? 'Download staged profile' : 'Download profile';
   $('apply-profile').disabled = !enabled || !profileDraft;
@@ -592,6 +594,24 @@ function renderProgress() {
     rest.textContent = `Preview shows the first 100 of ${profileDraft.entries.length} values; all are applied. Use the exported JSON to review the full profile.`;
     $('profile-preview').append(rest);
   }
+  const profileMain = profileDraft?.entries.find(entry => entry.variable.name === STORY_REGISTER.name);
+  if (slotSave() && profileMain) {
+    const preview = document.createElement('pre'); preview.className = 'story-preview';
+    try { preview.textContent = explainStoryJump(previewStoryJump(save, progressCatalog, { target: profileMain.value, flags: Object.fromEntries(profileDraft.entries.map(({ variable, value }) => [variable.name, value])) })); }
+    catch (error) { preview.textContent = `Preview unavailable: ${error.message}`; }
+    $('profile-preview').append(preview);
+  }
+}
+
+function storyJumpOptions() {
+  if ($('story-use-profile').checked && !profileDraft) throw new Error('Stage a supporting profile first or turn off profile inclusion.');
+  return { target: $('story-stage').value, flags: $('story-use-profile').checked ? Object.fromEntries(profileDraft.entries.map(({ variable, value }) => [variable.name, value])) : {}, acknowledgeRisk: $('story-ack').checked, allowRewind: $('story-rewind').checked };
+}
+
+function renderStoryJump() {
+  if (!slotSave()) { $('story-preview').textContent = 'No slot save loaded'; return; }
+  try { $('story-preview').textContent = explainStoryJump(previewStoryJump(save, progressCatalog, storyJumpOptions())); }
+  catch (error) { $('story-preview').textContent = `Preview unavailable: ${error.message}`; }
 }
 
 function renderConversion() {
@@ -719,6 +739,8 @@ function openDocument(next, isDemo = false) {
     storyValueDraft = undefined;
     profileDraft = undefined;
     $('story-ack').checked = false;
+    $('story-use-profile').checked = false;
+    $('story-rewind').checked = false;
     $('allow-system').checked = false;
     $('allow-conversion').checked = false;
     $('correct-gender').checked = false;
@@ -830,8 +852,10 @@ for (const id of ['correct-gender', 'export-gender', 'reset-appearance', 'reset-
 $('story-ack').addEventListener('change', renderProgress);
 $('story-stage').addEventListener('input', () => {
   storyValueDraft = slotSave() && $('story-stage').value !== '' && Number($('story-stage').value) === save.flag(STORY_REGISTER) ? undefined : $('story-stage').value;
+  renderStoryJump();
   updateExportButton();
 });
+for (const id of ['story-use-profile', 'story-rewind']) $(id).addEventListener('change', renderStoryJump);
 $('story-marker').replaceChildren(new Option('Choose a marker', ''), ...STORY_MARKERS.map(marker => new Option(`${marker.value} · ${marker.label}`, marker.value)));
 $('story-marker').addEventListener('change', () => {
   if ($('story-marker').value === '') return;
@@ -840,11 +864,20 @@ $('story-marker').addEventListener('change', () => {
   renderProgress();
 });
 $('clear-story').addEventListener('click', () => { storyValueDraft = undefined; renderProgress(); updateExportButton(); });
+$('stage-endgame').addEventListener('click', () => attempt(() => {
+  if (storyValueDraft !== undefined || profileDraft) throw new Error('Apply or clear the story/profile draft before choosing a shortcut.');
+  storyValueDraft = ENDGAME_SHORTCUT.target;
+  profileDraft = { label: ENDGAME_SHORTCUT.label, entries: progressCatalog.entries(ENDGAME_SHORTCUT.flags) };
+  $('story-use-profile').checked = true;
+  renderProgress(); updateExportButton();
+  notify('End-game flags staged only. Review omitted actions before applying; no events or world initialization run.', true);
+}));
 $('story-form').addEventListener('submit', event => {
   event.preventDefault();
   attempt(() => {
     if (!slotSave() || !$('allow-flags').checked || !$('story-ack').checked) throw new Error('Enable story editing and acknowledge incomplete jump dependencies first.');
-    save.setFlag(STORY_REGISTER, $('story-stage').value);
+    applyStoryJump(save, progressCatalog, storyJumpOptions());
+    if ($('story-use-profile').checked) { profileDraft = undefined; flagDrafts.clear(); $('story-use-profile').checked = false; }
     storyValueDraft = undefined;
     flagDrafts.delete(STORY_REGISTER.name);
     render();
@@ -892,8 +925,11 @@ $('save-profile').addEventListener('click', () => attempt(() => {
 $('clear-profile').addEventListener('click', () => { profileDraft = undefined; renderProgress(); updateExportButton(); });
 $('apply-profile').addEventListener('click', () => attempt(() => {
   if (!slotSave() || !profileDraft || !$('allow-flags').checked || !$('story-ack').checked) throw new Error('Enable story editing and acknowledge incomplete dependencies first.');
-  save.setFlags(profileDraft.entries, profileDraft.label);
+  const main = profileDraft.entries.find(entry => entry.variable.name === STORY_REGISTER.name);
+  if (main) applyStoryJump(save, progressCatalog, { target: main.value, flags: Object.fromEntries(profileDraft.entries.map(({ variable, value }) => [variable.name, value])), label: profileDraft.label, acknowledgeRisk: $('story-ack').checked, allowRewind: $('story-rewind').checked });
+  else save.setFlags(profileDraft.entries, profileDraft.label);
   profileDraft = undefined;
+  $('story-use-profile').checked = false;
   flagDrafts.clear();
   render();
   notify('Named flags applied as one undoable edit. This does not replay events, grant rewards or initialize quest records.', true);

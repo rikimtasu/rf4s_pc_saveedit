@@ -1,3 +1,32 @@
+# v0.4 — Story, soil, experimental roster and nickname resets
+
+Download **RF4S-Save-Editor-v0.4-win-x64.zip**, extract it and run **RF4S Save Editor.exe**. Windows 10/11 x64; executable approximately **49.4 MiB**. No installation, Python, Node, browser, local server or game-folder reading is required. Previous releases remain available.
+
+## New editors and shortcuts
+
+- **Story jump planner:** preview a target stage plus explicit supporting flags, exact byte/mask changes, candidate conditions and unresolved dependencies. Apply atomically with undo; rewinds require separate acknowledgement. Story-bearing profiles stage into the native planner.
+- **Experimental end-game shortcut:** stages progress 511 and two documented Ventuswill-related clears for review. It does not execute the ending, initialize the world, clean active events, grant rewards/achievements or modify the separate system save.
+- **Soil editor:** raw packed health, growth/yield/quality/size, defense and level/progress values. Edit one patch or changed fields across used patches of one field. Crop records and unused seasonal patches are preserved.
+- **Experimental relationships:** opt-in dating-bit editing for all 23 audited main NPC records; opt-in spouse IDs within the five-bit 0–31 range. Does not add missing confession/date/wedding scripts. Guests do not have an audited persisted dating field and remain unsupported there.
+- **Experimental roster creation:** add species IDs 1–255 into empty tamed-monster slots, using basic or copied saved stats. Requires built-room capacity (four per room); existing monsters are never overwritten. NPC species can lack usable monster AI/models/behavior and are not guaranteed to spawn or survive gameplay transitions.
+- **Nickname reset shortcuts:** reset NPC→player, player→NPC, or both for the selected NPC using the current saved **Lest/Frey** gender. Resets stage drafts only and preserve dating/friendship. Unknown gender is not guessed.
+
+## Readability and retained functionality
+
+- Bundled **Noto Sans Medium (500)** and **Noto Sans CJK SC Medium** replace Inter/system-dependent Chinese fallback. No font installation or runtime network access is needed; both SIL OFL notices are included.
+- Compact **11pt** body text, **16pt** page headings, smaller tiles/icons/picker rows and Nord colors. Forms still reflow at 640×480; drafts survive resizing and English/Chinese switching.
+- Game-style inventory grid, shared lazy picker models, **Learn all recipes / Ctrl+Shift+L**, standalone references/icons and all v0.3 direct-export/backups and atomic-draft behavior are retained.
+
+## Verification and important limits
+
+150 JavaScript tests passed, including all 512 stored story targets, soil bit preservation, PC/Switch CRC/undo, experimental relationship bounds, roster capacity and failed-batch rollback. Native UI/layout tests and standalone executable smoke tests cover the new editors and nickname reset behavior. Narrow read-only executable replays verify soil copy loops, main-NPC dating queries and roster occupancy counting; **they do not prove in-game story, romance or NPC-monster compatibility**.
+
+**Back up the entire save folder and close the game before editing.** A valid checksum is not proof of gameplay acceptance. Use **Save as…** for experimental copies and test in-game before replacing important saves. Undo changes memory, not an already exported file. PC ↔ extracted Switch conversion remains experimental. See [expanded editors and executable evidence](docs/expanded-editors.md), [story-jump details](docs/story-jump-planner.md), and [nickname guidance](docs/player-name-and-relationships.md).
+
+The public package excludes personal saves, raw private reference modules, game executables and full game archives. Curated game-derived editor references/icons retain their owners' copyright and notices. Editor/runtime/font license documents are included.
+
+---
+
 # v0.3 — Standalone icons, tourists and direct export
 
 Download **RF4S-Save-Editor-v0.3-win-x64.zip**, extract it and run **RF4S Save Editor.exe**. Windows 10/11 x64; executable approximately **34.8 MiB**. No installation, Python, Node, browser, local server or game-folder reading is required.

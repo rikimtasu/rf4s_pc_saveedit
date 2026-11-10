@@ -1,6 +1,7 @@
 """Native UX and standalone catalog checks; exports only inside temporary folders."""
 import ctypes
 import importlib.util
+import json
 import os
 from pathlib import Path
 import struct
@@ -77,6 +78,62 @@ class StreamlinedUiTests(unittest.TestCase):
         self.assertFalse(self.window.pending())
         self.assertEqual(self.window.backend.state()['undo'], 1)
         self.window.backend.call('undo'); self.assertEqual(bytes(self.window.backend.call('working')), self.original)
+
+    def test_story_jump_preview_and_language_switch_preserve_drafts_and_bytes(self):
+        self.select('flags')
+        form = self.window.story_form
+        self.edit(form, 'target', 440)
+        self.edit(form, 'flags', '{"FLG_SUBEV_COM_49_CLEAR": 0}')
+        self.assertIn('Memories', self.window.story_preview.toPlainText())
+        self.assertIn('eligibility unknown', self.window.story_preview.toPlainText())
+        drafts = dict(form.drafts)
+        self.window.ui_language_combo.setCurrentIndex(self.window.ui_language_combo.findData('zh-CN'))
+        self.assertIn('总体资格 未知', self.window.story_preview.toPlainText())
+        self.assertEqual(form.drafts, drafts)
+        self.assertEqual(bytes(self.window.backend.call('working')), self.original)
+        self.assertEqual(self.window.backend.state()['undo'], 0)
+        form.clear()
+        self.assertFalse(form.drafts)
+
+    def test_story_jump_requires_acknowledgement_and_explicit_rewind_then_undoes_atomically(self):
+        self.select('flags'); form = self.window.story_form
+        self.edit(form, 'target', 7)
+        with self.assertRaises(ValueError): self.window.apply_form(form, form.apply_callback)
+        self.edit(form, 'acknowledgeRisk', 1)
+        with self.assertRaises(ValueError): self.window.apply_form(form, form.apply_callback)
+        self.assertEqual(bytes(self.window.backend.call('working')), self.original)
+        self.edit(form, 'allowRewind', 1)
+        self.edit(form, 'flags', '{"REG_SUBEV_RSV": 56}')
+        self.window.apply_form(form, form.apply_callback)
+        self.assertEqual(self.window.backend.state()['undo'], 1)
+        values = {record['name']: record['value'] for record in self.window.backend.call('flags')}
+        self.assertEqual(values['REG_MAIN_SCENARIO'], 7); self.assertEqual(values['REG_SUBEV_RSV'], 56)
+        self.assertFalse(form.drafts)
+        self.assertFalse(form.controls['acknowledgeRisk'].isChecked())
+        self.window.mutate('undo')
+        self.assertEqual(bytes(self.window.backend.call('working')), self.original)
+
+    def test_story_profile_import_stages_full_preview_instead_of_applying(self):
+        self.select('flags')
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'story.json'
+            path.write_text(json.dumps({'format': 'rf4s-progress-v1', 'flags': {'REG_MAIN_SCENARIO': 442, 'FLG_SUBEV_COM_49_CLEAR': 1, 'REG_SUBEV_AFTER': 96}}), encoding='utf-8')
+            with patch('native_ui.QFileDialog.getOpenFileName', return_value=(str(path), '')):
+                self.window.read_profile()
+        self.assertTrue(self.window.story_form.drafts)
+        self.assertIn('FLG_SUBEV_COM_49_CLEAR: 0 → 1', self.window.story_preview.toPlainText())
+        self.assertEqual(bytes(self.window.backend.call('working')), self.original)
+        self.assertEqual(self.window.backend.state()['undo'], 0)
+        self.assertEqual(self.window.test_errors, [])
+
+    def test_story_jump_pending_batch_rolls_back_with_an_invalid_other_draft(self):
+        self.select('flags'); form = self.window.story_form
+        self.edit(form, 'target', 440); self.edit(form, 'acknowledgeRisk', 1)
+        self.select('calendar'); self.edit(self.window.calendar_form, 'day', 99)
+        with self.assertRaises(ValueError): self.window.apply_all_drafts()
+        self.assertEqual(bytes(self.window.backend.call('working')), self.original)
+        self.assertEqual(self.window.backend.state()['undo'], 0)
+        self.assertTrue(form.drafts); self.assertTrue(self.window.calendar_form.drafts)
 
     def test_invalid_last_draft_leaves_all_working_bytes_and_disk_unchanged(self):
         self.select('player'); self.edit(self.window.player_form, 'tourists', 123)

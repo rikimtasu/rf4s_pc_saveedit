@@ -16,6 +16,7 @@ from native_export import atomic_write, export_to_game_folder, game_save_directo
 from native_icons import GameIcons
 from native_i18n import UiLanguage, install_qt_translator
 from native_layout import ResponsiveRow, wrapping_checkbox
+from native_fonts import interface_font
 from scripts.game_sources import all_references, LANGUAGES, NAME_TABLES, parse_name_table
 
 
@@ -90,7 +91,7 @@ class _InventoryRows(QAbstractListModel):
 
 class _ItemTile(QStyledItemDelegate):
     def sizeHint(self, option, index):
-        return QSize(120, 128)
+        return QSize(104, 108)
 
     def paint(self, painter, option, index):
         item = index.data(Qt.ItemDataRole.UserRole + 1)
@@ -102,11 +103,11 @@ class _ItemTile(QStyledItemDelegate):
         painter.setBrush(palette.highlight() if selected else palette.base())
         painter.setPen(palette.highlight().color() if selected else palette.mid().color())
         painter.drawRoundedRect(tile, 8, 8)
-        index.data(Qt.ItemDataRole.DecorationRole).paint(painter, QRect(tile.center().x() - 28, tile.top() + 8, 56, 56))
+        index.data(Qt.ItemDataRole.DecorationRole).paint(painter, QRect(tile.center().x() - 20, tile.top() + 7, 40, 40))
         painter.setFont(option.font)
         painter.setPen(palette.highlightedText().color() if selected else palette.text().color())
         name = option.fontMetrics.elidedText(index.data(Qt.ItemDataRole.DisplayRole), Qt.TextElideMode.ElideRight, tile.width() - 12)
-        painter.drawText(tile.adjusted(6, 67, -6, -24), Qt.AlignmentFlag.AlignCenter, name)
+        painter.drawText(tile.adjusted(6, 51, -6, -24), Qt.AlignmentFlag.AlignCenter, name)
         painter.drawText(tile.adjusted(8, 0, -8, -5), Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom, f'Lv{item["level"]}' if item['id'] else '')
         painter.drawText(tile.adjusted(8, 0, -8, -5), Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignBottom, str(item['slot'] + 1))
         if item['quantity'] > 1:
@@ -335,7 +336,7 @@ class NativeWindow(QMainWindow):
         super().__init__()
         QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseStyleSheetPropagationInWidgetStyles, True)
         if QApplication.style().objectName().lower() != 'fusion': QApplication.setStyle('Fusion')
-        font = self.font(); font.setPointSize(max(12, font.pointSize()))
+        font = interface_font(11)
         QApplication.setFont(font)
         self.setFont(font)
         palette = self.palette()
@@ -359,7 +360,7 @@ class NativeWindow(QMainWindow):
             QScrollArea { border: none; background: #2e3440; }
             QWidget#editorPage { background: #2e3440; }
             QToolBar { border: none; spacing: 6px; background: #3b4252; }
-            QToolButton { padding: 6px; border-radius: 5px; }
+            QToolButton { padding: 4px; border-radius: 5px; }
             QToolButton:hover { background: #4c566a; }
             QToolButton#learnAllRecipes { background: #88c0d0; color: #2e3440; padding: 8px 12px; }
             QToolButton#learnAllRecipes:disabled { background: #434c5e; color: #a6afbe; }
@@ -367,15 +368,15 @@ class NativeWindow(QMainWindow):
             QMenu, QToolTip { background: #3b4252; color: #eceff4; border: 1px solid #4c566a; }
             QMenu::item:selected { background: #88c0d0; color: #2e3440; }
             QListWidget#navigation { background: #3b4252; color: #eceff4; border: none; padding: 4px; }
-            QListWidget#navigation::item { padding: 9px 6px; border-radius: 5px; }
+            QListWidget#navigation::item { padding: 6px; border-radius: 5px; }
             QListWidget#navigation::item:selected { background: #88c0d0; color: #2e3440; }
             QListWidget#navigation::item:disabled { color: #a6afbe; }
             QListView#inventoryGrid { background: #3b4252; border: 2px solid #4c566a; border-radius: 10px; }
             QLineEdit, QComboBox, QPlainTextEdit { background: #2e3440; color: #eceff4; border: 1px solid #4c566a; border-radius: 5px; padding: 4px 7px; }
-            QLineEdit, QComboBox { min-height: 28px; }
+            QLineEdit, QComboBox { min-height: 22px; }
             QLineEdit:focus, QComboBox:focus { border: 2px solid #88c0d0; }
             QLineEdit:disabled, QComboBox:disabled { color: #a6afbe; background: #3b4252; }
-            QPushButton { background: #434c5e; color: #eceff4; border: 1px solid #4c566a; border-radius: 6px; padding: 6px 10px; min-height: 24px; }
+            QPushButton { background: #434c5e; color: #eceff4; border: 1px solid #4c566a; border-radius: 6px; padding: 4px 9px; min-height: 22px; }
             QPushButton:hover { background: #4c566a; border-color: #88c0d0; }
             QPushButton:disabled { color: #a6afbe; background: #3b4252; }
             QGroupBox { border: 1px solid #4c566a; border-radius: 8px; margin-top: 14px; padding-top: 10px; }
@@ -465,6 +466,8 @@ class NativeWindow(QMainWindow):
         self.make_player_name()
         self.make_inventory()
         self.make_record_pages()
+        self.make_soil()
+        self.make_roster()
         self.make_marriage()
         self.make_system()
         self.make_flags()
@@ -482,7 +485,7 @@ class NativeWindow(QMainWindow):
         super().resizeEvent(event)
         if not hasattr(self, 'splitter'): return
         if hasattr(self, 'inventory_grid'):
-            self.inventory_grid.setFixedHeight(140 if self.height() < 600 else 268)
+            self.inventory_grid.setFixedHeight(120 if self.height() < 600 else 228)
         compact = self.width() < 900
         if compact != self.compact_navigation:
             self.compact_navigation = compact
@@ -501,7 +504,7 @@ class NativeWindow(QMainWindow):
         # Keep controls intact, including half-typed values and disabled drafts.
         current = next((key for key, (_widget, _layout, index) in self.pages.items() if index == self.stack.currentIndex()), None)
         if current == 'inventory': self.render_item_preview()
-        elif current in ('flags', 'review', 'relationships', 'player-name'):
+        elif current in ('flags', 'review', 'relationships', 'player-name', 'soil', 'roster'):
             self.renderers[current]()
             self.ui.apply(self.pages[current][0])
 
@@ -510,7 +513,7 @@ class NativeWindow(QMainWindow):
         widget.setObjectName('editorPage')
         layout = QVBoxLayout(widget)
         heading = QLabel(title)
-        font = heading.font(); font.setPointSize(20); font.setBold(True); heading.setFont(font)
+        font = heading.font(); font.setPointSize(16); font.setBold(True); heading.setFont(font)
         layout.addWidget(heading)
         if note: heading.setToolTip(note)
         self.pages[key] = (widget, layout, self.navigation.count())
@@ -836,17 +839,17 @@ class NativeWindow(QMainWindow):
         self.inventory_grid.setResizeMode(QListView.ResizeMode.Adjust)
         self.inventory_grid.setMovement(QListView.Movement.Static)
         self.inventory_grid.setUniformItemSizes(True)
-        self.inventory_grid.setGridSize(QSize(120, 128))
-        self.inventory_grid.setIconSize(QSize(56, 56))
+        self.inventory_grid.setGridSize(QSize(104, 108))
+        self.inventory_grid.setIconSize(QSize(40, 40))
         self.inventory_grid.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.inventory_grid.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.inventory_grid.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.inventory_grid.setFixedHeight(268)
+        self.inventory_grid.setFixedHeight(228)
         self.inventory_grid.selectionModel().currentChanged.connect(self.change_inventory_slot)
         layout.addWidget(self.inventory_grid)
         self.slot_label = QLabel(); self.slot_label.setWordWrap(True); self.slot_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-        self.slot_icon = QLabel(); self.slot_icon.setFixedSize(64, 64)
-        font = self.slot_label.font(); font.setPointSize(14); font.setBold(True); self.slot_label.setFont(font)
+        self.slot_icon = QLabel(); self.slot_icon.setFixedSize(48, 48)
+        font = self.slot_label.font(); font.setPointSize(12); font.setBold(True); self.slot_label.setFont(font)
         slot_row = QHBoxLayout(); slot_row.addWidget(self.slot_icon); slot_row.addWidget(self.slot_label, 1); layout.addLayout(slot_row)
         preview = QGroupBox('Item effect preview'); preview_row = QVBoxLayout(preview)
         preview.setCheckable(True); preview.setChecked(True)
@@ -865,11 +868,11 @@ class NativeWindow(QMainWindow):
         self.inventory_form = self.form(layout, fields, self.apply_inventory, 'Attachment IDs are 10-bit (0–1023), equipment only. Unchanged fields are preserved; 0 removes an attachment. Blank level preserves mixed unit levels.')
         for control in self.inventory_form.controls.values():
             if isinstance(control, QComboBox):
-                control.setIconSize(QSize(40, 40))
-                control.view().setIconSize(QSize(40, 40))
+                control.setIconSize(QSize(24, 24))
+                control.view().setIconSize(QSize(24, 24))
                 control.view().setUniformItemSizes(True)
                 if control.isEditable():
-                    control.completer().popup().setIconSize(QSize(40, 40))
+                    control.completer().popup().setIconSize(QSize(24, 24))
                     control.completer().popup().setUniformItemSizes(True)
                 if control is not self.inventory_form.controls['element']: control.setProperty('gameNames', True)
         self.inventory_form.controls['id'].currentIndexChanged.connect(self.inventory_id_changed)
@@ -986,7 +989,7 @@ class NativeWindow(QMainWindow):
         try:
             form = self.inventory_form
             basic, details = self.inventory_changes(form.drafts) if form.drafts else ({}, {})
-            self.slot_icon.setPixmap(self.icons.icon('items', basic.get('id', form.base.get('id', 0))).pixmap(64, 64))
+            self.slot_icon.setPixmap(self.icons.icon('items', basic.get('id', form.base.get('id', 0))).pixmap(48, 48))
             result = self.backend.call('previewItem', container=self.inventory_container, slot=self.inventory_slot, changes=basic, details=details)
             self.item_preview_before.setPlainText(self.effect_preview_text('Current item', result['before']))
             self.item_preview_after.setPlainText(self.effect_preview_text('Draft result', result['after']))
@@ -1001,7 +1004,8 @@ class NativeWindow(QMainWindow):
             'recipes': ('Learned recipes', [{'key': 'known', 'label': 'Recipe learned', 'kind': 'bool'}], 'Variants sharing a learned bit change together. Recipe difficulty is not stored as an editable save value.'),
             'friendship': ('Friendship', [{'key': 'level', 'label': 'Friendship level (0–10,000)'}], 'Does not trigger dating, wedding or story events.'),
             'relationships': ('Dating & nicknames', [
-                {'key': 'dating', 'label': 'Dating status (marriage candidates only)', 'kind': 'bool'},
+                {'key': 'experimental', 'label': 'Experimental non-candidate flags (no romance scripts added)', 'kind': 'bool'},
+                {'key': 'dating', 'label': 'Saved dating status', 'kind': 'bool'},
                 {'key': 'npcCallsPlayer', 'label': 'NPC calls player', 'kind': 'choice'},
                 {'key': 'playerCallsNpc', 'label': 'Player calls NPC', 'kind': 'choice'},
             ], 'Saved flags and nicknames only; does not simulate confessions, breakups, marriage or story events. Nicknames are independent of dating. Export dating cleanup, if enabled, overrides these fields for its targets. Guests are not supported here.'),
@@ -1015,7 +1019,7 @@ class NativeWindow(QMainWindow):
             selector.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
             selector.setMinimumContentsLength(12)
             selector.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-            selector.setIconSize(QSize(40, 40))
+            selector.setIconSize(QSize(24, 24))
             selector.setProperty('gameNames', key != 'trophies')
             layout.addWidget(selector)
             self.record_selectors[key] = selector
@@ -1043,10 +1047,22 @@ class NativeWindow(QMainWindow):
             form = self.form(layout, fields, lambda changes, key=key: self.apply_record(key, changes))
             self.record_forms[key] = form
             if key == 'relationships':
+                form.draftChanged.connect(self.update_relationship_controls)
                 for field in ('npcCallsPlayer', 'playerCallsNpc'): form.controls[field].setProperty('gameNames', True)
                 self.nickname_help = QLabel(); self.nickname_help.setWordWrap(True)
                 self.nickname_help.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
                 layout.insertWidget(2, self.nickname_help)
+                self.nickname_reset_target = QLabel(); self.nickname_reset_target.setWordWrap(True)
+                self.nickname_reset_target.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+                self.nickname_reset_target.setToolTip('Uses current saved gender, not appearance or export gender. Only stages nickname defaults; dating and friendship stay unchanged.')
+                layout.insertWidget(3, self.nickname_reset_target)
+                row = ResponsiveRow()
+                self.nickname_reset_buttons = {}
+                for caption, field in [('Reset NPC calls player', 'npcCallsPlayer'), ('Reset player calls NPC', 'playerCallsNpc'), ('Reset both for current gender', 'both')]:
+                    button = QPushButton(caption); button.setEnabled(False)
+                    button.clicked.connect(lambda _checked=False, field=field: self.attempt(lambda: self.reset_nickname_draft(field)))
+                    self.nickname_reset_buttons[field] = button; row.addWidget(button)
+                layout.insertWidget(4, row)
             selector.currentIndexChanged.connect(lambda _index, key=key: self.change_record(key))
             self.renderers[key] = lambda key=key: self.render_record(key)
 
@@ -1082,6 +1098,7 @@ class NativeWindow(QMainWindow):
         state = self.backend.state()
         ready = bool(state and state['kind'] == 'slot')
         form.set_ready(ready)
+        if key == 'relationships': self.update_relationship_controls()
         if not ready: return
         if key == 'people':
             records = [{'id': i, 'name': self.person_name(i)} for i in range(1, 27)]
@@ -1118,13 +1135,35 @@ class NativeWindow(QMainWindow):
             labels = ['Not recorded', 'Recorded'] if record['width'] == 1 else ['None', 'Gold / first', 'Silver / second', 'Bronze / third']
             options = {'value': [(label, index) for index, label in enumerate(labels)]}
         elif key == 'relationships':
-            values = record
+            values = {**record, 'experimental': 0}
             options = {field: self.nickname_choices(record, field) for field in ('npcCallsPlayer', 'playerCallsNpc')}
             self.ui.set_text(self.nickname_help, 'Nickname labels use Game names, not Interface. Player-name tokens appear as [Player name].' if self.nickname_names()
                              else 'Read game folder (or rf3TxtHeroNickName name tables) to load special nickname choices. Defaults and stored IDs remain available.')
         else: values = record
         form.set_data(values, options)
-        if key == 'relationships': form.controls['dating'].setEnabled(record['canDate'])
+        if key == 'relationships': self.update_relationship_controls()
+
+    def update_relationship_controls(self):
+        form = self.record_forms.get('relationships')
+        if not form: return
+        candidate = any(person['id'] == self.selections['relationships'] for person in self.constants['candidates'])
+        form.controls['dating'].setEnabled(candidate or bool(form.value('experimental')))
+        if not hasattr(self, 'nickname_reset_buttons'): return
+        state = self.backend.state()
+        gender = state.get('gender') if state and state['kind'] == 'slot' else None
+        enabled = bool(form.allow.isEnabled() and form.allow.isChecked() and self.selections['relationships'] is not None and gender in ('male', 'female'))
+        for button in self.nickname_reset_buttons.values(): button.setEnabled(enabled)
+        caption = 'Nickname reset target: Lest' if gender == 'male' else 'Nickname reset target: Frey' if gender == 'female' else 'Nickname reset unavailable: no recognized slot gender'
+        self.ui.set_text(self.nickname_reset_target, caption)
+
+    def reset_nickname_draft(self, field='both'):
+        form = self.record_forms['relationships']
+        if not form.allow.isEnabled() or not form.allow.isChecked(): raise ValueError('Enable this editor first.')
+        defaults = self.backend.call('relationshipDefaults', id=self.selections['relationships'])
+        fields = ('npcCallsPlayer', 'playerCallsNpc') if field == 'both' else (field,)
+        for key in fields:
+            form.write(key, defaults['defaults'][key]); form.track(key)
+        self.statusBar().showMessage(self.ui.text('Nickname defaults staged only. Apply or export to save; dating and friendship stay unchanged.'), 10000)
 
     def nickname_names(self):
         return self.languages.get(self.language, {}).get('nicknames') or self.languages.get('en', {}).get('nicknames', [])
@@ -1151,7 +1190,7 @@ class NativeWindow(QMainWindow):
         selected = self.selections[key]
         if key == 'skills': self.backend.call('setSkill', id=selected, changes=changes)
         elif key == 'friendship': self.backend.call('setFriendship', id=selected, level=changes['level'])
-        elif key == 'relationships': self.backend.call('setRelationship', id=selected, changes=changes)
+        elif key == 'relationships': self.backend.call('setRelationship', id=selected, changes={**changes, 'experimental': bool(self.record_forms[key].value('experimental'))})
         elif key == 'people': self.backend.call('setStats', kind='person', id=selected, changes=changes)
         elif key == 'monsters':
             values = {'stats': {field: value for field, value in changes.items() if field != 'friendship'}}
@@ -1177,16 +1216,90 @@ class NativeWindow(QMainWindow):
         if all_recipes and known:
             self.statusBar().showMessage(self.ui.text('All loaded recipes learned in memory. Export to save.'), 10000)
 
+    def make_soil(self):
+        layout = self.page('soil', 'Soil editor')
+        note = QLabel('Raw packed soil values, not crop growth or a magnifying-glass simulator. One patch covers shared soil. Crop records and unused patches are preserved. Back up and test in-game.'); note.setWordWrap(True); note.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(note)
+        self.soil_constants = self.backend.call('soilConstants')
+        self.soil_location = (0, 0)
+        self.soil_farm = QComboBox(); self.soil_patch = QComboBox()
+        combo_options(self.soil_farm, [(farm['name'], farm['id']) for farm in self.soil_constants['farms']], 0)
+        row = ResponsiveRow(); row.addWidget(self.soil_farm); row.addWidget(self.soil_patch); layout.addWidget(row)
+        fields = [{'key': 'all', 'label': 'Apply changed fields to every used patch on this field', 'kind': 'bool'}]
+        fields += [{**field, 'kind': 'bool' if field['width'] == 1 else 'number'} for field in self.soil_constants['fields']]
+        self.soil_form = self.form(layout, fields, lambda changes: self.backend.call('setSoil', farm=self.soil_location[0], patch=self.soil_location[1], all=bool(self.soil_form.value('all')), changes={key: value for key, value in changes.items() if key != 'all'}))
+        restore = QPushButton('Prepare soil health 255'); restore.clicked.connect(lambda: (self.soil_form.write('health', 255), self.soil_form.track('health')))
+        layout.insertWidget(3, restore)
+        self.soil_farm.currentIndexChanged.connect(self.change_soil)
+        self.soil_patch.currentIndexChanged.connect(self.change_soil)
+        self.renderers['soil'] = self.render_soil
+
+    def change_soil(self):
+        farm, patch = self.soil_farm.currentData(), self.soil_patch.currentData()
+        if farm is None: return
+        if farm != self.soil_location[0]: patch = self.soil_constants['farms'][farm]['patches'][0]
+        if patch is None or (farm, patch) == self.soil_location: return
+        if self.soil_form.drafts:
+            try: self.apply_form(self.soil_form, self.soil_form.apply_callback)
+            except ValueError as error:
+                combo_options(self.soil_farm, [(item['name'], item['id']) for item in self.soil_constants['farms']], self.soil_location[0])
+                combo_options(self.soil_patch, [(f'{self.ui.text("Soil patch")} {i + 1}', i) for i in self.soil_constants['farms'][self.soil_location[0]]['patches']], self.soil_location[1])
+                self.statusBar().showMessage(self.ui.text(str(error))); return
+        self.soil_location = (farm, patch)
+        self.render_soil()
+
+    def render_soil(self):
+        state = self.backend.state(); ready = bool(state and state['kind'] == 'slot')
+        self.soil_form.set_ready(ready); self.soil_farm.setEnabled(ready); self.soil_patch.setEnabled(ready)
+        if not ready: return
+        farm, patch = self.soil_location
+        combo_options(self.soil_farm, [(self.ui.text(item['name']), item['id']) for item in self.soil_constants['farms']], farm)
+        combo_options(self.soil_patch, [(f'{self.ui.text("Soil patch")} {i + 1}', i) for i in self.soil_constants['farms'][farm]['patches']], patch)
+        self.soil_form.set_data({**self.backend.call('soil', farm=farm, patch=patch)['values'], 'all': 0})
+        self.ui.apply(self.pages['soil'][0])
+
+    def make_roster(self):
+        layout = self.page('roster', 'Add roster NPC / monster')
+        note = QLabel('Experimental: writes an empty tamed-monster slot, not the town NPC. NPC species may fail to spawn or lack monster AI, riding and produce. No new game definitions are created. Requires a built barn room with space.'); note.setWordWrap(True); note.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(note)
+        self.roster_summary = QLabel(); self.roster_summary.setWordWrap(True); layout.addWidget(self.roster_summary)
+        self.roster_form = self.form(layout, [
+            {'key': 'species', 'label': 'NPC / monster species (1–255; not all IDs are valid actors)', 'kind': 'choice', 'search': True},
+            {'key': 'name', 'label': 'Roster name (up to 6 characters / 18 UTF-8 bytes)', 'kind': 'text'},
+            {'key': 'slot', 'label': 'Empty destination slot', 'kind': 'choice'},
+            {'key': 'room', 'label': 'Built barn room', 'kind': 'choice'},
+            {'key': 'friendship', 'label': 'Friendship (0–1,000)'},
+            {'key': 'sourceKind', 'label': 'Stat source', 'kind': 'choice', 'choices': [('Basic level 1 (not species-scaled)', 'basic'), ('Existing monster stats', 'monster'), ('Existing NPC stats', 'person')]},
+            {'key': 'sourceId', 'label': 'Source ID (NPC 1–26 / monster slot 0–199)'},
+            {'key': 'acknowledgeRisk', 'label': 'I accept experimental roster compatibility risks', 'kind': 'bool'},
+        ], lambda _changes: self.backend.call('setRosterAdd', **{key: bool(self.roster_form.value(key)) if key == 'acknowledgeRisk' else self.roster_form.value(key) for key in self.roster_form.controls}))
+        self.roster_form.controls['name'].setPlaceholderText('Blank generates a short default name')
+        self.renderers['roster'] = self.render_roster
+
+    def render_roster(self):
+        state = self.backend.state(); ready = bool(state and state['kind'] == 'slot'); self.roster_form.set_ready(ready)
+        if not ready: return
+        data = self.backend.call('roster')
+        free = [record for record in data['slots'] if not record['occupied']]
+        housing = [room for room in data['housing'] if room['free'] > 0]
+        choices = {'species': [(f'{i} · {self.name("people", i, "NPC / monster")}', i) for i in range(1, 256)],
+                   'slot': [(f'{record["id"] + 1} (ID {record["id"]})', record['id']) for record in free],
+                   'room': [(f'{self.ui.text("Barn")} {room["barn"] + 1} / {self.ui.text("Room")} {room["room"] + 1} · map {room["map"]} · {room["free"]}/4', room['map']) for room in housing]}
+        self.roster_form.set_data({'species': 48, 'name': '', 'slot': free[0]['id'] if free else None, 'room': housing[0]['map'] if housing else None, 'friendship': 0, 'sourceKind': 'basic', 'sourceId': 0, 'acknowledgeRisk': 0}, choices)
+        self.roster_form.set_ready(bool(free and housing))
+        self.roster_summary.setText(f'{len(data["slots"]) - len(free)}/200 · ' + self.ui.text('Free barn places') + f': {sum(room["free"] for room in housing)}')
+        self.ui.apply(self.pages['roster'][0])
+
     def make_marriage(self):
         layout = self.page('marriage', 'Marriage flags', 'Flags only—not a complete marry/divorce operation. Wedding events, pregnancy, children, schedules and system unlocks are not simulated. Back up and test the exported copy.')
-        self.marriage_summary = QLabel(); layout.addWidget(self.marriage_summary)
+        warning = QLabel('Experimental spouse IDs only change a five-bit register. Non-candidates have no wedding/romance scripts; guests may not work. IDs above 31 cannot be stored.'); warning.setWordWrap(True); warning.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(warning)
+        self.marriage_summary = QLabel(); self.marriage_summary.setWordWrap(True); layout.addWidget(self.marriage_summary)
         self.candidate_combo = QComboBox()
         self.candidate_combo.setProperty('gameNames', True)
         layout.addWidget(QLabel('Event candidate (does not change spouse)')); layout.addWidget(self.candidate_combo)
         self.candidate_combo.currentIndexChanged.connect(self.change_candidate)
         fields = [{**field, 'kind': 'choice' if field['key'] in {'spouse', 'season'} else 'bool' if field['max'] == 1 else 'number'} for field in self.constants['marriage']]
         fields += [{'key': 'marriageEvent', 'label': 'Candidate marriage event cleared', 'kind': 'bool'}, {'key': 'newlywedEvent', 'label': 'Candidate newlywed event cleared', 'kind': 'bool'}]
-        self.marriage_form = self.form(layout, fields, lambda changes: self.backend.call('setMarriage', candidate=self.candidate, changes=changes))
+        fields.insert(0, {'key': 'experimental', 'label': 'Experimental non-candidate flags (no romance scripts added)', 'kind': 'bool'})
+        self.marriage_form = self.form(layout, fields, lambda changes: self.backend.call('setMarriage', candidate=self.candidate, changes={**changes, 'experimental': bool(self.marriage_form.value('experimental'))}))
         self.renderers['marriage'] = self.render_marriage
 
     def change_candidate(self):
@@ -1206,7 +1319,8 @@ class NativeWindow(QMainWindow):
         combo_options(self.candidate_combo, candidates, self.candidate)
         if not ready: return
         values = self.backend.call('marriage', candidate=self.candidate)
-        self.marriage_form.set_data(values, {'spouse': [('None · 0', 0)] + candidates, 'season': [(season, i) for i, season in enumerate(self.constants['seasons'])]})
+        spouses = [(self.name('people', i, self.constants['people'][i] if i < len(self.constants['people']) else f'NPC {i}') + ('' if any(person['id'] == i for person in self.constants['candidates']) else self.ui.text(' · experimental')), i) for i in range(1, 32)]
+        self.marriage_form.set_data({**values, 'experimental': 0}, {'spouse': [('None · 0', 0)] + spouses, 'season': [(season, i) for i, season in enumerate(self.constants['seasons'])]})
         self.marriage_summary.setText(f'Spouse ID {values["spouse"]} · anniversary {self.constants["seasons"][values["season"]]} {values["day"] or "(unset)"}')
 
     def make_system(self):
@@ -1219,6 +1333,21 @@ class NativeWindow(QMainWindow):
 
     def make_flags(self):
         layout = self.page('flags', 'Expert: story flags', 'Story changes can break progression. These controls do not initialize world state, reward quests or replay events.')
+        layout.addWidget(QLabel('Story jump planner'))
+        self.story_marker = QComboBox(); layout.addWidget(self.story_marker)
+        self.story_form = self.form(layout, [
+            {'key': 'target', 'label': 'Target story stage (0–511)', 'min': 0, 'max': 511},
+            {'key': 'flags', 'label': 'Explicit supporting flags (JSON object; blank keeps other flags)', 'kind': 'text', 'optional': True},
+            {'key': 'acknowledgeRisk', 'label': 'I understand this does not reconstruct a playable checkpoint', 'kind': 'bool'},
+            {'key': 'allowRewind', 'label': 'Allow rewind (later world state is not reverted)', 'kind': 'bool'},
+        ], lambda _changes: self.backend.call('setStoryJump', **self.story_jump_options()))
+        self.story_preview = QPlainTextEdit(); self.story_preview.setReadOnly(True); self.story_preview.setMaximumHeight(300); layout.addWidget(self.story_preview)
+        self.story_form.draftChanged.connect(self.render_story_jump)
+        self.story_marker.currentIndexChanged.connect(self.choose_story_marker)
+        self.endgame_button = QPushButton('Stage end-game flags (experimental)')
+        self.endgame_button.clicked.connect(lambda: self.attempt(self.stage_endgame))
+        layout.insertWidget(1, self.endgame_button)
+        layout.addWidget(QLabel('Individual flags / registers'))
         self.flag_group = QComboBox(); combo_options(self.flag_group, [('All flags', 'all')], 'all'); layout.addWidget(self.flag_group)
         self.flag_group.currentIndexChanged.connect(self.render_flags)
         self.flag_search = QLineEdit(); self.flag_search.setPlaceholderText('Find flags / registers by developer name or description'); layout.addWidget(self.flag_search)
@@ -1235,6 +1364,34 @@ class NativeWindow(QMainWindow):
         layout.addWidget(row)
         self.renderers['flags'] = self.render_flags
 
+    def stage_endgame(self):
+        if self.story_form.drafts: raise ValueError('Apply or clear the story draft before choosing a shortcut.')
+        preset = self.backend.call('endgameShortcut')
+        self.story_form.write('target', preset['target']); self.story_form.track('target')
+        self.story_form.write('flags', json.dumps(preset['flags'])); self.story_form.track('flags')
+        self.statusBar().showMessage(self.ui.text('End-game flags staged only. Review omitted actions and acknowledge risk before applying.'))
+
+    def story_jump_options(self):
+        text = self.story_form.value('flags').strip()
+        if len(text.encode('utf-8')) > 1024 * 1024: raise ValueError('Progress profile is too large.')
+        return {'target': self.story_form.value('target'), 'flags': json.loads(text) if text else {},
+                'acknowledgeRisk': bool(self.story_form.value('acknowledgeRisk')), 'allowRewind': bool(self.story_form.value('allowRewind'))}
+
+    def choose_story_marker(self):
+        value = self.story_marker.currentData()
+        if value is None or not self.story_form.allow.isEnabled(): return
+        self.story_form.write('target', value); self.story_form.track('target')
+
+    def render_story_jump(self):
+        if not hasattr(self, 'story_preview'): return
+        state = self.backend.state()
+        if not state or state['kind'] != 'slot': self.story_preview.clear(); return
+        try:
+            result = self.backend.call('storyJumpPreview', **self.story_jump_options(), language='zh' if self.ui.code == 'zh-CN' else 'en')
+            self.story_preview.setPlainText(result['explanation'])
+        except (ValueError, KeyError) as error:
+            self.story_preview.setPlainText(self.ui.text('Preview unavailable') + ': ' + self.ui.text(str(error)))
+
     def change_flag(self):
         selected = self.flag_selector.currentData()
         if selected == self.selections['flags']: return
@@ -1248,8 +1405,17 @@ class NativeWindow(QMainWindow):
 
     def render_flags(self):
         state = self.backend.state(); ready = bool(state and state['kind'] == 'slot'); self.flag_form.set_ready(ready)
-        if not ready: return
+        self.story_form.set_ready(ready); self.story_marker.setEnabled(ready)
+        self.endgame_button.setEnabled(ready)
+        if not ready: self.story_preview.clear(); return
         records = self.backend.call('flags')
+        main = next(record for record in records if record['name'] == 'REG_MAIN_SCENARIO')
+        self.story_form.set_data({'target': main['value'], 'flags': None, 'acknowledgeRisk': 0, 'allowRewind': 0})
+        language = 'zh' if self.ui.code == 'zh-CN' else 'en'
+        markers = [(self.ui.text('Choose a script witness (not a preset)'), None)]
+        markers += [(f'{witness["value"]} · {witness[language]}', witness['value']) for witness in self.constants['storyWitnesses']]
+        combo_options(self.story_marker, markers, self.story_marker.currentData())
+        self.render_story_jump()
         group = self.flag_group.currentData() or 'all'
         combo_options(self.flag_group, [('All flags', 'all')] + [(label, label) for label in sorted({record['group'] for record in records})], group)
         query = self.flag_search.text().strip().casefold()
@@ -1318,6 +1484,14 @@ class NativeWindow(QMainWindow):
             if path.stat().st_size > 1024 * 1024: raise ValueError('Progress profile is too large.')
             text = path.read_text(encoding='utf-8')
             data = json.loads(text)
+            flags = data.get('flags', {})
+            if data.get('format') == 'rf4s-progress-v1' and isinstance(flags, dict) and 'REG_MAIN_SCENARIO' in flags:
+                # Validate and stage without applying or treating donor flags as world records.
+                self.backend.call('storyJumpPreview', target=flags['REG_MAIN_SCENARIO'], flags=flags)
+                self.story_form.write('target', flags['REG_MAIN_SCENARIO']); self.story_form.track('target')
+                self.story_form.write('flags', json.dumps(flags, ensure_ascii=False)); self.story_form.track('flags')
+                self.statusBar().showMessage(self.ui.text('Story profile staged. Review the jump preview and acknowledge incomplete dependencies.'))
+                return
             count = len(data.get('flags', {}))
             if self.question('Apply progression flags?', f'Apply {count} named flags as one undoable edit? Events and world state will not be simulated.', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel) == QMessageBox.StandardButton.Yes:
                 self.backend.call('applyProfile', text=text)

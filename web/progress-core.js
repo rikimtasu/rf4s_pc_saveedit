@@ -1,9 +1,7 @@
 import { integer, STORY_REGISTER } from './save-core.js';
+import { STORY_WITNESSES } from './flag-help.js';
 
-export const STORY_MARKERS = [
-  { value: 430, label: 'Ending marker · script evidence' },
-  { value: 511, label: 'Final story marker · script evidence' },
-];
+export const STORY_MARKERS = STORY_WITNESSES.map(witness => ({ value: witness.value, label: `${witness.en} · script evidence` }));
 
 export function progressGroup(variable) {
   if (['Story Event Flags', 'Other Event Flags'].includes(variable.group)) return 'Main story';

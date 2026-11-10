@@ -97,12 +97,17 @@ export function flagHelp(variable) {
   return { title: { en, zh }, original, translation: pair ? 'curated' : symbolic ? 'symbol interpretation' : 'unknown', evidence: layoutMatches ? variable.source ? 'CT label; semantics not independently verified' : audited ? 'Static game/script evidence; not in-game validation' : 'Developer description / symbol; not gameplay validation' : 'Unknown or mismatched layout', impact: layoutMatches && STATIC_IMPACTS[variable.name] || special || { en: 'No automatic event replay, rewards, world initialization or dependency repair.', zh: '不会自动重播事件、发放奖励、初始化世界或修复依赖。' }, sources: layoutMatches ? ['docs/story-flag-investigation.md', 'docs/cheat-table-and-platforms.md', 'vendor/rf4-modkit/emflags.py'] : [] };
 }
 
-export function storyConditions(bytes) {
-  const stage = readFlag(bytes, known.get('REG_MAIN_SCENARIO'));
+export function storyConditions(bytes, variables = known) {
+  const value = name => {
+    const field = variables.get(name), expected = known.get(name);
+    return field && expected && field.bitOffset === expected.bitOffset && field.width === expected.width ? readFlag(bytes, field) : null;
+  };
+  const stage = value('REG_MAIN_SCENARIO');
   return STORY_GATES.map(gate => {
-    const progressPass = stage >= gate.minimum;
-    const completionPass = readFlag(bytes, known.get(gate.completed)) === 0;
-    return { ...gate, stage, progressPass, completionPass, participantState: 'unknown runtime queries', eligibility: progressPass && completionPass ? 'unknown' : 'false' };
+    const completed = value(gate.completed);
+    const progressPass = stage === null ? null : stage >= gate.minimum;
+    const completionPass = completed === null ? null : completed === 0;
+    return { ...gate, stage, progressPass, completionPass, participantState: 'unknown runtime queries', eligibility: progressPass === false || completionPass === false ? 'false' : 'unknown' };
   });
 }
 

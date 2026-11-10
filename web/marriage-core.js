@@ -35,14 +35,14 @@ export class MarriageEditor {
     return { marriageEvent: this.field(`FLG_SUBEV_${person.symbol}_MARRIAGE_CLEAR`), newlywedEvent: this.field(`FLG_SUBEV_${person.symbol}_JUST_MARRIED_CLEAR`) };
   }
   events(id) { return Object.fromEntries(Object.entries(this.eventFields(id)).map(([key, field]) => [key, this.document.flag(field)])); }
-  apply(changes, candidateId) {
+  apply(changes, candidateId, { experimental = false } = {}) {
     const fields = new Map(MARRIAGE_FIELDS.map(field => [field.key, field]));
     const entries = Object.entries(changes).map(([key, value]) => {
       if (key === 'marriageEvent' || key === 'newlywedEvent') return { variable: this.eventFields(candidateId)[key], value: integer(value, 0, 1, key) };
       const spec = fields.get(key);
       if (!spec) throw new Error('Unknown marriage field.');
       const parsed = integer(value, spec.min, spec.max, spec.label);
-      if (key === 'spouse' && parsed !== 0 && !MARRIAGE_CANDIDATES.some(person => person.id === parsed)) throw new Error('Choose none or a known marriage candidate.');
+      if (key === 'spouse' && parsed !== 0 && !MARRIAGE_CANDIDATES.some(person => person.id === parsed) && experimental !== true) throw new Error('Non-candidate spouse IDs require experimental consent.');
       return { variable: this.field(spec.name), value: parsed };
     });
     return this.document.setFlags(entries, 'Marriage flags (events not simulated)');

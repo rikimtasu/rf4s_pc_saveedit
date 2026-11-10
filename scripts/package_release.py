@@ -8,6 +8,7 @@ import io
 import json
 
 from PyInstaller.archive.readers import CArchiveReader
+from scripts.build_desktop import FONT_ASSETS
 
 ROOT = Path(__file__).resolve().parents[1]
 LICENSES = {
@@ -27,6 +28,9 @@ def validate_public(executable):
     forbidden = [name for name in names if any(token in name.lower() for token in ['webengine', 'chromium', 'qt6quick']) or name.lower().endswith(('.sav', '.html', '.css'))]
     if forbidden:
         raise ValueError(f'Unexpected public release assets: {forbidden}')
+    for filename in FONT_ASSETS:
+        if f'web/assets/fonts/{filename}' not in names:
+            raise ValueError(f'Missing bundled interface font/notice: {filename}')
     # Curated, game-derived editor assets are separate from private legacy
     # reference modules. Never accept saves or entire game archives in this pack.
     if 'builtin/references.json.gz' in names:
@@ -41,7 +45,7 @@ def validate_public(executable):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('executable', type=Path)
-    parser.add_argument('--version', default='v0.3')
+    parser.add_argument('--version', default='v0.4')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if not args.output: args.output = ROOT / 'dist' / f'RF4S-Save-Editor-{args.version}-win-x64.zip'
@@ -64,12 +68,19 @@ no installation, Python, Node or browser is needed.
 
 Back up the entire save folder and close the game before editing. Saves are
 not uploaded. Edit values directly; valid drafts apply automatically on export
-or before switching records. No editing opt-in or manual Apply is required.
+or before switching records. Ordinary values need no per-page editing opt-in.
+Experimental story, non-candidate romance and roster edits require explicit acknowledgement.
 This standalone build includes the editor's item/recipe/name references and icons.
 No game-folder reading is required; reload/import controls are optional overrides.
+Noto Sans Medium and Noto Sans CJK SC Medium are bundled for offline English/Chinese text.
 
 For player-name editing, open **rf4_sys.sav** and select the matching bank/slot.
 For dating and nickname editing, open an individual slot save.
+Reset either nickname direction, or both, to the current saved Lest/Frey gender;
+the shortcuts stage drafts and preserve dating/friendship.
+Soil, end-game flags and experimental NPC/monster roster controls are documented
+in docs/expanded-editors.md. A recorded flag/roster entry is NOT proof of a playable
+ending, wedding or NPC monster AI. Back up and test exported copies in-game.
 **Export edited save** (Ctrl+S) writes directly to
 `%APPDATA%\\Rune Factory 4 Special`. It backs up the current destination in that
 same folder before replacement. If the imported filename is not a canonical
@@ -91,6 +102,8 @@ and [release notes](RELEASE_NOTES.md). Source: https://github.com/rikimtasu/rf4s
             'Game-derived reference text and icon images remain the property of the Rune Factory 4 Special rights holders. '
             'They are not relicensed under the editor GPL. No personal saves or full game archives are included.\n')
         package.write(ROOT / 'vendor' / 'rf4-modkit' / 'LICENSE', f'{folder}/licenses/rf4-modkit-MIT.txt')
+        for filename in ('NotoSans-OFL.txt', 'NotoSansCJK-OFL.txt', 'NotoSans-README.md'):
+            package.write(ROOT / 'web' / 'assets' / 'fonts' / filename, f'{folder}/licenses/{filename}')
         for filename, data in notices.items():
             package.writestr(f'{folder}/licenses/{filename}', data)
     print(f'Public {args.version} package: {args.output} ({args.output.stat().st_size / 1048576:.1f} MiB)')

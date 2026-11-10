@@ -24,11 +24,17 @@ export class RelationshipEditor {
       },
     };
   }
-  apply(id, changes) {
+  currentGenderDefaults(id) {
+    const person = this.values(id);
+    const gender = this.document.gender();
+    if (!gender) throw new Error('Saved gender is unrecognized. Cannot choose Lest / Frey nickname defaults.');
+    return { id: person.id, gender, defaults: { ...person.defaults[gender] } };
+  }
+  apply(id, changes, { experimental = false } = {}) {
     const person = this.values(id);
     const parsed = Object.fromEntries(Object.entries(changes).map(([key, value]) => {
       if (!['dating', 'npcCallsPlayer', 'playerCallsNpc'].includes(key)) throw new Error('Unknown relationship field.');
-      if (key === 'dating' && !person.canDate) throw new Error('Dating status is editable only for marriage candidates.');
+      if (key === 'dating' && !person.canDate && experimental !== true) throw new Error('Dating outside marriage candidates requires experimental consent.');
       return [key, integer(value, 0, key === 'dating' ? 1 : NICKNAME_COUNT - 1, key)];
     }));
     return this.document.transact(`${person.name} relationship (events not simulated)`, bytes => {

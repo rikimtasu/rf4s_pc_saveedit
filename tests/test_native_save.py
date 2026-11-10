@@ -198,5 +198,28 @@ class NativeSaveTests(unittest.TestCase):
         self.assertEqual(self.save.state()['undo'], state['undo'])
         self.assertEqual(self.save.state()['redo'], state['redo'])
 
+    def test_story_jump_preview_and_atomic_batch_in_the_qt_interpreter(self):
+        result = self.save.call('storyJumpPreview', target=440, flags={'FLG_SUBEV_COM_49_CLEAR': 0}, language='zh')
+        self.assertIn('总体资格 未知', result['explanation'])
+        self.assertEqual(bytes(self.save.call('working')), self.original)
+        before_revision = self.save.revision
+        with self.assertRaises(ValueError): self.save.call('setStoryJump', target=440)
+        self.assertEqual(self.save.revision, before_revision)
+        self.assertEqual(self.save.state()['undo'], 0)
+        with self.assertRaises(ValueError):
+            self.save.apply_callbacks([
+                lambda: self.save.call('setStoryJump', target=440, acknowledgeRisk=True),
+                lambda: self.save.call('setCalendar', changes={'day': 99, 'season': 0, 'year': 1}),
+            ])
+        self.assertEqual(bytes(self.save.call('working')), self.original)
+        self.save.apply_callbacks([
+            lambda: self.save.call('setStoryJump', target=442, flags={'FLG_SUBEV_COM_49_CLEAR': 1}, acknowledgeRisk=True),
+            lambda: self.save.call('setPlayer', changes={'money': 123}),
+        ])
+        self.assertEqual(self.save.state()['undo'], 1)
+        self.assertEqual(self.save.call('player')['money'], 123)
+        self.save.call('undo')
+        self.assertEqual(bytes(self.save.call('working')), self.original)
+
 
 if __name__ == '__main__': unittest.main()

@@ -63,6 +63,20 @@ class RelationshipReplayTests(unittest.TestCase):
                     self.assertEqual(person['npcCallsPlayer'], 97)
                     self.assertEqual(person['playerCallsNpc'], 133)
 
+    def test_experimental_non_candidate_bits_reach_actual_dating_query(self):
+        from replay_relationships import replay
+        program = """
+            import {createDemo} from './web/save-core.js';
+            import {RelationshipEditor} from './web/relationship-core.js';
+            const save = createDemo(), editor = new RelationshipEditor(save);
+            for(let id=1;id<=23;id++) editor.apply(id,{dating:1},{experimental:true});
+            process.stdout.write(Buffer.from(save.build()).toString('base64'));
+        """
+        data = base64.b64decode(subprocess.check_output(['node', '--input-type=module', '-e', program], cwd=ROOT))
+        result = replay(Path(EXECUTABLE), data, {npc: f'NPC {npc}' for npc in range(1, 24)})
+        self.assertEqual(len(result['people']), 23)
+        self.assertTrue(all(person['dating'] for person in result['people']))
+
 
 if __name__ == '__main__':
     unittest.main()

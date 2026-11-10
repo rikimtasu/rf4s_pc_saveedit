@@ -92,3 +92,14 @@ test('native operations expose dating and both nickname fields without altering 
   assert.equal(call('relationships').length, 23);
   call('undo'); assert.deepEqual(call('working'), before);
 });
+
+test('native nickname default lookup follows the current saved gender and is read-only', () => {
+  fixture(); call('setNumber', { offset: 0x36, type: 'u8', value: 1 });
+  const before = call('working'), state = call('state');
+  assert.deepEqual(call('relationshipDefaults', { id: 3 }), { id: 3, gender: 'female', defaults: { npcCallsPlayer: 73, playerCallsNpc: 50 } });
+  assert.deepEqual(call('working'), before); assert.deepEqual(call('state'), state);
+  call('setNumber', { offset: 0x36, type: 'u8', value: 2 });
+  const invalid = call('working');
+  assert.throws(() => call('relationshipDefaults', { id: 3 }), /unrecognized/);
+  assert.deepEqual(call('working'), invalid);
+});

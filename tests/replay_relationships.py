@@ -25,7 +25,7 @@ NPC_NAMES = {1: 'Vishnal', 2: 'Clorica', 4: 'Forte', 5: 'Kiel', 7: 'Margaret',
              17: 'Dolce', 20: 'Leon'}
 
 
-def replay(executable, data):
+def replay(executable, data, people=None):
     if hashlib.sha256(executable.read_bytes()).hexdigest() != AUDITED_EXE_SHA256:
         raise ValueError('Re-audit addresses before using another executable build.')
     if len(data) not in (140424, 140416) or struct.unpack_from('<I', data)[0] != zlib.crc32(data[4:-224]):
@@ -73,7 +73,8 @@ def replay(executable, data):
     })
     result = {'scope': 'Actual NPC load, dating predicate and saved address selection; no UI/story execution.',
               'storedGender': data[0x36], 'people': []}
-    for npc, name in NPC_NAMES.items():
+    for npc, name in (NPC_NAMES if people is None else people).items():
+        if not 1 <= npc <= 23: raise ValueError('Only audited main-NPC relationship records can be replayed.')
         actor = actors + npc * 0x1000
         uc.mem_write(stack + 0x8000, struct.pack('<Q', base + 0x227ade))
         run(0x227ab0, 0x227ade, {UC_X86_REG_RSP: stack + 0x8000, UC_X86_REG_RCX: npc})

@@ -47,7 +47,7 @@ class ServerTests(unittest.TestCase):
         status, headers, body = self.request('/')
         self.assertEqual(status, 200)
         self.assertIn(b'Save editor', body)
-        for path in ['/app.js', '/save-core.js', '/extended-core.js', '/extended-ui.js', '/save-reference.js', '/progress-core.js', '/save-metadata.js', '/styles.css', '/assets/Inter.ttf', '/assets/fonts/tabler-icons.woff2', '/help.html', '/game-reference.js', '/game-schema.js', '/local-game-data.js', '/local-save-reference.js']:
+        for path in ['/app.js', '/save-core.js', '/extended-core.js', '/extended-ui.js', '/save-reference.js', '/progress-core.js', '/save-metadata.js', '/styles.css', '/assets/fonts/NotoSans.ttf', '/assets/fonts/NotoSansCJKsc-Medium.otf', '/assets/fonts/tabler-icons.woff2', '/help.html', '/game-reference.js', '/game-schema.js', '/local-game-data.js', '/local-save-reference.js']:
             self.assertEqual(self.request(path)[0], 200, path)
         self.assertIn('text/javascript', self.request('/app.js')[1]['Content-type'])
 

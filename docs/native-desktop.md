@@ -1,10 +1,10 @@
 # Native Windows save editor
 
-v0.3 uses the [standalone workflow](standalone-workflow.md): bundled data/icons, automatic draft application, tourist-count edits and direct save-folder export with backups. v0.1/v0.2 packages remain unchanged and use their historical manual-apply/copy-export workflows.
+v0.4 retains the v0.3 [standalone workflow](standalone-workflow.md): bundled data/icons, automatic draft application, tourist-count edits and direct save-folder export with backups. v0.1/v0.2 packages remain unchanged and use their historical manual-apply/copy-export workflows.
 
-Open `dist/RF4S Save Editor.exe`. No installation, browser, server, Python or Node is required. The interface uses native Qt Widgets. The bundled scripting interpreter runs only shared save algorithms; it does not display web pages.
+Extract the v0.4 ZIP and open `RF4S Save Editor.exe`, or use `start.bat` for a local build. No installation, browser, server, Python or Node is required. The interface uses native Qt Widgets. The bundled scripting interpreter runs only shared save algorithms; it does not display web pages.
 
-The current source uses the Nord palette (Polar Night backgrounds, Snow Storm text and Frost highlights) with Fusion rendering across the GUI, dropdowns and search suggestions. It retains 12-point minimum body text, 40-pixel picker/portrait icons and a 56-pixel item grid with 64-pixel selected-item previews. Existing release executables are unchanged. The separate local development build is `dist/nord/RF4S Save Editor.exe`, preferred by `start.bat` when present; build it with `python scripts/build_desktop.py --output dist/nord` after installing the desktop build requirements. Earlier local builds remain available as fallbacks.
+v0.4 uses the Nord palette (Polar Night backgrounds, Snow Storm text and Frost highlights) with Fusion rendering across the GUI, dropdowns and search suggestions. It has 11-point Noto Medium body text, 24-pixel picker/portrait icons, 40-pixel tile icons and 48-pixel selected-item previews. `start.bat` prefers `dist/v0.4/RF4S Save Editor.exe`; build it with `python -m scripts.build_desktop --output dist/v0.4` after installing the desktop build requirements. Earlier local builds remain fallbacks and previous published releases are unchanged.
 
 1. Close the game and back up your save directory.
 2. The launch save picker starts at `%APPDATA%\Rune Factory 4 Special`; if absent, it uses your home folder. Select a PC / extracted Switch slot or `rf4_sys.sav`, or cancel and use **Open save** later. No save is auto-loaded.
@@ -44,4 +44,10 @@ Standard confirmation buttons retain English captions when no Chinese catalog en
 
 **Interface / 界面** is independent of **Game names**. **Follow system** defaults to Simplified Chinese for Chinese system locales and English otherwise; manual English/Chinese overrides are remembered. Switching interface language preserves controls, even partially typed drafts, and does not change save data. The legacy browser UI is not fully localized. Seven game-name languages are bundled.
 
+v0.4 uses **Noto Sans Medium (500)** with bundled **Noto Sans CJK SC Medium** for Chinese, including user-entered text and previews. Both fonts load from the app itself without installation or network access.
+
+v0.4 includes **Soil editor**, **Add roster NPC / monster**, a staged **end-game shortcut**, explicit experimental non-candidate relationship/spouse flags, and current-gender **nickname resets**. These are not game-script modifications; unsupported NPCs can remain unplayable. See the [complete instructions and storage evidence](expanded-editors.md).
+
 Story flags retain raw developer identifiers and original descriptions. Human translations, symbol-only interpretations and static script evidence are distinguished. Group/Chinese-description search and the draft impact preview do not apply dependency repairs or simulate events. Memories / 回忆 and The Running Sign / 会跑的广告牌 show numeric/completion gates, but participant-enable queries remain unknown. See [investigation](story-flag-investigation.md). Nothing is uploaded. Backups and in-game testing remain essential.
+
+The **Story jump planner** previews target + explicit JSON supporting flags as a single edit, including event-bank state, partial 442/511 script comparisons and exact byte masks. Profiles containing the main-story register are staged for review, not immediately applied. Risk acknowledgement is required for a changed jump; decreases require separate rewind consent. Valid acknowledged drafts participate in the existing atomic export batch. See the [detailed explanation and workflow](story-jump-planner.md); no playable checkpoint preset is claimed.
