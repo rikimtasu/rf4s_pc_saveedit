@@ -10,7 +10,9 @@ import { ProgressCatalog } from './progress-core.js';
 import { SAVE_METADATA } from './save-metadata.js';
 import { flagHelp, previewFlagEdit, STORY_WITNESSES } from './flag-help.js';
 import { previewStoryJump, applyStoryJump, explainStoryJump, ENDGAME_SHORTCUT } from './story-jump.js';
-import { SoilEditor, SOIL_FARMS, SOIL_FIELDS } from './soil-core.js';
+import { SoilEditor, SOIL_FARMS, SOIL_FIELDS, SOIL_MAXIMUM } from './soil-core.js';
+import { OrdersEditor, ORDER_FIELDS, ORDER_APPEARANCES } from './orders-core.js';
+import { gearPreset, giveGearPreset } from './gear-presets.js';
 import { RosterEditor } from './roster-core.js';
 import { RelationshipEditor, NICKNAME_COUNT } from './relationship-core.js';
 import { PlayerNameEditor, NAME_RECORD_COUNT } from './player-name-core.js';
@@ -24,7 +26,7 @@ const extra = () => new ExtendedSave(requireSave());
 const marriage = () => new MarriageEditor(requireSave(), progress.variables);
 const EDIT_OPERATIONS = new Set(['setPlayer', 'setCalendar', 'setMarriage', 'setSkill', 'setFriendship',
   'setRelationship', 'setPlayerName', 'setStats', 'setMonster', 'setRecipes', 'setTrophy', 'setSystem',
-  'setFlag', 'setStoryJump', 'setSoil', 'setRosterAdd', 'setNumber', 'patchBytes', 'setItem']);
+  'setFlag', 'setStoryJump', 'setSoil', 'setOrders', 'setGearPreset', 'setRosterAdd', 'setNumber', 'patchBytes', 'setItem']);
 
 export function nativeInvoke(operation, args = {}) {
   switch (operation) {
@@ -102,7 +104,12 @@ export function nativeInvoke(operation, args = {}) {
     case 'setMonster': return extra().setMonster(args.id, args.changes);
     case 'roster': return { slots: extra().monsters().map(({ id, name, species, occupied }) => ({ id, name, species, occupied })), housing: new RosterEditor(requireSave()).housing() };
     case 'setRosterAdd': return new RosterEditor(requireSave()).add(args);
-    case 'soilConstants': return { farms: SOIL_FARMS, fields: SOIL_FIELDS };
+    case 'orderConstants': return { fields: ORDER_FIELDS, appearances: ORDER_APPEARANCES };
+    case 'orders': return new OrdersEditor(requireSave()).values();
+    case 'setOrders': return new OrdersEditor(requireSave()).apply(args.changes);
+    case 'gearPreset': return gearPreset(args.id, catalog);
+    case 'setGearPreset': return giveGearPreset(requireSave(), catalog, args.id, args.acknowledgeRisk);
+    case 'soilConstants': return { farms: SOIL_FARMS, fields: SOIL_FIELDS, maximum: SOIL_MAXIMUM };
     case 'soil': return new SoilEditor(requireSave()).values(args.farm, args.patch);
     case 'setSoil': return new SoilEditor(requireSave()).apply(args.farm, args.patch, args.changes, args.all === undefined ? false : args.all);
     case 'endgameShortcut': return { ...ENDGAME_SHORTCUT, flags: { ...ENDGAME_SHORTCUT.flags } };

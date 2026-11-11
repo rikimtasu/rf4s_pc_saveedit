@@ -25,6 +25,8 @@ export const SOIL_FIELDS = [
   ['overallLevel', 'Overall level (raw 0–15)', 120, 4],
   ['speedLevel', 'Base speed level (raw 0–15)', 124, 4],
 ].map(([key, label, bit, width]) => ({ key, label, bit, width, min: 0, max: 2 ** width - 1 }));
+// Maximize magnitudes, never the negative sign bits. These remain raw limits.
+export const SOIL_MAXIMUM = Object.fromEntries(SOIL_FIELDS.map(field => [field.key, field.key.endsWith('Negative') ? 0 : field.max]));
 export const SOIL_FARMS = ['Center field', 'Bottom-left field', 'Bottom-right field', 'Top-left field', 'Top-right field', 'Spring field', 'Summer field', 'Autumn field', 'Winter field'].map((name, id) => ({ id, name, patches: id < 5 ? Array.from({ length: 18 }, (_, i) => i) : id === 5 ? [0,1,2,3,4,5,6,7] : id === 6 ? [0,1,2,3] : id === 7 ? [0,1,3,4,6,7] : Array.from({ length: 12 }, (_, i) => i) }));
 
 function location(farmInput, patchInput) {

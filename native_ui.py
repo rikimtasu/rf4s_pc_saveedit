@@ -465,7 +465,9 @@ class NativeWindow(QMainWindow):
         self.make_player()
         self.make_player_name()
         self.make_inventory()
+        self.make_gear_shortcuts()
         self.make_record_pages()
+        self.make_orders()
         self.make_soil()
         self.make_roster()
         self.make_marriage()
@@ -504,7 +506,7 @@ class NativeWindow(QMainWindow):
         # Keep controls intact, including half-typed values and disabled drafts.
         current = next((key for key, (_widget, _layout, index) in self.pages.items() if index == self.stack.currentIndex()), None)
         if current == 'inventory': self.render_item_preview()
-        elif current in ('flags', 'review', 'relationships', 'player-name', 'soil', 'roster'):
+        elif current in ('flags', 'review', 'relationships', 'player-name', 'soil', 'roster', 'orders', 'gear'):
             self.renderers[current]()
             self.ui.apply(self.pages[current][0])
 
@@ -612,6 +614,7 @@ class NativeWindow(QMainWindow):
         self.inventory_rows_key = None
         self.source_path = path
         self.demo_mode = demo
+        self.gear_consent.setChecked(False)
         self.export_platform.setCurrentIndex(self.export_platform.findData('keep'))
         self.export_gender.setCurrentIndex(self.export_gender.findData('keep'))
         self.conversion_consent.setChecked(False)
@@ -1216,6 +1219,75 @@ class NativeWindow(QMainWindow):
         if all_recipes and known:
             self.statusBar().showMessage(self.ui.text('All loaded recipes learned in memory. Export to save.'), 10000)
 
+    def make_orders(self):
+        layout = self.page('orders', 'Extra orders')
+        note = QLabel('Saved order effects only; no point costs or events are executed. To unlock the Extra Orders menu, open rf4_sys.sav and use System save unlocks. Appearance changes do not change dialogue gender. Back up and test in-game.')
+        note.setWordWrap(True); note.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(note)
+        self.order_constants = self.backend.call('orderConstants')
+        fields = [{**field, 'kind': 'choice' if field['key'] == 'appearance' else 'bool' if 'bit' in field else 'number'} for field in self.order_constants['fields']]
+        self.orders_form = self.form(layout, fields, lambda changes: self.backend.call('setOrders', changes=changes))
+        self.renderers['orders'] = self.render_orders
+
+    def render_orders(self):
+        state = self.backend.state(); ready = bool(state and state['kind'] == 'slot')
+        self.orders_form.set_ready(ready)
+        if not ready: return
+        choices = [(self.ui.text(entry['name']) if 'name' in entry else self.name('people', entry['id'], f'NPC {entry["id"]}'), entry['id']) for entry in self.order_constants['appearances']]
+        self.orders_form.set_data(self.backend.call('orders'), {'appearance': choices})
+
+    def make_gear_shortcuts(self):
+        layout = self.page('gear', 'Equipment shortcuts')
+        note = QLabel('Curated endgame staff sets for Lest or Frey, not a mathematical best-build guarantee. Adds six level-10 items to empty slots in the first 15 bag slots; equip them in-game. Existing items, worn gear and bag capacity are preserved. All saved level/rarity bonuses are maximized. Export to save.')
+        note.setWordWrap(True); note.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(note)
+        self.gear_preview_tabs = QTabWidget(); layout.addWidget(self.gear_preview_tabs)
+        self.gear_previews = {}
+        for key, title in [('staff-balanced', 'Balanced optimized staff gear'), ('staff-damage', 'Maximum-damage optimized staff gear')]:
+            panel = QPlainTextEdit(); panel.setReadOnly(True); panel.setMinimumHeight(180)
+            self.gear_previews[key] = panel; self.gear_preview_tabs.addTab(panel, title)
+        warning = QLabel('Damage preset: Strange Pendant ignores enemy DEF/M.DEF AND your own DEF/M.DEF. It sacrifices protection. Final stats, inheritance and staff charge attacks are not simulated; test exported copies in-game.')
+        warning.setWordWrap(True); warning.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(warning)
+        requirements = QLabel('Inspired by the supplied GameFAQs build. For its claimed resistance/INT targets, use level-10 Gold Juice and high resistance skills in-game. Neither buff nor skills are changed here. Positive cloth bonuses are not inverted; the preview shows the actual saved build.')
+        requirements.setWordWrap(True); requirements.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(requirements)
+        self.gear_consent, consent_row = wrapping_checkbox('I understand experimental gear and the damage preset defense tradeoff')
+        layout.addWidget(consent_row)
+        row = ResponsiveRow(); layout.addWidget(row)
+        self.gear_buttons = {}
+        for key, title in [('staff-balanced', 'Give balanced staff gear'), ('staff-damage', 'Give maximum-damage staff gear')]:
+            button = QPushButton(title); self.gear_buttons[key] = button; row.addWidget(button)
+            button.clicked.connect(lambda _checked=False, key=key: self.attempt(lambda: self.give_gear(key)))
+        self.gear_consent.toggled.connect(self.render_gear_shortcuts)
+        layout.addStretch(); self.renderers['gear'] = self.render_gear_shortcuts
+
+    def render_gear_shortcuts(self):
+        state = self.backend.state(); ready = bool(state and state['kind'] == 'slot')
+        self.gear_consent.setEnabled(ready)
+        for key, panel in self.gear_previews.items():
+            available = ready
+            try:
+                preset = self.backend.call('gearPreset', id=key)
+                lines = []
+                for item in preset['items']:
+                    lines.append(f'{self.ui.text(item["role"])}: {self.item_name(item["id"])} · #{item["id"]}')
+                    lines.append(self.ui.text('Crafting attachments') + ': ' + ', '.join(self.item_name(entry['id']) for entry in item['craft']))
+                    lines.append(self.ui.text('Upgrades in order') + ': ' + ' → '.join(self.item_name(entry['id']) for entry in item['upgrades']))
+                    lines.append('')
+                panel.setPlainText('\n'.join(lines))
+            except ValueError as error:
+                available = False; panel.setPlainText(self.ui.text(str(error)))
+            self.gear_buttons[key].setEnabled(available and self.gear_consent.isChecked())
+
+    def give_gear(self, key):
+        if not self.gear_consent.isEnabled() or not self.gear_consent.isChecked(): raise ValueError('Acknowledge experimental gear presets first.')
+        pending = [form for form in self.forms if form.drafts]
+        callbacks = [lambda form=form: form.apply_callback(form.changes()) for form in pending]
+        callbacks.append(lambda: self.backend.call('setGearPreset', id=key, acknowledgeRisk=True))
+        self.backend.apply_callbacks(callbacks)
+        for form in pending:
+            form.drafts.clear(); form.status.setText(self.ui.text('No draft'))
+        self.gear_consent.setChecked(False)
+        self.refresh()
+        self.statusBar().showMessage(self.ui.text('Six gear items added in memory. Equip them in-game after exporting.'), 10000)
+
     def make_soil(self):
         layout = self.page('soil', 'Soil editor')
         note = QLabel('Raw packed soil values, not crop growth or a magnifying-glass simulator. One patch covers shared soil. Crop records and unused patches are preserved. Back up and test in-game.'); note.setWordWrap(True); note.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(note)
@@ -1227,11 +1299,19 @@ class NativeWindow(QMainWindow):
         fields = [{'key': 'all', 'label': 'Apply changed fields to every used patch on this field', 'kind': 'bool'}]
         fields += [{**field, 'kind': 'bool' if field['width'] == 1 else 'number'} for field in self.soil_constants['fields']]
         self.soil_form = self.form(layout, fields, lambda changes: self.backend.call('setSoil', farm=self.soil_location[0], patch=self.soil_location[1], all=bool(self.soil_form.value('all')), changes={key: value for key, value in changes.items() if key != 'all'}))
-        restore = QPushButton('Prepare soil health 255'); restore.clicked.connect(lambda: (self.soil_form.write('health', 255), self.soil_form.track('health')))
-        layout.insertWidget(3, restore)
+        restore = QPushButton('Prepare soil health 255'); restore.clicked.connect(lambda: self.attempt(lambda: self.prepare_soil({'health': 255})))
+        self.soil_max_button = QPushButton('Prepare maximum soil stats (raw)')
+        self.soil_max_button.clicked.connect(lambda: self.attempt(lambda: self.prepare_soil(self.soil_constants['maximum'])))
+        self.soil_shortcut_buttons = [restore, self.soil_max_button]
+        row = ResponsiveRow(); row.addWidget(restore); row.addWidget(self.soil_max_button); layout.insertWidget(3, row)
         self.soil_farm.currentIndexChanged.connect(self.change_soil)
         self.soil_patch.currentIndexChanged.connect(self.change_soil)
         self.renderers['soil'] = self.render_soil
+
+    def prepare_soil(self, values):
+        if not self.soil_form.allow.isEnabled() or not self.soil_form.allow.isChecked(): raise ValueError('Open a slot save first.')
+        for key, value in values.items():
+            self.soil_form.write(key, value); self.soil_form.track(key)
 
     def change_soil(self):
         farm, patch = self.soil_farm.currentData(), self.soil_patch.currentData()
@@ -1250,6 +1330,7 @@ class NativeWindow(QMainWindow):
     def render_soil(self):
         state = self.backend.state(); ready = bool(state and state['kind'] == 'slot')
         self.soil_form.set_ready(ready); self.soil_farm.setEnabled(ready); self.soil_patch.setEnabled(ready)
+        for button in self.soil_shortcut_buttons: button.setEnabled(ready and self.soil_form.allow.isChecked())
         if not ready: return
         farm, patch = self.soil_location
         combo_options(self.soil_farm, [(self.ui.text(item['name']), item['id']) for item in self.soil_constants['farms']], farm)
@@ -1326,10 +1407,18 @@ class NativeWindow(QMainWindow):
     def make_system(self):
         layout = self.page('system', 'System save unlocks', 'Persistent ending/wedding/data-transfer records only. These do not simulate events or advance slot saves.')
         self.system_form = self.form(layout, [{'key': str(field['bit']), 'label': field['label'], 'kind': 'bool'} for field in self.constants['systemFlags']], lambda changes: self.backend.call('setSystem', changes=changes))
+        self.extra_orders_unlock_button = QPushButton('Prepare extra-orders unlock')
+        self.extra_orders_unlock_button.clicked.connect(lambda: self.attempt(self.prepare_extra_orders_unlock))
+        layout.insertWidget(1, self.extra_orders_unlock_button)
         def render():
             state = self.backend.state(); ready = bool(state and state['kind'] == 'system'); self.system_form.set_ready(ready)
+            self.extra_orders_unlock_button.setEnabled(ready and self.system_form.allow.isChecked())
             if ready: self.system_form.set_data({str(field['bit']): field['value'] for field in self.backend.call('system')})
         self.renderers['system'] = render
+
+    def prepare_extra_orders_unlock(self):
+        if not self.system_form.allow.isEnabled() or not self.system_form.allow.isChecked(): raise ValueError('Open rf4_sys.sav to unlock Extra Orders.')
+        self.system_form.write('0', 1); self.system_form.track('0')
 
     def make_flags(self):
         layout = self.page('flags', 'Expert: story flags', 'Story changes can break progression. These controls do not initialize world state, reward quests or replay events.')

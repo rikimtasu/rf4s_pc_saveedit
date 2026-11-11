@@ -20,6 +20,8 @@ Install the build requirements, prepare the bundled catalog/icons with `python -
 
 ### New in v0.4
 
+**Native additions:** **Extra orders**, **Prepare maximum soil stats (raw)**, and separate **balanced / maximum-damage optimized staff gear** shortcuts based on the supplied GameFAQs discussion. See [usage, presets and limits](docs/order-soil-gear-shortcuts.md). Gear is added to six empty slots in the first 15 bag slots; equip it in-game. The damage preset sacrifices defense. `start.bat` prefers the new local `dist/order-soil-gear/RF4S Save Editor.exe` when built; the previously published v0.4 ZIP remains unchanged.
+
 **Story jump planner and experimental end-game shortcut**, **soil editing**, opt-in **non-candidate dating/spouse records**, **NPC/monster roster creation**, and nickname reset shortcuts for the current **Lest/Frey** gender. The more compact interface uses bundled **Noto Sans Medium** plus its Chinese companion. Experimental record edits do not add missing story/romance/AI scripts or guarantee playability. See [expanded editors and limits](docs/expanded-editors.md) and [release notes](RELEASE_NOTES.md).
 
 The v0.3 standalone catalog/icons, tourists, atomic drafts, direct save-folder export and same-folder backups are retained. See [standalone workflow and asset evidence](docs/standalone-workflow.md).
@@ -49,6 +51,8 @@ The editor opens in your browser, normally at `http://127.0.0.1:8764`. Keep the 
 | Marriage | Spouse register, anniversary, ring acceptance, wedding memory and per-candidate marriage / newlywed event flags |
 | Monsters | Stats and friendship for existing tamed monsters |
 | Soil (v0.4) | Raw packed soil values per patch or used patches on one field; crops/unused patches preserved |
+| Extra orders (native source) | Enemy level increase, EXP/skill EXP and event toggles, enemy displays, appearance selector; separate system menu-unlock shortcut |
+| Equipment shortcuts (native source) | Balanced and damage-focused upgraded staff sets; preview, empty-slot allocation and one undo |
 | Experimental roster (v0.4) | Add an NPC/monster species ID to an empty tamed roster slot with validated stats and free built-barn capacity |
 | Trophy records | 25 recorded achievement / festival fields—not Steam achievements |
 | System saves | Persistent ending, wedding and data-transfer unlock flags |

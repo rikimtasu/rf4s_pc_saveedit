@@ -137,6 +137,30 @@ def run(app, window, destination, game=None):
             window.grab().save(str(output / 'desktop-roster.png'))
             window.backend.call('undo'); window.backend.call('undo')
             checks['newEditorsUndo'] = bytes(window.backend.call('working')) == original and not window.pending()
+            page('orders'); form = window.orders_form
+            edit(form, 'enemyLevel', 10); edit(form, 'noExp', 1); edit(form, 'showEnemyHp', 1)
+            window.apply_all_drafts()
+            values = window.backend.call('orders')
+            checks['extraOrders'] = values['enemyLevel'] == 10 and values['noExp'] == 1 and values['showEnemyHp'] == 1 and valid(window.backend.build())
+            window.grab().save(str(output / 'desktop-extra-orders.png'))
+            window.backend.call('undo'); window.refresh()
+            page('soil'); window.soil_max_button.click(); edit(window.soil_form, 'all', 1)
+            checks['maxSoilStaged'] = bytes(window.backend.call('working')) == original
+            window.apply_all_drafts()
+            checks['maxSoil'] = all(window.backend.call('soil', farm=0, patch=i)['values'] == window.soil_constants['maximum'] for i in range(18))
+            window.backend.call('undo'); window.refresh()
+            for key in ('staff-balanced', 'staff-damage'):
+                page('gear'); window.gear_consent.setChecked(True); window.gear_buttons[key].click()
+                ids = [item['id'] for item in window.backend.call('inventory', container='bag')]
+                checks[key] = all(item_id in ids for item_id in (501, 595, 749, 706, 729, 665)) and window.backend.state()['undo'] == 1 and valid(window.backend.build())
+                window.backend.call('undo'); window.refresh()
+            window.resize(640, 480)
+            for key in ('gear', 'orders', 'soil'):
+                page(key)
+                for _ in range(4): app.processEvents()
+                checks[f'{key}ShortcutCompact'] = window.stack.currentWidget().horizontalScrollBar().maximum() == 0
+            page('gear'); window.grab().save(str(output / 'desktop-gear-shortcuts.png'))
+            checks['shortcutsUndo'] = bytes(window.backend.call('working')) == original and not window.pending()
             if not all(checks.values()) or window.test_errors: raise AssertionError((checks, window.test_errors))
             (output / 'desktop-test.json').write_text(json.dumps({'passed': True, 'native': True, 'version': app.applicationVersion(), 'checks': checks}, indent=2), encoding='utf-8')
             window.closing = True; app.exit(0)

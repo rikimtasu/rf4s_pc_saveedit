@@ -1,3 +1,13 @@
+# Native additions after v0.4 — Extra orders, maximum soil and staff gear
+
+- Extra Orders editor: enemy level increase 0–10, EXP/skill EXP toggles, town-event toggle, enemy level/HP display and appearance orders. Separate `rf4_sys.sav` menu-unlock draft button.
+- Maximum soil shortcut: positive packed maxima, with negative signs cleared; preserves the selected patch/field scope, crops and unused patches.
+- Separate balanced and maximum-damage optimized staff gear grants, informed by the supplied [GameFAQs thread](https://gamefaqs.gamespot.com/boards/258612-rune-factory-4-special/80987735). Full attachment previews, maximum saved level/rarity bonuses, empty-slot-only allocation and atomic undo.
+- Damage preset uses Strange Pendant, which ignores **your** defenses as well as the enemy's. No mathematical optimum or complete immunity is claimed; food buffs, skills and final-stat simulation are not changed/implemented.
+- Native English/Chinese controls and compact layouts. The previously published v0.4 download remains unchanged. See [usage and evidence](docs/order-soil-gear-shortcuts.md).
+
+---
+
 # v0.4 — Story, soil, experimental roster and nickname resets
 
 Download **RF4S-Save-Editor-v0.4-win-x64.zip**, extract it and run **RF4S Save Editor.exe**. Windows 10/11 x64; executable approximately **49.4 MiB**. No installation, Python, Node, browser, local server or game-folder reading is required. Previous releases remain available.
