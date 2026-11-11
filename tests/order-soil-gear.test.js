@@ -24,7 +24,7 @@ for (const platform of ['pc', 'switch']) {
     save.data[0x2071e] = 0xdf; save.data[0x2071f] = 0x87;
     const before = save.data.slice();
     editor.apply(changes);
-    assert.deepEqual(editor.values(), changes);
+    assert.deepEqual(Object.fromEntries(Object.keys(changes).map(key => [key, editor.values()[key]])), changes);
     assert.equal(save.data[0x2071e], 0xff); assert.equal(save.data[0x2071f], 0xff);
     const addresses = new Set([0x2071e, 0x2071f, 0x2072c, 0x20740, 0x20741, 0x20742, 0x20743]);
     for (let offset = 0; offset < before.length; offset++) if (!addresses.has(offset)) assert.equal(save.data[offset], before[offset], offset.toString(16));
@@ -46,7 +46,7 @@ for (const platform of ['pc', 'switch']) {
     const ranges = added.map(item => [item.offset, item.offset + ITEM_RECORD_SIZE]);
     for (let offset = 0; offset < before.length; offset++) if (!ranges.some(([start, end]) => offset >= start && offset < end)) assert.equal(save.data[offset], before[offset], offset.toString(16));
     for (const [i, item] of added.entries()) {
-      assert.equal(item.quantity, 1); assert.equal(item.level, 10); assert.ok(item.slot < 15);
+      assert.equal(item.quantity, 1); assert.equal(item.level, 10); assert.ok(item.slot < 60);
       assert.equal(save.data[item.offset + 2], 1);
       const details = itemDetails(save, 'bag', item.slot);
       assert.equal(details.totalLevel, 150); assert.equal(details.rarityBonus, 200);
@@ -82,10 +82,10 @@ test('extra orders validate the entire request before writing, retaining redo on
   for (const changes of [{ noExp: 1, enemyLevel: 127 }, { noExp: 1, noTownEvents: 2 }, { enemyLevel: -1 }, { enemyLevel: 1.5 }, { appearance: 392 }, { appearance: -1 }, { typo: 1 }]) {
     assert.throws(() => editor.apply(changes)); assert.deepEqual(save.data, before); assert.equal(save.redoStack.length, 1);
   }
-  assert.equal(ORDER_FIELDS.length, 7);
+  assert.ok(ORDER_FIELDS.length > 7);
 });
 
-test('gear refuses missing tables, missing consent, full accessible bag and unknown presets atomically', () => {
+test('gear refuses missing tables, missing consent, full bag and unknown presets atomically', () => {
   const save = fixture(), catalog = new ItemCatalog(references());
   const before = save.data.slice();
   for (const consent of [false, 1, 'true', null]) assert.throws(() => giveGearPreset(save, catalog, 'staff-balanced', consent));
@@ -94,10 +94,37 @@ test('gear refuses missing tables, missing consent, full accessible bag and unkn
   const missing = references(); missing.tables.upgrade.records[933] = null;
   assert.throws(() => giveGearPreset(save, new ItemCatalog(missing), 'staff-balanced', true));
   assert.deepEqual(save.data, before); assert.equal(save.undoStack.length, 0);
-  for (let slot = 0; slot < 15; slot++) save.view().setUint16(BAG_OFFSET + slot * 28, 501 | (1 << 11), true);
+  for (let slot = 0; slot < 60; slot++) save.view().setUint16(BAG_OFFSET + slot * 28, 501 | (1 << 11), true);
   const full = save.data.slice();
   assert.throws(() => giveGearPreset(save, catalog, 'staff-balanced', true), /Free six/);
   assert.deepEqual(save.data, full); assert.equal(save.undoStack.length, 0);
+});
+
+for (const platform of ['pc', 'switch']) for (const preset of ['staff-balanced', 'staff-damage']) {
+  test(`${platform}: ${preset} uses scattered empty slots anywhere in the 60-slot bag`, () => {
+    const save = fixture(platform), catalog = new ItemCatalog(references());
+    const empty = [17, 22, 35, 48, 55, 59];
+    for (let slot = 0; slot < 60; slot++) save.view().setUint16(BAG_OFFSET + slot * 28, 501 | (1 << 11), true);
+    for (const slot of empty) save.data.fill(0, BAG_OFFSET + slot * 28, BAG_OFFSET + (slot + 1) * 28);
+    const before = save.data.slice();
+    giveGearPreset(save, catalog, preset, true);
+    assert.deepEqual(empty.map(slot => save.bagSlot(slot).id), [501, 595, 749, 706, 729, 665]);
+    for (let offset = 0; offset < before.length; offset++) {
+      if (!empty.some(slot => offset >= BAG_OFFSET + slot * 28 && offset < BAG_OFFSET + (slot + 1) * 28)) assert.equal(save.data[offset], before[offset]);
+    }
+    assert.equal(save.undoStack.length, 1); assert.equal(new SaveDocument(save.build()).crcValid, true);
+    save.undo(); assert.deepEqual(save.data, before);
+  });
+}
+
+test('five empty bag slots still refuse an entire set without partial writes or losing redo', () => {
+  const save = fixture(), catalog = new ItemCatalog(references());
+  save.setPlayer({ money: 1234 }); save.undo();
+  for (let slot = 0; slot < 60; slot++) save.view().setUint16(BAG_OFFSET + slot * 28, 501 | (1 << 11), true);
+  for (const slot of [18, 34, 47, 58, 59]) save.data.fill(0, BAG_OFFSET + slot * 28, BAG_OFFSET + (slot + 1) * 28);
+  const before = save.data.slice();
+  assert.throws(() => giveGearPreset(save, catalog, 'staff-damage', true), /Free six bag slots/);
+  assert.deepEqual(save.data, before); assert.equal(save.redoStack.length, 1); assert.equal(save.undoStack.length, 0);
 });
 
 test('preset sequences honor staff charges, core sets, boot inheritance and the separate damage tradeoff', () => {

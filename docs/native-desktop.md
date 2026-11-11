@@ -1,10 +1,10 @@
 # Native Windows save editor
 
-v0.4 retains the v0.3 [standalone workflow](standalone-workflow.md): bundled data/icons, automatic draft application, tourist-count edits and direct save-folder export with backups. v0.1/v0.2 packages remain unchanged and use their historical manual-apply/copy-export workflows.
+v0.41 retains the v0.3/v0.4 [standalone workflow](standalone-workflow.md): bundled data/icons, automatic draft application, tourist-count edits and direct save-folder export with backups. It adds named Extra Orders, soil/staff shortcuts and [Backups & rollback](save-history-and-order-names.md). Earlier packages remain unchanged.
 
-Extract the v0.4 ZIP and open `RF4S Save Editor.exe`, or use `start.bat` for a local build. No installation, browser, server, Python or Node is required. The interface uses native Qt Widgets. The bundled scripting interpreter runs only shared save algorithms; it does not display web pages.
+Extract the v0.41 ZIP and open `RF4S Save Editor.exe`, or use `start.bat` for a local build. No installation, browser, server, Python or Node is required. The interface uses native Qt Widgets. The bundled scripting interpreter runs only shared save algorithms; it does not display web pages.
 
-v0.4 uses the Nord palette (Polar Night backgrounds, Snow Storm text and Frost highlights) with Fusion rendering across the GUI, dropdowns and search suggestions. It has 11-point Noto Medium body text, 24-pixel picker/portrait icons, 40-pixel tile icons and 48-pixel selected-item previews. `start.bat` prefers `dist/v0.4/RF4S Save Editor.exe`; build it with `python -m scripts.build_desktop --output dist/v0.4` after installing the desktop build requirements. Earlier local builds remain fallbacks and previous published releases are unchanged.
+The app uses the Nord palette (Polar Night backgrounds, Snow Storm text and Frost highlights) with Fusion rendering across the GUI, dropdowns and search suggestions. It has 11-point Noto Medium body text, 24-pixel picker/portrait icons, 40-pixel tile icons and 48-pixel selected-item previews. `start.bat` prefers `dist/v0.41/RF4S Save Editor.exe`; build it with `python -m scripts.build_desktop --output dist/v0.41` after installing the desktop build requirements. Earlier local builds remain fallbacks and previous published releases are unchanged.
 
 1. Close the game and back up your save directory.
 2. The launch save picker starts at `%APPDATA%\Rune Factory 4 Special`; if absent, it uses your home folder. Select a PC / extracted Switch slot or `rf4_sys.sav`, or cancel and use **Open save** later. No save is auto-loaded.

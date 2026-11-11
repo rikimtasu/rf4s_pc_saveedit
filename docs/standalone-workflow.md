@@ -12,6 +12,8 @@ The target defaults to the opened file's canonical name (`rf4_sNN.sav` or `rf4_s
 
 Before replacing a target, the editor backs up the **current bytes on disk**, not a possibly stale loaded snapshot. Backups are created beside the save, named like `rf4_s01.sav.backup-YYYYMMDD-HHMMSS-microseconds-N.bak`. If a target does not yet exist, the imported original is backed up there instead. Repeated exports keep separate backups. Backup creation must succeed before the atomic save write proceeds.
 
+v0.41 retains the newest **10 managed backups per save** after successful direct export/rollback and adds **Backups & rollback** with snapshot details and confirmed disk restoration. Historical v0.3/v0.4 published packages are unchanged. See [retention rules and restore safety](save-history-and-order-names.md).
+
 Switching records applies a valid draft to the old record first. Invalid drafts stay visible; export does not partially apply the other drafts or modify the disk. Only basic format, integer/bit-field limits, checksum rebuilding, data-loss protection and unsaved-close protection remain. Unsupported story/family prerequisites are still not simulated. Undo changes memory; export again to write that undo to disk, with another backup.
 
 ## Tourists

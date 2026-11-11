@@ -2,7 +2,7 @@
 
 These are **native desktop** features. Close RF4S and back up the whole save folder first. Nothing is written to game files or your save folder until export. The legacy browser interface is unchanged.
 
-For the local portable build, run **`start.bat`** or **`dist/order-soil-gear/RF4S Save Editor.exe`**. Earlier executables and the published v0.4 ZIP are retained unchanged.
+These features ship in **v0.41**. For the latest local portable build, run **`start.bat`** or **`dist/v0.41/RF4S Save Editor.exe`**. Earlier executables and published downloads remain unchanged. See [named BGM / NPC morning calls and backup rollback](save-history-and-order-names.md).
 
 ## Extra orders
 
@@ -12,6 +12,20 @@ Open a slot save and choose **Extra orders**:
 - Disable combat EXP, disable skill EXP, disable town events.
 - Show enemy levels / HP.
 - Appearance order: default, opposite-gender protagonist appearance, or the CT-listed NPC appearance IDs. Save and reload; this does **not** change dialogue gender. Unsupported models/script paths can still fail in-game.
+
+The page now contains **44 fields in five tabs**, adding 37 fields to the original editor:
+
+| Tab | Direct edits |
+| --- | --- |
+| Order effects | Original seven EXP/event/enemy-display/appearance settings |
+| Licenses | Forging, chemistry, crafting, basic cooking, pro cooking, business, airship |
+| Shops & services | Blossom furniture/grocery stock, flower-shop stock expansion, furniture shop, Bado accessories/bargains, clothing, fish, jewelry, magic, rune abilities, nationalized/free baths |
+| Storage & fields | Bag, fridge, storage, bookshelf, weapon/armor/tool/shipping-box levels, home-field expansion, 60-slot bag-order unlock |
+| Other saved orders | Expanded cooking-tools flag, raw rank, global morning-call unlock plus named NPC caller, Sharance Maze, swimsuits, hide inn shopkeeper, six named BGM choices |
+
+Tabs do not discard or apply drafts. Export applies drafts from all tabs as one transaction; an invalid draft on a hidden tab blocks the whole batch. Individual Apply buttons apply only that tab's changed fields.
+
+**Unlock flags do not deliver furniture, run orders, deduct points, build facilities or reconstruct NPC/shop schedules.** Raw rank, expansion and BGM ranges are storage widths, **not verified gameplay limits or capacity formulas**. Avoid shrinking occupied storage. There is deliberately no blanket “max every order” button or automatic building/recipe/event initialization.
 
 For the **menu unlock**, open **`rf4_sys.sav` → System save unlocks → Prepare extra-orders unlock**. This prepares only system bit 0 at `0x10`; Apply/export it separately. It does not advance a slot's story, run an ending, award achievements or change save-slot availability bitmaps. Export's optional appearance reset still overrides an appearance-order edit in the exported copy.
 
@@ -27,7 +41,21 @@ The v12.3 CT names fields relative to `RF4D`; v13 places the corresponding field
 | Enemy level increase | `0x2072C` | u8, guarded 0–10 |
 | Appearance selector | `0x20740` | i32, explicit choices only |
 
-The surrounding currency/order blocks and appearance save/load anchors are documented in [save-layout.md](save-layout.md). **The new order labels are CT-derived, not independent gameplay-consumer verification.** Byte tests cover masked writes, PC/Switch CRC, rollback and undo; they do not prove in-game behavior. Requests, event payloads, typhoon state and other unknown order-block fields are not edited.
+The additional packed settings come from inert v13 **Order Flags / Licenses / Shops / Furniture / Prince(ss) rank** entries, mapped through the same order-block anchor:
+
+| Setting | Slot offset | Bits (LSB-first within byte) |
+| --- | --- | --- |
+| Forge / chemistry / crafting / basic cooking / pro cooking | `0x2071C` | 0 / 1 / 2 / 3 / 4 |
+| Blossom furniture / flower-shop expansion | `0x2071C` | 6 / 7 |
+| Furniture / groceries / Bado accessories / bargains / clothing / fish | `0x2071D` | 2 / 3 / 4 / 5 / 6 / 7 |
+| Jewelry / magic / rune abilities / business | `0x2071E` | 0 / 1 / 2 / 3 |
+| Nationalized baths / expanded cooking-tools flag | `0x2071E` | 6 / 7 |
+| Airship license | `0x20738` | 0 |
+| Prince/princess rank | `0x20718` | low five bits, 0–31 raw; upper bits preserved |
+
+Storage/field levels and the remaining switches use the exact names, offsets and **full widths from `SAVE_METADATA.symbols`**, written with the existing GameFlags encoder. Their numeric assembly is MSB-first, unlike the byte-local packed fields above. In particular, the editor does not copy the CT's partial/incorrect expansion-register interpretation. These fields were already accessible through Expert flags; the new tabs bring a curated subset into the direct order editor.
+
+The surrounding currency/order blocks and appearance save/load anchors are documented in [save-layout.md](save-layout.md). **The new packed order labels are CT-derived, not independent gameplay-consumer verification.** Named GameFlags have developer layout/description evidence, not proof that running an order is equivalent to writing a flag. Byte tests cover masked writes, PC/Switch CRC, rollback and undo; they do not prove in-game behavior. Requests, event payloads, typhoon state and unknown order-block fields are not edited. The CT's runtime-only instant/forced-weather cheats are not exposed as saved order settings.
 
 ## Maximum soil
 
@@ -44,7 +72,7 @@ Choose **Equipment shortcuts**. Read both previews and the warnings, acknowledge
 - **Give balanced staff gear** — INT-oriented staff set with elemental/status protection and utility inheritance.
 - **Give maximum-damage staff gear** — more INT-focused attachments; **Strange Pendant ignores enemy DEF/M.DEF and your own DEF/M.DEF**. This is a deliberate survivability tradeoff, not a universally stronger set.
 
-Both add **six level-10 items**: Sorcerer's Wand, Rune Shield, Four Dragons' Vest, Crown, Fairy Boots and Art of Magic. Total-level/rarity metadata is set to **150/200**. Existing worn gear and occupied inventory records are never overwritten. Allocation is conservatively restricted to six empty slots within the **first 15 bag slots**, avoiding unverified expansion-capacity assumptions. If there is no room, free slots in-game or with the item editor. No capacity/order flag is silently enabled. Equip the items in-game after export.
+Both add **six level-10 items**: Sorcerer's Wand, Rune Shield, Four Dragons' Vest, Crown, Fairy Boots and Art of Magic. Total-level/rarity metadata is set to **150/200**. Existing worn gear and occupied inventory records are never overwritten. Allocation now searches **all 60 saved bag slots**, taking the first six empty slots; gaps need not be contiguous and may all be after slot 15. Fewer than six empty slots blocks the entire grant with no partial writes. No capacity/order flag is silently enabled: writing a later serialized slot does not itself unlock that slot's in-game capacity. Equip the items in-game after export.
 
 Valid pending edits and the grant apply together as one atomic undo entry. An invalid pending edit, missing reference table or full bag leaves all bytes/history/drafts intact. Consent resets after a successful grant or opening another save. Both Lest and Frey can receive the same set; gender, appearance, base stats, recipes and skills are unchanged.
 
@@ -72,5 +100,6 @@ This is a curated optimized preset, **not a mathematical maximum over all equipm
 ## Verification
 
 - `tests/order-soil-gear.test.js`: both platforms, exact packed conservation, both preset byte ranges/attachments, CRC/undo/redo, validation, missing tables/full bag, source-inspired sequence checks and mixed-batch rollback.
+- `tests/expanded-orders.test.js`: each new field's bit conservation, asymmetric full-width GameFlags encoding, raw rank masks, invalid batches and an optional inert cross-check against the local v13 CT.
 - `tests/test_order_soil_gear_ui.py`: real Qt controls, draft/consent lifecycle, localization/640×480 layout, pending-edit failures and separate system unlock.
 - `scripts/desktop_smoke.py`: standalone catalog-backed grant previews, both grants, maximum soil and Extra Orders on synthetic saves only.

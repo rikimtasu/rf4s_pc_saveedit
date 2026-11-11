@@ -54,10 +54,10 @@ export function giveGearPreset(save, catalog, id, acknowledgeRisk = false) {
   if (acknowledgeRisk !== true) throw new Error('Acknowledge experimental gear presets first.');
   gearPreset(id, catalog); // Validate the complete set before any write.
   const preset = presetFor(id);
-  // Restrict allocation to the first 15 slots, usable even without bag expansion.
-  // Never unlock capacity or place rewards in potentially inaccessible slots.
-  const slots = save.inventoryItems('bag').filter(item => item.slot < 15 && item.id === 0 && item.quantity === 0).slice(0, preset.items.length);
-  if (slots.length !== preset.items.length) throw new Error('Free six slots in the first 15 bag slots before giving gear. Existing items are never overwritten.');
+  // Search all 60 serialized bag slots; gaps need not be contiguous. Capacity
+  // flags remain unchanged, just as with ordinary direct bag-slot edits.
+  const slots = save.inventoryItems('bag').filter(item => item.id === 0 && item.quantity === 0).slice(0, preset.items.length);
+  if (slots.length !== preset.items.length) throw new Error('Free six bag slots before giving gear. Existing items are never overwritten.');
   return save.transact(preset.name, bytes => {
     const staged = Object.create(save);
     staged.data = bytes;

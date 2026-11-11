@@ -6,11 +6,11 @@ A local, offline save editor for **PC / Steam**, **extracted Switch saves**, and
 
 ### Portable Windows app — no installation
 
-Download **v0.4** from [GitHub Releases](https://github.com/rikimtasu/rf4s_pc_saveedit/releases/tag/v0.4). Extract **RF4S-Save-Editor-v0.4-win-x64.zip** and open `RF4S Save Editor.exe`. Item/effect definitions, recipes, seven name languages, item/NPC icons and Noto Latin/Chinese fonts are bundled; no game-folder reading is required.
+Download **v0.41** from [GitHub Releases](https://github.com/rikimtasu/rf4s_pc_saveedit/releases/tag/v0.41). Extract **RF4S-Save-Editor-v0.41-win-x64.zip** and open `RF4S Save Editor.exe`. Item/effect definitions, recipes, seven name languages, item/NPC icons and Noto Latin/Chinese fonts are bundled; no game-folder reading is required.
 
 This is a **native Qt Widgets GUI**, not a browser-based app: no Chromium, WebView, HTML interface or local server. Python and required native Qt libraries are bundled, so nothing needs installing. Windows 10/11 x64 is supported. First launch unpacks its runtime into a temporary folder.
 
-`start.bat` also opens a locally built native EXE in `dist/`. The v0.4 executable is approximately **49.4 MiB**, including standalone references, icons and English/Chinese fonts; no installation is needed.
+`start.bat` also opens a locally built native EXE in `dist/`, preferring `dist/v0.41/RF4S Save Editor.exe`. The executable is approximately **49 MiB**, including standalone references, icons and English/Chinese fonts; no installation is needed.
 
 Close the game, open your save, edit values, then click **Export edited save**. It writes directly to `%APPDATA%\Rune Factory 4 Special`, backing up the current destination there first. Edits stay in memory until you explicitly export. **Save as…** creates copies or exports extracted Switch format.
 
@@ -18,9 +18,11 @@ Close the game, open your save, edit values, then click **Export edited save**. 
 
 Install the build requirements, prepare the bundled catalog/icons with `python -m scripts.generate_builtin "<game folder>"`, run `npm run build:native-core`, then run `python desktop.py`. Node/esbuild compiles the existing save algorithms for Qt's small standalone scripting interpreter, not a browser. Node and the game folder are not needed by users of the new standalone EXE.
 
-### New in v0.4
+### New in v0.41
 
-**Native additions:** **Extra orders**, **Prepare maximum soil stats (raw)**, and separate **balanced / maximum-damage optimized staff gear** shortcuts based on the supplied GameFAQs discussion. See [usage, presets and limits](docs/order-soil-gear-shortcuts.md). Gear is added to six empty slots in the first 15 bag slots; equip it in-game. The damage preset sacrifices defense. `start.bat` prefers the new local `dist/order-soil-gear/RF4S Save Editor.exe` when built; the previously published v0.4 ZIP remains unchanged.
+**Extra orders** now has 44 fields in five tabs, including named BGM choices and the separate NPC-specific morning-call selector. **Backups & rollback** previews save details and restores a selected backup; successful exports/restores retain at most **10 editor backups per save**. See [named orders and rollback](docs/save-history-and-order-names.md). Maximum soil and both staff presets are included; gear uses any six empty slots across all 60 saved bag slots. The damage preset sacrifices defense. See [presets and limits](docs/order-soil-gear-shortcuts.md). Previously published downloads remain unchanged.
+
+### Retained from v0.4
 
 **Story jump planner and experimental end-game shortcut**, **soil editing**, opt-in **non-candidate dating/spouse records**, **NPC/monster roster creation**, and nickname reset shortcuts for the current **Lest/Frey** gender. The more compact interface uses bundled **Noto Sans Medium** plus its Chinese companion. Experimental record edits do not add missing story/romance/AI scripts or guarantee playability. See [expanded editors and limits](docs/expanded-editors.md) and [release notes](RELEASE_NOTES.md).
 
@@ -51,8 +53,9 @@ The editor opens in your browser, normally at `http://127.0.0.1:8764`. Keep the 
 | Marriage | Spouse register, anniversary, ring acceptance, wedding memory and per-candidate marriage / newlywed event flags |
 | Monsters | Stats and friendship for existing tamed monsters |
 | Soil (v0.4) | Raw packed soil values per patch or used patches on one field; crops/unused patches preserved |
-| Extra orders (native source) | Enemy level increase, EXP/skill EXP and event toggles, enemy displays, appearance selector; separate system menu-unlock shortcut |
-| Equipment shortcuts (native source) | Balanced and damage-focused upgraded staff sets; preview, empty-slot allocation and one undo |
+| Extra orders (v0.41 native) | 44 direct fields, including six named BGM choices and nine named morning-call NPCs; licenses, shops/free baths, raw expansion/rank values and original effects |
+| Backups & rollback (v0.41 native) | Up to 10 managed backups per save, snapshot details, confirmed disk restore with a pre-rollback backup |
+| Equipment shortcuts (v0.41 native) | Balanced and damage-focused upgraded staff sets; preview, empty-slot allocation and one undo |
 | Experimental roster (v0.4) | Add an NPC/monster species ID to an empty tamed roster slot with validated stats and free built-barn capacity |
 | Trophy records | 25 recorded achievement / festival fields—not Steam achievements |
 | System saves | Persistent ending, wedding and data-transfer unlock flags |
@@ -66,7 +69,7 @@ v0.2 also offers an independent **Interface / 界面** selector: **Follow system
 
 Compact windows are supported down to **640×480**. Forms reflow instead of clipping labels, and long pages scroll vertically through the Apply/Clear controls. Item previews use current/draft tabs; uncheck their heading to collapse the preview. Resizing does not discard drafts.
 
-v0.4 uses bundled **Noto Sans Medium (500)** for English and **Noto Sans CJK SC Medium** for Chinese in both native and browser interfaces. The supplied Latin font has no Chinese glyphs, so the matching CJK face is included for consistent offline rendering. Fonts need no system installation; portable builds include both faces and their SIL OFL notices. `start.bat` prefers the new release build in `dist/v0.4/`, then earlier local builds; prior releases remain untouched.
+v0.4+ uses bundled **Noto Sans Medium (500)** for English and **Noto Sans CJK SC Medium** for Chinese in both native and browser interfaces. The supplied Latin font has no Chinese glyphs, so the matching CJK face is included for consistent offline rendering. Fonts need no system installation; portable builds include both faces and their SIL OFL notices. `start.bat` prefers the latest release build in `dist/v0.41/`, then earlier local builds; prior releases remain untouched.
 
 v0.4 adds a game-inspired icon grid with quantity badges, compact **11-point** Medium body text and balanced heading/icon sizes. Nord colors apply consistently to controls and dropdowns; **Ctrl+Shift+L** or **Learn all recipes** learns every loaded recipe as one undoable edit. Shared lazy picker models and cached slot lists make full storage much faster to browse. Earlier local builds remain launcher fallbacks. See the [native guide](docs/native-desktop.md).
 
@@ -81,6 +84,8 @@ v0.2 fixes blank confirmation buttons and Barrett / Raven friendship offsets. Al
 5. Keep the game closed until export finishes. Keep your backups and handle Steam Cloud conflicts separately. Use **Save as…** if you want a separate copy instead.
 
 Your save is **not uploaded**. Edits stay in application memory until exported. Direct export explicitly overwrites the chosen save after creating a unique same-folder backup of its current bytes; if absent, the imported original is backed up instead. Export rebuilds the checksum. Undo changes memory, not the on-disk save; export again to save the undo.
+
+In v0.41, **Backups & rollback** shows save details and restores a reviewed backup after confirmation, preserving the current disk bytes first. Successful direct exports/restores retain up to **10 matching editor backups per save**; manual copies and other slots are untouched. See [retention and restore safety](docs/save-history-and-order-names.md).
 
 For gender correction, use **Review & export → Character gender**. The optional appearance reset also clears cosmetic overrides and outfits; it never renames the player. Both options affect only the exported output.
 
@@ -114,7 +119,7 @@ The native **Item effect preview / 物品效果预览** compares current and dra
 
 v0.4 also adds a **Story jump planner**: stage plus explicit supporting flags, combined condition/byte previews, active-event and script-witness warnings, separate rewind acknowledgement and one atomic undo. Story-bearing profiles stage into the native planner. It does not synthesize a playable checkpoint or run event cleanup. See the [detailed workflow and explanation](docs/story-jump-planner.md).
 
-v0.4 includes an experimental **end-game flag shortcut**, **soil editing**, opt-in **non-candidate dating/spouse records**, and **NPC/monster roster creation**, with a more compact 11pt Noto interface. Run the release EXE or `start.bat` (prefers `dist/v0.4/RF4S Save Editor.exe` when built locally). These are save-record edits, not new romance/AI scripts or a guaranteed playable ending. Dating is limited to the 23 audited main-NPC records, spouse IDs to 0–31 and roster species to 1–255. Read the [usage, limits and executable evidence](docs/expanded-editors.md) before experimenting.
+v0.4+ includes an experimental **end-game flag shortcut**, **soil editing**, opt-in **non-candidate dating/spouse records**, and **NPC/monster roster creation**, with a more compact 11pt Noto interface. Run the release EXE or `start.bat` (prefers `dist/v0.41/RF4S Save Editor.exe` when built locally). These are save-record edits, not new romance/AI scripts or a guaranteed playable ending. Dating is limited to the 23 audited main-NPC records, spouse IDs to 0–31 and roster species to 1–255. Read the [usage, limits and executable evidence](docs/expanded-editors.md) before experimenting.
 
 ## Important limits
 

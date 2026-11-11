@@ -1,10 +1,22 @@
-# Native additions after v0.4 — Extra orders, maximum soil and staff gear
+# v0.41 — Extra orders, staff gear and backup rollback
 
+Download **RF4S-Save-Editor-v0.41-win-x64.zip**, extract it and run **RF4S Save Editor.exe**. Windows 10/11 x64; no installation, Python, Node, browser or game-folder reading is required. Standalone references, icons and English/Chinese fonts are included. Previous releases remain available.
+
+- Named BGM choices (six soundtrack families) and a separate named morning-call NPC selector, including Pico. The global morning-call menu unlock remains independent. Direct order fields now total 44.
+- Backups & rollback page: timestamps, CRC, size/hash, calendar/player/currency details; confirmed byte-exact disk restore with a pre-rollback backup. Successful direct exports/restores retain the newest 10 managed backups per save, with cleanup failures reported safely. See [usage and evidence](docs/save-history-and-order-names.md).
+- Extra Orders expanded to **44 direct fields in five tabs**: seven licenses, twelve shop/service switches, raw storage/field levels, rank and other saved flags, plus named BGM/caller choices. Named registers use full developer widths; CT-derived raw settings retain explicit limits/warnings. Hidden-tab invalid drafts block export atomically.
+- Both staff presets now search **all 60 saved bag slots**, including scattered empty slots after slot 15. Six free slots are required; existing items/capacity are untouched.
 - Extra Orders editor: enemy level increase 0–10, EXP/skill EXP toggles, town-event toggle, enemy level/HP display and appearance orders. Separate `rf4_sys.sav` menu-unlock draft button.
 - Maximum soil shortcut: positive packed maxima, with negative signs cleared; preserves the selected patch/field scope, crops and unused patches.
 - Separate balanced and maximum-damage optimized staff gear grants, informed by the supplied [GameFAQs thread](https://gamefaqs.gamespot.com/boards/258612-rune-factory-4-special/80987735). Full attachment previews, maximum saved level/rarity bonuses, empty-slot-only allocation and atomic undo.
 - Damage preset uses Strange Pendant, which ignores **your** defenses as well as the enemy's. No mathematical optimum or complete immunity is claimed; food buffs, skills and final-stat simulation are not changed/implemented.
 - Native English/Chinese controls and compact layouts. The previously published v0.4 download remains unchanged. See [usage and evidence](docs/order-soil-gear-shortcuts.md).
+
+## Verification and safety
+
+Focused Python checks passed: 10 export/backup checks, 3 native backup/order-name checks and 2 translation checks. No additional JavaScript tests or EXE smoke tests were run for this update, as requested. The portable package is checked for private reference data and unwanted browser/save assets before publication.
+
+**Back up the entire save folder and close the game before exporting or restoring.** A valid checksum does not guarantee gameplay compatibility. Unlock flags do not run order/event scripts or build facilities; raw expansion/rank values are not verified gameplay caps. Rollback does not manage Steam Cloud conflicts. Gear presets use empty slots only and do not unlock bag capacity; equip the granted items in-game.
 
 ---
 

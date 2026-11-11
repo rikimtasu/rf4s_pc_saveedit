@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
     QAbstractItemView, QFileDialog, QMessageBox, QPlainTextEdit, QSplitter, QSizePolicy, QTabWidget, QSpacerItem)
 
 from native_save import NativeSave, local_references
-from native_export import atomic_write, export_to_game_folder, game_save_directory
+from native_export import atomic_write, export_to_game_folder, game_save_directory, list_backups, inspect_backup, restore_backup
 from native_icons import GameIcons
 from native_i18n import UiLanguage, install_qt_translator
 from native_layout import ResponsiveRow, wrapping_checkbox
@@ -476,6 +476,7 @@ class NativeWindow(QMainWindow):
         self.make_reference()
         self.make_raw()
         self.make_review()
+        self.make_backups()
         self.navigation.currentRowChanged.connect(self.select_page)
         references = local_references()
         self.load_references(references)
@@ -506,7 +507,7 @@ class NativeWindow(QMainWindow):
         # Keep controls intact, including half-typed values and disabled drafts.
         current = next((key for key, (_widget, _layout, index) in self.pages.items() if index == self.stack.currentIndex()), None)
         if current == 'inventory': self.render_item_preview()
-        elif current in ('flags', 'review', 'relationships', 'player-name', 'soil', 'roster', 'orders', 'gear'):
+        elif current in ('flags', 'review', 'relationships', 'player-name', 'soil', 'roster', 'orders', 'gear', 'backups'):
             self.renderers[current]()
             self.ui.apply(self.pages[current][0])
 
@@ -595,7 +596,7 @@ class NativeWindow(QMainWindow):
         self.redo_action.setEnabled(bool(state and state['redo']))
         slot = bool(state and state['kind'] == 'slot')
         self.learn_all_recipes_action.setEnabled(slot and bool(self.backend.call('recipes')))
-        always = {'overview', 'reference', 'review', 'player-name'}
+        always = {'overview', 'reference', 'review', 'player-name', 'backups'}
         for key, (_widget, _layout, index) in self.pages.items():
             available = key in always or bool(state) and (key in {'raw'} or slot and key != 'system' or not slot and key == 'system')
             if key in {'player', 'inventory'}: available = slot
@@ -626,6 +627,7 @@ class NativeWindow(QMainWindow):
         filename = Path(name).name.lower()
         target = filename if re.fullmatch(r'rf4_s\d{2}\.sav|rf4_sys\.sav', filename) else 'rf4_sys.sav' if self.backend.state()['kind'] == 'system' else None
         with QSignalBlocker(self.target_save_combo): self.target_save_combo.setCurrentIndex(self.target_save_combo.findData(target))
+        with QSignalBlocker(self.backup_target_combo): self.backup_target_combo.setCurrentIndex(self.backup_target_combo.findData(target))
         self.inventory_container = 'bag'; self.inventory_slot = 0
         self.candidate = 1
         self.refresh()
@@ -1224,20 +1226,35 @@ class NativeWindow(QMainWindow):
         note = QLabel('Saved order effects only; no point costs or events are executed. To unlock the Extra Orders menu, open rf4_sys.sav and use System save unlocks. Appearance changes do not change dialogue gender. Back up and test in-game.')
         note.setWordWrap(True); note.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(note)
         self.order_constants = self.backend.call('orderConstants')
-        fields = [{**field, 'kind': 'choice' if field['key'] == 'appearance' else 'bool' if 'bit' in field else 'number'} for field in self.order_constants['fields']]
-        self.orders_form = self.form(layout, fields, lambda changes: self.backend.call('setOrders', changes=changes))
+        warning = QLabel('Unlock flags do not deliver furniture, build facilities or run order scripts. Rank and expansion levels are raw stored values, not verified gameplay caps. The morning-call NPC is separate from its menu unlock. Do not shrink occupied storage; back up and test exported copies.')
+        warning.setWordWrap(True); warning.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(warning)
+        self.order_tabs = QTabWidget(); layout.addWidget(self.order_tabs)
+        self.orders_forms = {}
+        for group in self.order_constants['groups']:
+            tab = QWidget(); tab_layout = QVBoxLayout(tab)
+            fields = [field for field in self.order_constants['fields'] if field['group'] == group['id']]
+            self.orders_forms[group['id']] = self.form(tab_layout, fields, lambda changes: self.backend.call('setOrders', changes=changes))
+            self.order_tabs.addTab(tab, group['name'])
+        self.orders_form = self.orders_forms['effects']
+        layout.addStretch()
         self.renderers['orders'] = self.render_orders
 
     def render_orders(self):
         state = self.backend.state(); ready = bool(state and state['kind'] == 'slot')
-        self.orders_form.set_ready(ready)
+        self.order_tabs.setEnabled(ready)
+        for form in self.orders_forms.values(): form.set_ready(ready)
         if not ready: return
         choices = [(self.ui.text(entry['name']) if 'name' in entry else self.name('people', entry['id'], f'NPC {entry["id"]}'), entry['id']) for entry in self.order_constants['appearances']]
-        self.orders_form.set_data(self.backend.call('orders'), {'appearance': choices})
+        values = self.backend.call('orders')
+        other_choices = {
+            'bgm': [(self.ui.text(entry['name']), entry['id']) for entry in self.order_constants['bgm']],
+            'morningCaller': [(self.ui.text(entry['name']) if 'name' in entry else self.person_name(entry['id']), entry['id']) for entry in self.order_constants['morningCallers']],
+        }
+        for key, form in self.orders_forms.items(): form.set_data(values, {'appearance': choices} if key == 'effects' else other_choices if key == 'other' else None)
 
     def make_gear_shortcuts(self):
         layout = self.page('gear', 'Equipment shortcuts')
-        note = QLabel('Curated endgame staff sets for Lest or Frey, not a mathematical best-build guarantee. Adds six level-10 items to empty slots in the first 15 bag slots; equip them in-game. Existing items, worn gear and bag capacity are preserved. All saved level/rarity bonuses are maximized. Export to save.')
+        note = QLabel('Curated endgame staff sets for Lest or Frey, not a mathematical best-build guarantee. Adds six level-10 items to any empty slots across all 60 saved bag slots; equip them in-game. Existing items, worn gear and bag capacity are preserved. All saved level/rarity bonuses are maximized. Export to save.')
         note.setWordWrap(True); note.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(note)
         self.gear_preview_tabs = QTabWidget(); layout.addWidget(self.gear_preview_tabs)
         self.gear_previews = {}
@@ -1699,12 +1716,90 @@ class NativeWindow(QMainWindow):
             state = self.backend.state()
             if state['kind'] == 'slot' and self.export_options()['platform'] != 'pc': raise ValueError('Use PC output for the PC save folder, or choose Save as for Switch.')
             if (state['kind'] == 'system') != (self.target_save_combo.currentData() == 'rf4_sys.sav'): raise ValueError('Choose a target filename matching the save type.')
-            target, backup = export_to_game_folder(self.target_save_combo.currentData(), data, bytes(self.backend.call('original')))
+            result = export_to_game_folder(self.target_save_combo.currentData(), data, bytes(self.backend.call('original')))
+            target, backup = result
             self.source_path = target
+            with QSignalBlocker(self.backup_target_combo): self.backup_target_combo.setCurrentIndex(self.backup_target_combo.findData(target.name))
             self.backend.call('markExported')
             self.update_export()
             self.statusBar().showMessage(self.ui.text('Saved: ') + str(target) + self.ui.text(' · Backup: ') + str(backup), 15000)
+            self.report_backup_cleanup(result)
         self.attempt(export)
+
+    def make_backups(self):
+        layout = self.page('backups', 'Backups & rollback')
+        note = QLabel('Keeps the newest 10 editor backups per save after successful export or rollback. Only matching editor .bak files are trimmed; manual copies and other saves are untouched. Rollback replaces the disk save, backs up its current bytes first, and reloads the restored save. Close the game and handle Steam Cloud conflicts separately.')
+        note.setWordWrap(True); note.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(note)
+        row = ResponsiveRow(); self.backup_target_combo = QComboBox()
+        combo_options(self.backup_target_combo, [('Choose target save slot', None)] + [(f'rf4_s{slot:02d}.sav', f'rf4_s{slot:02d}.sav') for slot in range(40)] + [('rf4_sys.sav', 'rf4_sys.sav')])
+        row.addWidget(self.backup_target_combo, 1)
+        refresh = QPushButton('Refresh backups'); refresh.clicked.connect(lambda: self.attempt(self.render_backups)); row.addWidget(refresh); layout.addWidget(row)
+        self.backup_folder_label = QLabel(); self.backup_folder_label.setWordWrap(True); self.backup_folder_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred); layout.addWidget(self.backup_folder_label)
+        self.backup_list = QListWidget(); self.backup_list.setWordWrap(True); self.backup_list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff); self.backup_list.setMinimumHeight(100); layout.addWidget(self.backup_list)
+        self.backup_preview = QPlainTextEdit(); self.backup_preview.setReadOnly(True); self.backup_preview.setMinimumHeight(160); layout.addWidget(self.backup_preview)
+        self.backup_restore_button = QPushButton('Restore selected backup on disk')
+        self.backup_restore_button.setEnabled(False); self.backup_restore_button.clicked.connect(lambda: self.attempt(self.restore_selected_backup)); layout.addWidget(self.backup_restore_button)
+        self.backup_records = []; self.backup_selection = None
+        self.backup_target_combo.currentIndexChanged.connect(lambda: self.attempt(self.render_backups))
+        self.backup_list.currentRowChanged.connect(lambda: self.attempt(self.render_backup_details))
+        self.renderers['backups'] = self.render_backups
+
+    def render_backups(self):
+        filename = self.backup_target_combo.currentData()
+        previous = self.backup_list.currentItem().data(Qt.ItemDataRole.UserRole) if self.backup_list.currentItem() else None
+        self.backup_folder_label.setText(self.ui.text('Backup folder') + ': ' + str(game_save_directory()))
+        self.backup_records = list_backups(filename) if filename else []
+        with QSignalBlocker(self.backup_list):
+            self.backup_list.clear()
+            for record in self.backup_records:
+                self.backup_list.addItem(f'{record["created"]} · {record["size"]:,} ' + self.ui.text('bytes') + '\n' + record['name'])
+                self.backup_list.item(self.backup_list.count() - 1).setData(Qt.ItemDataRole.UserRole, record['name'])
+            selected = next((i for i, record in enumerate(self.backup_records) if record['name'] == previous), 0)
+            if self.backup_records: self.backup_list.setCurrentRow(selected)
+        self.render_backup_details()
+
+    def render_backup_details(self):
+        self.backup_selection = None; self.backup_restore_button.setEnabled(False)
+        row = self.backup_list.currentRow()
+        if row < 0 or row >= len(self.backup_records):
+            self.backup_preview.setPlainText(self.ui.text('No editor backups for this save.')); return
+        record = self.backup_records[row]
+        info = inspect_backup(self.backup_target_combo.currentData(), record['name'])
+        lines = [record['name'], self.ui.text('Backed up at') + ': ' + record['created'],
+                 self.ui.text('Size') + f': {record["size"]:,} ' + self.ui.text('bytes'),
+                 self.ui.text('Format') + ': ' + self.ui.text(info['format']),
+                 self.ui.text('Checksum') + ': ' + self.ui.text('Valid' if info['crc_valid'] else 'Invalid'),
+                 'SHA-256: ' + (info['sha256'] or self.ui.text('Unavailable'))]
+        if info['kind'] == 'slot':
+            calendar = info['calendar']; season = calendar['season']
+            season_name = self.ui.text(self.constants['seasons'][season]) if 0 <= season < 4 else str(season)
+            lines += [self.ui.text('Calendar') + f': {season_name} {calendar["day"]} · ' + self.ui.text('Year') + f' {calendar["year"]}',
+                      self.ui.text('Player') + ': ' + info['gender'], self.ui.text('Money') + f': {info["money"]:,}',
+                      self.ui.text('Order points') + f': {info["order_points"]:,}', self.ui.text('Tourists') + f': {info["tourists"]:,}']
+        elif info['kind'] == 'system': lines.append(self.ui.text('System flags') + f': 0x{info["system_flags"]:08X}')
+        if not info['restorable']: lines.append(self.ui.text('Direct rollback requires a valid matching PC slot or system-save backup.'))
+        lines.append(self.ui.text('A valid checksum does not guarantee gameplay compatibility.'))
+        self.backup_preview.setPlainText('\n'.join(lines))
+        self.backup_selection = (record['name'], info['sha256'])
+        self.backup_restore_button.setEnabled(info['restorable'])
+
+    def restore_selected_backup(self):
+        if not self.backup_selection or not self.backup_restore_button.isEnabled(): raise ValueError('Choose a valid backup first.')
+        filename = self.backup_target_combo.currentData(); name, digest = self.backup_selection
+        text = self.ui.text('Close the game first. Restore this backup to the selected disk save? The current disk save will be backed up. Unsaved editor changes and drafts will be discarded only after a successful restore.')
+        text += '\n\n' + str(game_save_directory() / filename) + '\n\n' + self.backup_preview.toPlainText()
+        if self.question('Restore backup?', text, QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes: return
+        result = restore_backup(filename, name, digest)
+        self.open_bytes(result.data, result.target.name, result.target)
+        self.render_backups()
+        self.statusBar().showMessage(self.ui.text('Backup restored and reloaded. Previous disk save backed up at') + ': ' + str(result.backup), 15000)
+        self.report_backup_cleanup(result)
+
+    def report_backup_cleanup(self, result):
+        if not result.cleanup_errors: return
+        text = self.ui.text('Save written successfully, but some older backups could not be removed. The 10-backup limit may be exceeded.') + '\n' + '\n'.join(result.cleanup_errors)
+        self.statusBar().showMessage(text, 20000)
+        if not getattr(self, 'testing', False): QMessageBox.warning(self, self.ui.text('Backup cleanup warning'), text)
 
     def save_as(self):
         def export():

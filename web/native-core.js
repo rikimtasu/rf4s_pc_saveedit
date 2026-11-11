@@ -11,7 +11,7 @@ import { SAVE_METADATA } from './save-metadata.js';
 import { flagHelp, previewFlagEdit, STORY_WITNESSES } from './flag-help.js';
 import { previewStoryJump, applyStoryJump, explainStoryJump, ENDGAME_SHORTCUT } from './story-jump.js';
 import { SoilEditor, SOIL_FARMS, SOIL_FIELDS, SOIL_MAXIMUM } from './soil-core.js';
-import { OrdersEditor, ORDER_FIELDS, ORDER_APPEARANCES } from './orders-core.js';
+import { OrdersEditor, ORDER_FIELDS, ORDER_APPEARANCES, ORDER_GROUPS, ORDER_BGM, MORNING_CALLERS } from './orders-core.js';
 import { gearPreset, giveGearPreset } from './gear-presets.js';
 import { RosterEditor } from './roster-core.js';
 import { RelationshipEditor, NICKNAME_COUNT } from './relationship-core.js';
@@ -104,7 +104,7 @@ export function nativeInvoke(operation, args = {}) {
     case 'setMonster': return extra().setMonster(args.id, args.changes);
     case 'roster': return { slots: extra().monsters().map(({ id, name, species, occupied }) => ({ id, name, species, occupied })), housing: new RosterEditor(requireSave()).housing() };
     case 'setRosterAdd': return new RosterEditor(requireSave()).add(args);
-    case 'orderConstants': return { fields: ORDER_FIELDS, appearances: ORDER_APPEARANCES };
+    case 'orderConstants': return { fields: ORDER_FIELDS, appearances: ORDER_APPEARANCES, groups: ORDER_GROUPS, bgm: ORDER_BGM, morningCallers: MORNING_CALLERS };
     case 'orders': return new OrdersEditor(requireSave()).values();
     case 'setOrders': return new OrdersEditor(requireSave()).apply(args.changes);
     case 'gearPreset': return gearPreset(args.id, catalog);

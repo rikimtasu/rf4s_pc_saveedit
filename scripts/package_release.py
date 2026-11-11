@@ -45,7 +45,7 @@ def validate_public(executable):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('executable', type=Path)
-    parser.add_argument('--version', default='v0.4')
+    parser.add_argument('--version', default='v0.41')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if not args.output: args.output = ROOT / 'dist' / f'RF4S-Save-Editor-{args.version}-win-x64.zip'
@@ -86,6 +86,21 @@ ending, wedding or NPC monster AI. Back up and test exported copies in-game.
 same folder before replacement. If the imported filename is not a canonical
 save name, choose the intended target on **Review & export** first.
 Use **Save as…** for copies or extracted Switch files.
+
+**Backups & rollback** previews timestamp, checksum, size/hash and save details.
+Confirmed restore backs up the current disk save, restores the selected bytes
+and reloads the editor. Successful direct exports/restores retain up to 10
+matching editor backups per save; manual copies and other slots are untouched.
+Keep an independent full-folder backup and handle Steam Cloud separately.
+
+**Extra orders** includes 44 fields in five tabs, six named BGM choices and nine
+named morning-call NPCs plus Cancel. The NPC selector is separate from the
+global morning-call menu unlock. Unlock flags do not execute order scripts.
+Maximum-soil and balanced/damage staff shortcuts are included. Staff grants
+use any six empty slots across all 60 saved bag slots, never overwrite items
+and do not unlock capacity. The damage preset's Strange Pendant ignores your
+defenses too. See docs/order-soil-gear-shortcuts.md and
+docs/save-history-and-order-names.md for usage and limits.
 
 If an older build edited Barrett/Raven friendship or system flags, reapply
 those edits from a pre-edit backup; unrelated old changes are not guessed away.

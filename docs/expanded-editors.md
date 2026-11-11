@@ -1,6 +1,6 @@
 # End-game shortcut, soil, experimental relationships and roster creation
 
-These features ship in **v0.4** and the native source. `start.bat` prefers the local `dist/v0.4/RF4S Save Editor.exe` release build when present; prior local/published builds are retained. Only the end-game shortcut is also added to the legacy browser UI; the new soil/roster/experimental relationship controls are native-first.
+These features ship in **v0.4+** and the native source. `start.bat` prefers the local `dist/v0.41/RF4S Save Editor.exe` release build when present; prior local/published builds are retained. Only the end-game shortcut is also added to the legacy browser UI; the new soil/roster/experimental relationship controls are native-first.
 
 **Close the game and back up the complete save folder first.** All operations edit working memory, share undo/redo and export through the existing checksum/backup flow. A correct CRC does not make an unsupported character or story state playable. Prefer Save as for experiments. No game executable, scripts, models or definitions are modified.
 

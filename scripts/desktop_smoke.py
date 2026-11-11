@@ -144,6 +144,20 @@ def run(app, window, destination, game=None):
             checks['extraOrders'] = values['enemyLevel'] == 10 and values['noExp'] == 1 and values['showEnemyHp'] == 1 and valid(window.backend.build())
             window.grab().save(str(output / 'desktop-extra-orders.png'))
             window.backend.call('undo'); window.refresh()
+            edit(window.orders_forms['licenses'], 'forgeLicense', 1)
+            edit(window.orders_forms['shops'], 'nationalizeBaths', 1)
+            edit(window.orders_forms['expansions'], 'bagExpansion', 1)
+            edit(window.orders_forms['other'], 'everyoneSwimsuits', 1)
+            edit(window.orders_forms['other'], 'princeRank', 17)
+            window.apply_all_drafts()
+            values = window.backend.call('orders')
+            checks['extendedOrders'] = all(values[key] == value for key, value in {'forgeLicense': 1, 'nationalizeBaths': 1, 'bagExpansion': 1, 'everyoneSwimsuits': 1, 'princeRank': 17}.items()) and window.backend.state()['undo'] == 1 and valid(window.backend.build())
+            for index in range(window.order_tabs.count()):
+                window.order_tabs.setCurrentIndex(index)
+                for _ in range(4): app.processEvents()
+                checks[f'orderTab{index}Compact'] = window.stack.currentWidget().horizontalScrollBar().maximum() == 0
+            window.grab().save(str(output / 'desktop-more-orders.png'))
+            window.backend.call('undo'); window.refresh()
             page('soil'); window.soil_max_button.click(); edit(window.soil_form, 'all', 1)
             checks['maxSoilStaged'] = bytes(window.backend.call('working')) == original
             window.apply_all_drafts()
@@ -161,6 +175,17 @@ def run(app, window, destination, game=None):
                 checks[f'{key}ShortcutCompact'] = window.stack.currentWidget().horizontalScrollBar().maximum() == 0
             page('gear'); window.grab().save(str(output / 'desktop-gear-shortcuts.png'))
             checks['shortcutsUndo'] = bytes(window.backend.call('working')) == original and not window.pending()
+            late_bag = bytearray(original); free_slots = [17, 22, 35, 48, 55, 59]
+            for slot in range(60): struct.pack_into('<H', late_bag, 0x5bd8 + slot * 28, 501 | (1 << 11))
+            for slot in free_slots: late_bag[0x5bd8 + slot * 28:0x5bd8 + (slot + 1) * 28] = bytes(28)
+            struct.pack_into('<I', late_bag, 0, zlib.crc32(late_bag[4:-224]))
+            for key in ('staff-balanced', 'staff-damage'):
+                window.open_bytes(late_bag, 'synthetic-late-bag.sav')
+                page('gear'); window.gear_consent.setChecked(True); window.gear_buttons[key].click()
+                bag = window.backend.call('inventory', container='bag')
+                checks[f'{key}AnyBagSlot'] = [bag[slot]['id'] for slot in free_slots] == [501, 595, 749, 706, 729, 665] and valid(window.backend.build())
+                window.backend.call('undo'); window.refresh()
+                checks[f'{key}AnyBagSlotUndo'] = bytes(window.backend.call('working')) == bytes(late_bag)
             if not all(checks.values()) or window.test_errors: raise AssertionError((checks, window.test_errors))
             (output / 'desktop-test.json').write_text(json.dumps({'passed': True, 'native': True, 'version': app.applicationVersion(), 'checks': checks}, indent=2), encoding='utf-8')
             window.closing = True; app.exit(0)

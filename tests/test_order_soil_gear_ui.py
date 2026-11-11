@@ -131,3 +131,58 @@ class OrderSoilGearUiTests(unittest.TestCase):
         self.window.render_orders(); self.window.render_soil(); self.window.render_gear_shortcuts()
         self.assertFalse(self.window.orders_form.allow.isEnabled()); self.assertFalse(self.window.soil_max_button.isEnabled())
         self.assertFalse(any(button.isEnabled() for button in self.window.gear_buttons.values()))
+
+    def test_extended_order_tabs_keep_all_drafts_and_apply_together(self):
+        self.select('orders')
+        forms = self.window.orders_forms
+        self.assertEqual(self.window.order_tabs.count(), 5)
+        self.edit(forms['licenses'], 'forgeLicense', 1)
+        self.edit(forms['licenses'], 'airshipLicense', 1)
+        self.edit(forms['shops'], 'nationalizeBaths', 1)
+        self.edit(forms['expansions'], 'bagExpansion', 1)
+        self.edit(forms['other'], 'everyoneSwimsuits', 1)
+        self.edit(forms['other'], 'princeRank', 17)
+        drafts = {key: dict(form.drafts) for key, form in forms.items()}
+        self.window.ui_language_combo.setCurrentIndex(self.window.ui_language_combo.findData('zh-CN'))
+        self.window.resize(640, 480)
+        for index in range(5):
+            self.window.order_tabs.setCurrentIndex(index)
+            for _ in range(4): self.app.processEvents()
+            self.assertEqual(self.window.stack.currentWidget().horizontalScrollBar().maximum(), 0)
+        self.assertEqual({key: dict(form.drafts) for key, form in forms.items()}, drafts)
+        self.assertEqual(bytes(self.window.backend.call('working')), self.original)
+        self.window.apply_all_drafts()
+        values = self.window.backend.call('orders')
+        for key in ('forgeLicense', 'airshipLicense', 'nationalizeBaths', 'bagExpansion', 'everyoneSwimsuits'):
+            self.assertEqual(values[key], 1)
+        self.assertEqual(values['princeRank'], 17)
+        self.assertEqual(self.window.backend.state()['undo'], 1)
+        self.window.mutate('undo'); self.assertEqual(bytes(self.window.backend.call('working')), self.original)
+
+    def test_invalid_hidden_order_tab_draft_blocks_all_other_tabs(self):
+        self.select('orders'); forms = self.window.orders_forms
+        self.edit(forms['licenses'], 'proCookingLicense', 1)
+        self.edit(forms['shops'], 'magicShop', 1)
+        self.edit(forms['expansions'], 'storageExpansion', 8)
+        self.window.order_tabs.setCurrentIndex(0)
+        with self.assertRaises(ValueError): self.window.apply_all_drafts()
+        self.assertEqual(bytes(self.window.backend.call('working')), self.original)
+        self.assertEqual(self.window.backend.state()['undo'], 0)
+        self.assertEqual(forms['expansions'].value('storageExpansion'), '8')
+        self.assertTrue(all(forms[key].drafts for key in ('licenses', 'shops', 'expansions')))
+
+    def test_gear_fills_any_scattered_empty_bag_slots_after_the_first_fifteen(self):
+        data = bytearray(self.original); empty = [17, 22, 35, 48, 55, 59]
+        for slot in range(60): struct.pack_into('<H', data, 0x5bd8 + slot * 28, 501 | (1 << 11))
+        for slot in empty: data[0x5bd8 + slot * 28:0x5bd8 + (slot + 1) * 28] = bytes(28)
+        struct.pack_into('<I', data, 0, zlib.crc32(data[4:-224]))
+        for key in ('staff-balanced', 'staff-damage'):
+            with self.subTest(preset=key):
+                self.window.open_bytes(data, 'synthetic-full-bag.sav')
+                self.select('gear'); self.window.gear_consent.setChecked(True)
+                self.window.gear_buttons[key].click()
+                self.assertEqual(self.window.test_errors, [])
+                bag = self.window.backend.call('inventory', container='bag')
+                self.assertEqual([bag[slot]['id'] for slot in empty], [501, 595, 749, 706, 729, 665])
+                self.assertEqual(self.window.backend.state()['undo'], 1)
+                self.window.mutate('undo'); self.assertEqual(bytes(self.window.backend.call('working')), bytes(data))
