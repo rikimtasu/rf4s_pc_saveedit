@@ -1,4 +1,4 @@
-// Read-only, definition-based preview. Never claims to reproduce final game stats.
+// Read-only preview of definitions; final game stats are not calculated.
 import { SaveDocument, equalBytes } from './save-core.js';
 import { VENTI_TABLES } from './game-schema.js';
 import { editInventoryItem, itemDetails, equipmentItem, equipmentElement } from './item-details.js';

@@ -1,10 +1,10 @@
-# Story jump planner: explicit flags, not invented checkpoints
+# Story jump planner
 
-v0.4 adds a **Story jump planner** to native **Expert: story flags**, and a combined jump preview to the legacy browser's **Progress profiles**. Previous release executables are unchanged.
+The **Story jump planner** is in native **Expert: story flags**. The legacy browser has a combined jump preview in **Progress profiles**. Both are available from v0.4; previous release executables are unchanged.
 
-**Implemented:** stage + explicit named flags can be previewed together, validated together and applied as one undoable edit. **Not implemented:** a universally playable jump to any act, boss or scene. No game was launched and no exported jump was tested in-game during this implementation.
+The planner previews and validates a stage together with explicit named flags, then applies them as one undoable edit. **It does not reconstruct a universally playable checkpoint for any act, boss or scene.** No game was launched and no exported jump was tested in-game during implementation.
 
-## Why changing one number is insufficient
+## Story register and checkpoint dependencies
 
 `REG_MAIN_SCENARIO` is a nine-bit numeric register, not a snapshot of the world. The normal game operation advances only when the new number is greater than the current number. It also updates live state and passes through an achievement-related writer path at values ≥430. An offline edit does none of that runtime work.
 
@@ -15,15 +15,15 @@ A meaningful checkpoint can also depend on completion bits, epilogue latches, ma
 ## Using the native planner
 
 1. Close the game and back up the **entire** save folder. Open the slot you want to edit.
-2. Open **Expert: story flags → Story jump planner**. Enter a target `0–511`, or choose a script witness. Witnesses are annotations, not presets.
+2. Open **Expert: story flags → Story jump planner**. Enter a target `0–511`, or choose a script witness: a milestone observed in the game's scripts. Witnesses are annotations, not presets.
 3. Leave **Explicit supporting flags** blank to keep every other flag unchanged. If you have independently established supporting values, enter a JSON object keyed by exact developer/CT identifiers. Unknown names and out-of-range values are rejected.
-4. Alternatively, **Read and apply profile** accepts an `rf4s-progress-v1` profile. If it contains `REG_MAIN_SCENARIO`, it now **stages** the target and all supplied flags in the planner rather than immediately applying them. Non-story profiles retain the existing explicit confirmation flow.
+4. Alternatively, **Read and apply profile** accepts an `rf4s-progress-v1` profile. If it contains `REG_MAIN_SCENARIO`, it **stages** the target and all supplied flags in the planner for review before applying them. Non-story profiles use a separate explicit confirmation.
 5. Review the entire preview: named edits, event banks, candidate gates, script comparisons, warnings, omitted actions and changed-byte masks.
 6. Check **I understand this does not reconstruct a playable checkpoint**. A decrease additionally requires **Allow rewind**. These acknowledgements are initially off and reset after applying/clearing the form.
 7. Apply, or export the acknowledged draft through the normal pending-edit batch. Invalid JSON, invalid flags or an invalid other pending edit leave all working bytes/history unchanged and retain the drafts. Prefer **Save as…** for a test copy rather than immediately replacing the active slot.
 8. Test the exported copy in-game, including loading, relevant map transitions, sleeping/day changes, affected NPCs, event selection and saving/reloading. Keep the original backup until those checks succeed. Undo changes memory only; it does not restore an already exported disk file.
 
-For example, this is **input syntax**, not a recommended gameplay preset:
+Save this example as a JSON profile for **Read and apply profile**, not for the **Explicit supporting flags** field. It demonstrates input syntax, **not a recommended gameplay preset**:
 
 ```json
 {
@@ -43,7 +43,7 @@ Enable flag editing and acknowledge jump dependencies. Enter a target and review
 
 The standalone **Apply staged flags** button also uses the planner's guard when the profile contains a main-story value. A profile that rewinds needs the separate rewind checkbox. The profile preview shows the same dependency explanation. Flag-only profiles without a main register remain ordinary named edits.
 
-## What the preview means
+## Preview fields and limits
 
 | Preview item | Meaning and limits |
 | --- | --- |
@@ -78,4 +78,6 @@ Native operations are `storyJumpPreview` (read-only), `setStoryJump` (editable a
 
 Regression checks cover all **512** numeric targets, adjacent-bit preservation, exact planned/applied byte equality, PC/Switch CRC and undo/redo, combined condition evaluation, immutable previews, explicit rewind consent, profile-stage conflicts, unknown layouts and native batch rollback. Native adapter/UI tests additionally cover profile staging, bilingual draft preservation and failed pending batches. These are synthetic byte/UI tests, **not gameplay acceptance**.
 
-The next substantive step toward real checkpoint presets is controlled before/after saves for a named checkpoint, together with traced scripts and in-game round trips. In particular, Memories participant-enable handlers and full map/NPC consumers remain unresolved. Do not promote the current partial witness comparisons into a “safe jump” preset.
+## Further validation
+
+Playable checkpoint presets need controlled before/after saves for a named checkpoint, traced scripts and in-game round trips. Memories participant-enable handlers and the full map/NPC code that uses these fields remain unresolved. Do not treat partial witness comparisons as a “safe jump” preset.

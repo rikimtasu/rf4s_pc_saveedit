@@ -35,6 +35,7 @@ Download **RF4S-Save-Editor-v0.4-win-x64.zip**, extract it and run **RF4S Save E
 
 ## Readability and retained functionality
 
+- A synthetic 990-slot fridge selection measured approximately 1.97 seconds before the picker-cache change and 0.15 seconds afterwards on the development machine; timings vary by machine and this is not a game-load benchmark.
 - Bundled **Noto Sans Medium (500)** and **Noto Sans CJK SC Medium** replace Inter/system-dependent Chinese fallback. No font installation or runtime network access is needed; both SIL OFL notices are included.
 - Compact **11pt** body text, **16pt** page headings, smaller tiles/icons/picker rows and Nord colors. Forms still reflow at 640×480; drafts survive resizing and English/Chinese switching.
 - Game-style inventory grid, shared lazy picker models, **Learn all recipes / Ctrl+Shift+L**, standalone references/icons and all v0.3 direct-export/backups and atomic-draft behavior are retained.

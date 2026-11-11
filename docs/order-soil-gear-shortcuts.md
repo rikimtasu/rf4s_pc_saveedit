@@ -8,12 +8,12 @@ These features ship in **v0.41**. For the latest local portable build, run **`st
 
 Open a slot save and choose **Extra orders**:
 
-- Enemy level increase: **0–10**. The CT's unsafe 127 value is deliberately rejected.
+- Enemy level increase: **0–10**. The CT's unsafe 127 value is rejected.
 - Disable combat EXP, disable skill EXP, disable town events.
 - Show enemy levels / HP.
 - Appearance order: default, opposite-gender protagonist appearance, or the CT-listed NPC appearance IDs. Save and reload; this does **not** change dialogue gender. Unsupported models/script paths can still fail in-game.
 
-The page now contains **44 fields in five tabs**, adding 37 fields to the original editor:
+The page contains **44 fields in five tabs**: the original seven settings and 37 additional fields.
 
 | Tab | Direct edits |
 | --- | --- |
@@ -25,7 +25,7 @@ The page now contains **44 fields in five tabs**, adding 37 fields to the origin
 
 Tabs do not discard or apply drafts. Export applies drafts from all tabs as one transaction; an invalid draft on a hidden tab blocks the whole batch. Individual Apply buttons apply only that tab's changed fields.
 
-**Unlock flags do not deliver furniture, run orders, deduct points, build facilities or reconstruct NPC/shop schedules.** Raw rank, expansion and BGM ranges are storage widths, **not verified gameplay limits or capacity formulas**. Avoid shrinking occupied storage. There is deliberately no blanket “max every order” button or automatic building/recipe/event initialization.
+**Unlock flags do not deliver furniture, run orders, deduct points, build facilities or reconstruct NPC/shop schedules.** Raw rank, expansion and BGM ranges are storage widths, **not verified gameplay limits or capacity formulas**. Avoid shrinking occupied storage. There is no blanket “max every order” button or automatic building/recipe/event initialization.
 
 For the **menu unlock**, open **`rf4_sys.sav` → System save unlocks → Prepare extra-orders unlock**. This prepares only system bit 0 at `0x10`; Apply/export it separately. It does not advance a slot's story, run an ending, award achievements or change save-slot availability bitmaps. Export's optional appearance reset still overrides an appearance-order edit in the exported copy.
 
@@ -72,13 +72,13 @@ Choose **Equipment shortcuts**. Read both previews and the warnings, acknowledge
 - **Give balanced staff gear** — INT-oriented staff set with elemental/status protection and utility inheritance.
 - **Give maximum-damage staff gear** — more INT-focused attachments; **Strange Pendant ignores enemy DEF/M.DEF and your own DEF/M.DEF**. This is a deliberate survivability tradeoff, not a universally stronger set.
 
-Both add **six level-10 items**: Sorcerer's Wand, Rune Shield, Four Dragons' Vest, Crown, Fairy Boots and Art of Magic. Total-level/rarity metadata is set to **150/200**. Existing worn gear and occupied inventory records are never overwritten. Allocation now searches **all 60 saved bag slots**, taking the first six empty slots; gaps need not be contiguous and may all be after slot 15. Fewer than six empty slots blocks the entire grant with no partial writes. No capacity/order flag is silently enabled: writing a later serialized slot does not itself unlock that slot's in-game capacity. Equip the items in-game after export.
+Both add **six level-10 items**: Sorcerer's Wand, Rune Shield, Four Dragons' Vest, Crown, Fairy Boots and Art of Magic. Total-level/rarity metadata is set to **150/200**. Existing worn gear and occupied inventory records are never overwritten. Allocation searches **all 60 saved bag slots**, taking the first six empty slots; gaps need not be contiguous and may all be after slot 15. Fewer than six empty slots blocks the entire grant with no partial writes. Capacity/order flags stay unchanged: writing a later serialized slot does not unlock that slot's in-game capacity. Equip the items in-game after export.
 
 Valid pending edits and the grant apply together as one atomic undo entry. An invalid pending edit, missing reference table or full bag leaves all bytes/history/drafts intact. Consent resets after a successful grant or opening another save. Both Lest and Frey can receive the same set; gender, appearance, base stats, recipes and skills are unchanged.
 
-### Source and deliberate adaptations
+### Source and preset recipes
 
-Read [wingblade98's “My take on the best equipment” and replies](https://gamefaqs.gamespot.com/boards/258612-rune-factory-4-special/80987735), supplied by the user. This is a **community theoretical build**, not executable evidence or a tested proof of an optimum. It supplies the INT/Gold Juice approach, four-core sets, Object X/Mealy Apple resistance approach, equipment bases and staff accessory/boot combinations. Replies dispute the status-resistance assumptions and discuss Magical Shield inheritance; we do **not** silently substitute that shield and lose Rune Shield's light/dark resistance.
+The presets draw on [wingblade98's “My take on the best equipment” and replies](https://gamefaqs.gamespot.com/boards/258612-rune-factory-4-special/80987735), supplied by the user. This is a **community theoretical build**, not executable evidence or a tested proof of an optimum. It supplies the INT/Gold Juice approach, four-core sets, Object X/Mealy Apple resistance approach, equipment bases and staff accessory/boot combinations. Replies dispute the status-resistance assumptions and discuss Magical Shield inheritance. The presets retain Rune Shield and its light/dark resistance rather than substituting Magical Shield.
 
 - Staff craft attachments: **Dragon Fin ×3**. Upgrades: **Dragon Fin → 10-Fold Steel → Dragon Fin → Double Steel → Blue Scale → Yellow Feather → Wind Dragon Tooth → Dragon Bones → Rainbow Waterpot**. The final three preserve the established staff charge order; the supplied post itself did not remember that order.
 - Each shield/armor/head/shoes/accessory contains all four different **Green/Red/Yellow/Blue Cores**.

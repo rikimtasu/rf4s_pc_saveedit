@@ -1,32 +1,31 @@
 # Rune Factory 4 Special save editor
 
-A local, offline save editor for **PC / Steam**, **extracted Switch saves**, and **`rf4_sys.sav` system saves**. It edits saves only—not game files or mods.
+A local, offline save editor for **PC / Steam**, **extracted Switch saves**, and **`rf4_sys.sav` system saves**. It edits saves only; game files and mods are unchanged.
 
 ## Quick start
 
-### Portable Windows app — no installation
+### Portable Windows app
 
 Download **v0.41** from [GitHub Releases](https://github.com/rikimtasu/rf4s_pc_saveedit/releases/tag/v0.41). Extract **RF4S-Save-Editor-v0.41-win-x64.zip** and open `RF4S Save Editor.exe`. Item/effect definitions, recipes, seven name languages, item/NPC icons and Noto Latin/Chinese fonts are bundled; no game-folder reading is required.
 
-This is a **native Qt Widgets GUI**, not a browser-based app: no Chromium, WebView, HTML interface or local server. Python and required native Qt libraries are bundled, so nothing needs installing. Windows 10/11 x64 is supported. First launch unpacks its runtime into a temporary folder.
+The app uses **native Qt Widgets** without Chromium, WebView, an HTML interface or a local server. Python and required native Qt libraries are bundled; you do not need to install them. Windows 10/11 x64 is supported. First launch unpacks its runtime into a temporary folder.
 
-`start.bat` also opens a locally built native EXE in `dist/`, preferring `dist/v0.41/RF4S Save Editor.exe`. The executable is approximately **49 MiB**, including standalone references, icons and English/Chinese fonts; no installation is needed.
+For local builds, `start.bat` prefers `dist/v0.41/RF4S Save Editor.exe`, then falls back to earlier builds in `dist/`. The executable is approximately **49 MiB**, including standalone references, icons and English/Chinese fonts; no installation is needed.
 
-Close the game, open your save, edit values, then click **Export edited save**. It writes directly to `%APPDATA%\Rune Factory 4 Special`, backing up the current destination there first. Edits stay in memory until you explicitly export. **Save as…** creates copies or exports extracted Switch format.
+Close the game and open the intended slot save (`rf4_sNN.sav`) or `rf4_sys.sav`. Edit values, then click **Export edited save** for PC output. It writes directly to `%APPDATA%\Rune Factory 4 Special`, backing up the current destination there first. Use **Save as…** for separate copies or extracted Switch output. Edits stay in memory until you explicitly export.
 
 ### Native source version (developers)
 
-Install the build requirements, prepare the bundled catalog/icons with `python -m scripts.generate_builtin "<game folder>"`, run `npm run build:native-core`, then run `python desktop.py`. Node/esbuild compiles the existing save algorithms for Qt's small standalone scripting interpreter, not a browser. Node and the game folder are not needed by users of the new standalone EXE.
+Follow the [build instructions](#build-the-portable-windows-executable) to install the requirements and prepare the bundled catalog/icons with `python -m scripts.generate_builtin "<game folder>"`. Run `npm run build:native-core`, then `python desktop.py`. Node/esbuild compiles the shared save algorithms for Qt's small standalone scripting interpreter, not a browser. Users of the standalone EXE do not need Node or the game folder.
 
-### New in v0.41
+### Feature guides
 
-**Extra orders** now has 44 fields in five tabs, including named BGM choices and the separate NPC-specific morning-call selector. **Backups & rollback** previews save details and restores a selected backup; successful exports/restores retain at most **10 editor backups per save**. See [named orders and rollback](docs/save-history-and-order-names.md). Maximum soil and both staff presets are included; gear uses any six empty slots across all 60 saved bag slots. The damage preset sacrifices defense. See [presets and limits](docs/order-soil-gear-shortcuts.md). Previously published downloads remain unchanged.
+- [Named orders and rollback](docs/save-history-and-order-names.md): BGM and morning-call choices, backup previews and restoration. Successful exports/restores retain at most **10 editor backups per save**.
+- [Soil and staff presets](docs/order-soil-gear-shortcuts.md): maximum soil and two staff sets. Gear uses any six empty slots across all 60 saved bag slots; the damage preset sacrifices defense.
+- [Expanded editors and limits](docs/expanded-editors.md): the story jump planner and end-game shortcut, soil, experimental non-candidate dating/spouse records, NPC/monster roster creation and Lest/Frey nickname resets. Record edits do not add missing story/romance/AI scripts or guarantee playability.
+- [Standalone workflow and asset evidence](docs/standalone-workflow.md): bundled catalog/icons, tourists, atomic drafts, direct save-folder export and same-folder backups.
 
-### Retained from v0.4
-
-**Story jump planner and experimental end-game shortcut**, **soil editing**, opt-in **non-candidate dating/spouse records**, **NPC/monster roster creation**, and nickname reset shortcuts for the current **Lest/Frey** gender. The more compact interface uses bundled **Noto Sans Medium** plus its Chinese companion. Experimental record edits do not add missing story/romance/AI scripts or guarantee playability. See [expanded editors and limits](docs/expanded-editors.md) and [release notes](RELEASE_NOTES.md).
-
-The v0.3 standalone catalog/icons, tourists, atomic drafts, direct save-folder export and same-folder backups are retained. See [standalone workflow and asset evidence](docs/standalone-workflow.md).
+See [release notes](RELEASE_NOTES.md) for changes by version. Previously published downloads remain unchanged.
 
 ### Optional legacy browser version
 
@@ -40,7 +39,7 @@ python serve.py
 
 The editor opens in your browser, normally at `http://127.0.0.1:8764`. Keep the terminal open while using it. Do not open `web/index.html` directly.
 
-## What you can edit
+## Supported edits
 
 | Section | Supported edits |
 | --- | --- |
@@ -53,7 +52,7 @@ The editor opens in your browser, normally at `http://127.0.0.1:8764`. Keep the 
 | Marriage | Spouse register, anniversary, ring acceptance, wedding memory and per-candidate marriage / newlywed event flags |
 | Monsters | Stats and friendship for existing tamed monsters |
 | Soil (v0.4) | Raw packed soil values per patch or used patches on one field; crops/unused patches preserved |
-| Extra orders (v0.41 native) | 44 direct fields, including six named BGM choices and nine named morning-call NPCs; licenses, shops/free baths, raw expansion/rank values and original effects |
+| Extra orders (v0.41 native) | 44 direct fields in five tabs, including six named BGM choices and nine named morning-call NPCs; licenses, shops/free baths, raw expansion/rank values and original effects |
 | Backups & rollback (v0.41 native) | Up to 10 managed backups per save, snapshot details, confirmed disk restore with a pre-rollback backup |
 | Equipment shortcuts (v0.41 native) | Balanced and damage-focused upgraded staff sets; preview, empty-slot allocation and one undo |
 | Experimental roster (v0.4) | Add an NPC/monster species ID to an empty tamed roster slot with validated stats and free built-barn capacity |
@@ -63,15 +62,19 @@ The editor opens in your browser, normally at `http://127.0.0.1:8764`. Keep the 
 
 Undo, redo, Save as and JSON change reports are included. No per-page editing opt-in is needed. Valid drafts apply automatically before switching records or exporting; invalid drafts remain visible and block export without partially applying other pending edits.
 
+## Interface and languages
+
 **Game names** offers bundled English, Japanese, French, German, Korean, Traditional Chinese and Simplified Chinese. It changes item, recipe-result, character, nickname and skill names; missing names fall back to English. Choose a different language without changing save bytes.
 
-v0.2 also offers an independent **Interface / 界面** selector: **Follow system** chooses Simplified Chinese for Chinese Windows locales, English otherwise. Manual English/Chinese overrides are remembered. Switching captions preserves drafts, IDs and save bytes. On launch the save picker starts at `%APPDATA%\Rune Factory 4 Special` (home-folder fallback); no save is automatically loaded.
+The independent **Interface / 界面** selector has a **Follow system** option: Simplified Chinese for Chinese Windows locales, English otherwise. Manual English/Chinese overrides are remembered. Switching captions preserves drafts, IDs and save bytes. On launch the save picker starts at `%APPDATA%\Rune Factory 4 Special` (home-folder fallback); no save is automatically loaded.
 
 Compact windows are supported down to **640×480**. Forms reflow instead of clipping labels, and long pages scroll vertically through the Apply/Clear controls. Item previews use current/draft tabs; uncheck their heading to collapse the preview. Resizing does not discard drafts.
 
-v0.4+ uses bundled **Noto Sans Medium (500)** for English and **Noto Sans CJK SC Medium** for Chinese in both native and browser interfaces. The supplied Latin font has no Chinese glyphs, so the matching CJK face is included for consistent offline rendering. Fonts need no system installation; portable builds include both faces and their SIL OFL notices. `start.bat` prefers the latest release build in `dist/v0.41/`, then earlier local builds; prior releases remain untouched.
+Both native and browser interfaces use bundled **Noto Sans Medium (500)** for English and **Noto Sans CJK SC Medium** for Chinese. The supplied Latin font has no Chinese glyphs, so the matching CJK face is included for consistent offline rendering. Fonts need no system installation; portable builds include both faces and their SIL OFL notices.
 
-v0.4 adds a game-inspired icon grid with quantity badges, compact **11-point** Medium body text and balanced heading/icon sizes. Nord colors apply consistently to controls and dropdowns; **Ctrl+Shift+L** or **Learn all recipes** learns every loaded recipe as one undoable edit. Shared lazy picker models and cached slot lists make full storage much faster to browse. Earlier local builds remain launcher fallbacks. See the [native guide](docs/native-desktop.md).
+The native interface has a game-inspired icon grid with quantity badges and **11-point** Medium body text. Controls and dropdowns use Nord colors. **Ctrl+Shift+L** or **Learn all recipes** learns every loaded recipe as one undoable edit. Pickers share indexed models, load icons on demand and cache slot lists for faster full-storage browsing. See the [native guide](docs/native-desktop.md) and the [measured comparison](RELEASE_NOTES.md#readability-and-retained-functionality).
+
+### Older-save compatibility
 
 v0.2 fixes blank confirmation buttons and Barrett / Raven friendship offsets. All 25 NPC friendship writes and every main-NPC level threshold are checked against the audited game code. **Reapply guest friendship edits from a pre-edit backup**: older builds wrote into the guest-block header, which is not automatically repaired. These corrections are not included in the original v0.1 release. See [friendship layout evidence](docs/extended-layout.md#friendship).
 
@@ -85,15 +88,15 @@ v0.2 fixes blank confirmation buttons and Barrett / Raven friendship offsets. Al
 
 Your save is **not uploaded**. Edits stay in application memory until exported. Direct export explicitly overwrites the chosen save after creating a unique same-folder backup of its current bytes; if absent, the imported original is backed up instead. Export rebuilds the checksum. Undo changes memory, not the on-disk save; export again to save the undo.
 
-In v0.41, **Backups & rollback** shows save details and restores a reviewed backup after confirmation, preserving the current disk bytes first. Successful direct exports/restores retain up to **10 matching editor backups per save**; manual copies and other slots are untouched. See [retention and restore safety](docs/save-history-and-order-names.md).
+**Backups & rollback** shows save details and restores a reviewed backup after confirmation, backing up the current disk bytes first. Successful direct exports/restores retain up to **10 matching editor backups per save**; manual copies and other slots are untouched. See [retention and restore safety](docs/save-history-and-order-names.md).
 
 For gender correction, use **Review & export → Character gender**. The optional appearance reset also clears cosmetic overrides and outfits; it never renames the player. Both options affect only the exported output.
 
-v0.2 also offers **Clear incompatible dating and their special nicknames (keep friendship)**. Lest export clears the six bachelors; Frey export clears the six bachelorettes. This opt-in preserves friendship, other NPCs and story/date history, and refuses incompatible spouses. See [relationship evidence](docs/extended-layout.md#dating-and-special-forms-of-address). It is not a full romance-event reset or included in the original v0.1 release.
+**Clear incompatible dating and their special nicknames (keep friendship)** is an optional export setting introduced in v0.2. Lest export clears the six bachelors; Frey export clears the six bachelorettes. This opt-in preserves friendship, other NPCs and story/date history, and blocks cleanup for incompatible spouses. See [relationship evidence](docs/extended-layout.md#dating-and-special-forms-of-address). It is not a full romance-event reset or included in the original v0.1 release.
 
 For individual edits use **Dating & nicknames**; localized choices are bundled. For **Player name**, open **`rf4_sys.sav`** and select the bank/slot—the name is not stored in an individual slot file. Reset prepares an empty-name draft so the game generates its default at next load. All edits remain undoable and export-only. v0.2 also corrects system unlock flags to offset `0x10`, preserving the slot bitmaps; reapply older system-flag edits from a pre-edit backup. See [name/relationship usage and evidence](docs/player-name-and-relationships.md).
 
-**Dating & nicknames** now also has reset shortcuts for either nickname direction or both at once, using the current saved **Lest/Frey** gender. They prepare drafts only and do not clear dating or friendship. Apply/export to save; see the [nickname-reset details](docs/player-name-and-relationships.md#dating--nicknames).
+**Dating & nicknames** has reset shortcuts for either nickname direction or both at once, using the current saved **Lest/Frey** gender. They prepare drafts only and do not clear dating or friendship. Apply/export to save; see the [nickname-reset details](docs/player-name-and-relationships.md#dating--nicknames).
 
 ## Optional reference overrides and legacy browser setup
 
@@ -107,19 +110,21 @@ python scripts/gather_save_references.py "<game-folder>"
 python scripts/gather_languages.py "<game-folder>"
 ```
 
-Replace `<game-folder>` with your installation folder, then restart or reload the editor. These commands read game files without modifying them. Generated references stay local and are excluded from Git. Venti does not need to be installed.
+Replace `<game-folder>` with your installation folder, then restart or reload the editor. These commands read game files without modifying them. Generated references stay local and are excluded from Git. Venti supplies the data definitions used by the reader; you do not need to install it.
 
 Extracted `rf3TxtItem_split2_1.*`, `rf3TxtNpc_split2_1.*` and `rf3TxtSkill_split2_1.*` TEXT tables can also be imported in **Overview → Game references & languages**. Do not choose `_split2_2` description tables.
 
-For equipment attachments, use **Bag & storage**. Unchanged fields are preserved; 0 removes an attachment. Leave level blank to preserve mixed unit levels. Attached IDs are limited to 1023 by their 10-bit storage. Element selection adds crystals to unused upgrade slots without removing existing attachments and raises the level accordingly. Full equipment is refused. Element selection is for weapons/tools, not armor resistances.
+## Equipment and story tools
+
+For equipment attachments, use **Bag & storage**. Unchanged fields are preserved; 0 removes an attachment. Leave level blank to preserve mixed unit levels. Attached IDs are limited to 1023 by their 10-bit storage. Element selection adds crystals to unused upgrade slots without removing existing attachments and raises the level accordingly. It is blocked when equipment has no free upgrade slots. Element selection is for weapons/tools, not armor resistances.
 
 The native **Item effect preview / 物品效果预览** compares current and drafted items without applying an edit. Bundled tables supply base equipment/use effects, inheritance references, individual material bonuses and the planned element. It is **definition-based, not a final-stat simulator**: material-level scaling, repetition penalties, special multipliers and total-level/rarity bonuses are explicitly not calculated.
 
-**Expert: story flags** has group filters, Chinese/English meanings, original developer symbols/descriptions, evidence levels and a read-only byte/condition preview. Script-witness stages are not playable presets; unresolved participant queries stay unknown. See [the new story investigation](docs/story-flag-investigation.md).
+**Expert: story flags** has group filters, Chinese/English meanings, original developer symbols/descriptions, evidence levels and a read-only byte/condition preview. Script-witness stages are not playable presets; unresolved participant queries stay unknown. See [the story investigation](docs/story-flag-investigation.md).
 
-v0.4 also adds a **Story jump planner**: stage plus explicit supporting flags, combined condition/byte previews, active-event and script-witness warnings, separate rewind acknowledgement and one atomic undo. Story-bearing profiles stage into the native planner. It does not synthesize a playable checkpoint or run event cleanup. See the [detailed workflow and explanation](docs/story-jump-planner.md).
+The **Story jump planner** combines a stage and explicit supporting flags in one atomic undoable edit. It previews conditions and bytes, warns about active events and differences from script witnesses, and requires separate acknowledgement for rewinds. Story-bearing profiles stage into the native planner. It does not synthesize a playable checkpoint or run event cleanup. See the [detailed workflow and explanation](docs/story-jump-planner.md).
 
-v0.4+ includes an experimental **end-game flag shortcut**, **soil editing**, opt-in **non-candidate dating/spouse records**, and **NPC/monster roster creation**, with a more compact 11pt Noto interface. Run the release EXE or `start.bat` (prefers `dist/v0.41/RF4S Save Editor.exe` when built locally). These are save-record edits, not new romance/AI scripts or a guaranteed playable ending. Dating is limited to the 23 audited main-NPC records, spouse IDs to 0–31 and roster species to 1–255. Read the [usage, limits and executable evidence](docs/expanded-editors.md) before experimenting.
+The experimental **end-game flag shortcut**, **soil editing**, opt-in **non-candidate dating/spouse records**, and **NPC/monster roster creation** edit save records. They do not add romance/AI scripts or guarantee a playable ending. Dating is limited to the 23 audited main-NPC records, spouse IDs to 0–31 and roster species to 1–255. Read the [usage, limits and executable evidence](docs/expanded-editors.md) before experimenting.
 
 ## Important limits
 
@@ -129,9 +134,9 @@ v0.4+ includes an experimental **end-game flag shortcut**, **soil editing**, opt
 - Friendship edits do not trigger dating, marriage or story events. Marriage controls edit selected flags only, not a complete marry/divorce operation; children, pregnancy, schedules and system-save wedding unlocks are untouched. Experimental non-candidate flags do not add missing romance scripts. The new roster creator writes empty slots only; it does not create models/AI or guarantee that NPC species can behave as monsters. Existing-monster stat editing still preserves names/species/barns.
 - Trophy records are not complete trophy-room ownership, physical trophy items or Steam achievement unlocks. Filling later inventory slots does not unlock capacity.
 - **PC ↔ Switch conversion is experimental** and requires an extracted save. It preserves the trailer and refuses to discard nonzero candidate-padding bytes; it does not decrypt or inject console saves.
-- The corrected appearance reset, newer editors, conversion and story jumps still need in-game acceptance testing. Keep backups and test exported copies before relying on them.
+- Appearance reset, the editors above, conversion and story jumps need in-game acceptance testing. Keep backups and test exported copies before relying on them.
 
-## More information
+## Documentation
 
 - [Native user guide](docs/native-desktop.md)
 - [App state-machine map and transition rules](docs/state-machines.md)

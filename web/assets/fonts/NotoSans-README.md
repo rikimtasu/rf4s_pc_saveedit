@@ -9,4 +9,4 @@ Licenses: `NotoSans-OFL.txt` is copied from the supplied `NotoSans/OFL.txt`; `No
 
 Native registration is in `native_fonts.py`; browser faces and Medium defaults are in `web/styles.css`. `scripts/build_desktop.py` explicitly packages both fonts and their notices, without including browser icon/font assets. Do not subset these fonts to only current captions: names and bilingual user text also need coverage.
 
-The compact expanded-editors native build uses an 11pt body (still Medium); large headings/icons were reduced independently of the typeface. Font loading never scales the body based on a previously opened window's application font.
+The native interface uses an 11pt Medium body. Heading and icon sizes are set independently of the typeface. Font loading never scales the body based on a previously opened window's application font.

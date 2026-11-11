@@ -493,7 +493,7 @@ export class SaveDocument {
   }
 
   // Call only after a successful native write (or a browser download request).
-  // build() is deliberately read-only and never acknowledges an export.
+  // build() is read-only and never acknowledges an export.
   markExported() {
     this._exportedData = this.data.slice();
     return 'exported';

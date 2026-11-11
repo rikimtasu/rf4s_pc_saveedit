@@ -1,4 +1,4 @@
-"""Read game symbols and inert CT descriptions into save-editor metadata. No hooks run."""
+"""Read game symbols and CT descriptions as data for save-editor metadata. No hooks run."""
 import argparse
 import hashlib
 import json
@@ -80,7 +80,7 @@ def ct_flags(path, symbols):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('game', type=Path)
-    parser.add_argument('--table', type=Path, help='Optional inert CT labels; no attachment path is assumed.')
+    parser.add_argument('--table', type=Path, help='Optional CT labels, read as data; no attachment path is assumed.')
     args = parser.parse_args()
     data = read_entry(args.game, 'emdeb.bin')
     symbols = variables(data)

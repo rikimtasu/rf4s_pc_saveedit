@@ -1,6 +1,6 @@
 # Native Windows save editor
 
-v0.41 retains the v0.3/v0.4 [standalone workflow](standalone-workflow.md): bundled data/icons, automatic draft application, tourist-count edits and direct save-folder export with backups. It adds named Extra Orders, soil/staff shortcuts and [Backups & rollback](save-history-and-order-names.md). Earlier packages remain unchanged.
+The native editor bundles data and icons, applies valid drafts automatically and exports directly to the game save folder with backups. It includes tourist-count edits, named Extra Orders, soil/staff shortcuts and [Backups & rollback](save-history-and-order-names.md). See the [standalone workflow](standalone-workflow.md) for export details. This guide covers v0.41; earlier packages remain unchanged.
 
 Extract the v0.41 ZIP and open `RF4S Save Editor.exe`, or use `start.bat` for a local build. No installation, browser, server, Python or Node is required. The interface uses native Qt Widgets. The bundled scripting interpreter runs only shared save algorithms; it does not display web pages.
 
@@ -16,15 +16,15 @@ The app uses the Nord palette (Polar Night backgrounds, Snow Storm text and Fros
 
 Select a container and saved slot in the icon grid. Tiles show quantity badges, level and the real saved slot number; hover for the full name and mixed unit levels. **Show empty slots** is checked by default; uncheck it to show occupied slots only. Showing/editing later positions does not unlock capacity. The filter searches localized names/slots. Item dropdowns offer large-icon search suggestions; choose a matching entry rather than leaving arbitrary typed text.
 
-Storage uses one decoded slot list per document revision, and pickers share three indexed, lazily illustrated catalogs instead of rebuilding thousands of entries for each selection. Uniform popup/grid layout avoids decoding the entire icon archive just to size closed controls. Filtering or selecting a slot reuses the models. Imports/language changes invalidate the appropriate display caches; edits, undo, redo and opening another save refresh the slot data. A synthetic 990-slot fridge selection measured approximately 1.97 seconds before this change and 0.15 seconds afterwards on the development machine; timings vary by machine and this is not a game-load benchmark.
+Storage uses one decoded slot list per document revision. Pickers share three indexed catalogs and load icons on demand, so selecting a slot does not rebuild thousands of entries. Popup/grid sizing does not decode the entire icon archive for closed controls. Filtering or selecting a slot reuses the models. Imports/language changes invalidate the appropriate display caches; edits, undo, redo and opening another save refresh the slot data.
 
-Replacements reset prior metadata. Unchanged fields are preserved. Blank level preserves mixed unit levels. Zero removes an attachment; attached IDs are restricted to 0–1023. Equipment supports three crafting and nine upgrade attachments, inherited equipment, total-level and rarity bonuses. Elements append crystals to unused upgrades, raise the level and never silently remove attachments. Full equipment is refused. Special effects remain the game's responsibility; in-game acceptance is not guaranteed.
+Changing an item ID resets the previous item's metadata, including attachments. Same-ID edits preserve unchanged fields. Blank level preserves mixed unit levels. Zero removes an attachment; attached IDs are restricted to 0–1023. Equipment supports three crafting and nine upgrade attachments, inherited equipment, total-level and rarity bonuses. Elements append crystals to unused upgrades, raise the level and never remove attachments automatically. An element change is blocked if there are not enough free upgrade slots. Special effects remain the game's responsibility; in-game acceptance is not guaranteed.
 
 The current/draft **Item effect preview** is read-only and uses the same item-edit algorithm on a copy. Game tables supply base equipment and use effects, inherited-equipment references, and individual craft/upgrade material bonuses. Percentages are decoded from fixed-point values; unknown/missing references remain unknown. The planned element is shown separately. Final stats, material-level scaling, repeated-material penalties, total-level/rarity bonuses, special multipliers, inheritance combinations and actor stats are not simulated.
 
 ## Recipes
 
-In **Learned recipes**, click **Learn all recipes** or press **Ctrl+Shift+L** to learn every loaded recipe across all groups, ignoring the current search/filter. Linked variants are deduplicated, and any selected recipe draft joins the operation in one undoable edit. It changes memory only; export to save. The shortcut is disabled for system saves or missing definitions. The existing filtered learn/forget buttons still affect only their filtered lists.
+In **Learned recipes**, click **Learn all recipes** or press **Ctrl+Shift+L** to learn every loaded recipe across all groups, ignoring the current search/filter. Linked variants are deduplicated, and any selected recipe draft joins the operation in one undoable edit. It changes memory only; export to save. The shortcut is disabled for system saves or missing definitions. Filtered learn/forget buttons affect only their filtered lists.
 
 ## Marriage and other editors
 
@@ -32,9 +32,9 @@ In **Learned recipes**, click **Learn all recipes** or press **Ctrl+Shift+L** to
 
 Spouse, anniversary, ring acceptance and wedding memory are grouped with candidate marriage/newlywed flags. Selecting an event candidate does not change spouse. Apply drafts as one undoable edit. This does not initialize pregnancy, children, schedules or system unlocks, or replay wedding events.
 
-Calendar/player (including Tourists), skills, individual/bulk recipes, friendship, people/monster stats, trophy records and system flags retain their value limits. Expert pages expose full-width named flags, progress profiles and bounded raw integers/bytes. Review/export includes direct save-folder export with automatic backups, Save as, JSON changes, undoable restore, optional gender/appearance correction and experimental PC ↔ Switch conversion.
+Calendar/player (including Tourists), skills, individual/bulk recipes, friendship, people/monster stats, trophy records and system flags retain their value limits. Expert pages expose full-width named flags, progress profiles and bounded raw integers/bytes. Review/export includes direct save-folder export with automatic backups, Save as, JSON changes, **Restore original in memory**, optional gender/appearance correction and experimental PC ↔ Switch conversion. The in-memory restore is undoable; disk rollback is separate and clears the previous undo history after a successful restore.
 
-v0.2 adds an off-by-default **Clear incompatible dating and their special nicknames (keep friendship)** export checkbox. Choose Male, Female or Match original gender first. Lest clears the six bachelors; Frey clears the six bachelorettes. Preview lists the targets. Both forms of address reset, but friendship, other NPCs, story/event history, date counts and achievements stay unchanged. An incompatible spouse blocks cleanup; marriage/family state must be handled separately. This is not a simulated breakup or complete romance-event reset.
+The **Clear incompatible dating and their special nicknames (keep friendship)** export checkbox is off by default. Choose Male, Female or Match original gender first. Lest clears the six bachelors; Frey clears the six bachelorettes. Preview lists the targets. Both forms of address reset, but friendship, other NPCs, story/event history, date counts and achievements stay unchanged. An incompatible spouse blocks cleanup; marriage/family state must be handled separately. This is not a simulated breakup or complete romance-event reset.
 
 Drafts persist across pages. Valid drafts apply automatically before switching records or exporting; an invalid draft stays visible and stops export without partially applying other pending edits. Undo/redo shares the same binary-edit history. Opening another save or closing prompts before discarding unexported work. There is no synthetic-demo button.
 
@@ -44,7 +44,7 @@ Standard confirmation buttons retain English captions when no Chinese catalog en
 
 **Interface / 界面** is independent of **Game names**. **Follow system** defaults to Simplified Chinese for Chinese system locales and English otherwise; manual English/Chinese overrides are remembered. Switching interface language preserves controls, even partially typed drafts, and does not change save data. The legacy browser UI is not fully localized. Seven game-name languages are bundled.
 
-v0.4 uses **Noto Sans Medium (500)** with bundled **Noto Sans CJK SC Medium** for Chinese, including user-entered text and previews. Both fonts load from the app itself without installation or network access.
+The app uses **Noto Sans Medium (500)** with bundled **Noto Sans CJK SC Medium** for Chinese, including user-entered text and previews. Both fonts load from the app itself without installation or network access.
 
 v0.4 includes **Soil editor**, **Add roster NPC / monster**, a staged **end-game shortcut**, explicit experimental non-candidate relationship/spouse flags, and current-gender **nickname resets**. These are not game-script modifications; unsupported NPCs can remain unplayable. See the [complete instructions and storage evidence](expanded-editors.md).
 

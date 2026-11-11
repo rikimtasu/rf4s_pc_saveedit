@@ -1,4 +1,4 @@
-"""Native save-operation seam, reusing the tested binary algorithms without a browser."""
+"""Native save operations using the shared, tested binary algorithms without a browser."""
 import json
 import gzip
 from copy import deepcopy
