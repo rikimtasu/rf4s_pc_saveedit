@@ -83,22 +83,30 @@ Extract this folder and open **RF4S Save Editor.exe** on Windows 10/11 x64.
 No installation, Python, Node, Qt or browser is needed. Game references,
 item icons and Noto English/Chinese fonts are bundled for offline use.
 
-Back up your entire save folder and close the game first. Open a slot save
-or rf4_sys.sav, then edit values. Valid drafts apply before switching pages
+Back up your entire save folder and close the game first. PC/Steam saves
+are normally in `%APPDATA%\\Rune Factory 4 Special`. Open a slot file
+(`rf4_sNN.sav`) for character/world edits, or `rf4_sys.sav` for player names
+and persistent system unlocks, then edit values. Valid drafts apply before switching pages
 or records and before export. Invalid drafts stay visible and block those
 actions. Changes remain in memory until you explicitly export.
 
 Choose the intended destination under **Review & export**. **Export edited
-save** writes to the game's roaming save folder after backing up its current
+save** writes to `%APPDATA%\\Rune Factory 4 Special` after backing up its current
 bytes. **Save as…** writes a separate copy or extracted Switch output.
+The editor also accepts Switch saves already extracted from the console.
+PC/Switch conversion is experimental and requires choosing the output
+platform and checking its risk acknowledgement under Review & export.
+It does not decrypt saves or transfer them to a console.
 Backups & rollback retains up to ten matching editor backups per save.
 Keep an independent full-folder backup and handle Steam Cloud separately.
 
 A valid checksum does not guarantee gameplay compatibility. Experimental
 story, romance and roster edits do not add missing scripts or world records.
-No in-game acceptance testing is claimed. The synthetic demo cannot export.
+No in-game acceptance testing is claimed. **Try synthetic demo** on Save
+overview lets you explore without a personal save; demo export is disabled.
 
-See docs/mygo-desktop.md and RELEASE_NOTES.md for controls and limitations.
+The extracted folder includes the [MyGO guide](docs/mygo-desktop.md) and
+[release notes](RELEASE_NOTES.md) for controls and limitations.
 Source: https://github.com/rikimtasu/rf4s_pc_saveedit/tree/{version}
 '''
         package.writestr(f'{folder}/README.md', readme)

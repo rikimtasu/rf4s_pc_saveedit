@@ -6,9 +6,13 @@ A local, offline save editor for **PC / Steam**, **extracted Switch saves**, and
 
 ### MyGO desktop app
 
-Download [**v0.5**](https://github.com/rikimtasu/rf4s_pc_saveedit/releases/tag/v0.5), extract **RF4S-Save-Editor-v0.5-win-x64.zip**, and open **RF4S Save Editor.exe**. Windows 10/11 x64; no installation or build tools are needed.
+Download [**v0.5**](https://github.com/rikimtasu/rf4s_pc_saveedit/releases/tag/v0.5), extract **RF4S-Save-Editor-v0.5-win-x64.zip**, and open **RF4S Save Editor.exe**. Windows 10/11 x64; no installation or build tools are needed. The ZIP includes the game-reference catalog, icons and fonts; downloaded users do not need asset preparation.
+
+Back up your save folder and close the game. Choose **Open save**, select a slot or `rf4_sys.sav`, then edit values. Choose the destination under **Review & export** before exporting; the editor backs up the current destination first. **Try synthetic demo** lets you inspect the interface without touching a personal save.
 
 The GUI uses [MyGO](https://github.com/egoist/mygo)'s native Go widgets with a Nord theme. It runs without Qt, Python, a browser, WebView or a local server. Goja runs the save-editing JavaScript inside the executable.
+
+#### Build from source (optional)
 
 The build below targets **Windows 10/11 x64**. Install **Go 1.27.3+**, **Node.js 20+** and **Python 3.10+**, then run these commands in PowerShell from the root of your source checkout. No `npm install` is needed; the build fetches esbuild and Go dependencies.
 
@@ -20,8 +24,6 @@ npm run build:mygo
 The executable is `dist/mygo/RF4S Save Editor.exe`; `start.bat` prefers it over older Qt builds. Node and Python are build tools only. To run the source app after preparing its assets, use `npm run start:mygo`.
 
 The build bundles fonts and any curated catalog/icons already in `builtin/`. A fresh checkout needs [asset preparation](docs/mygo-desktop.md#offline-assets) for item replacements, equipment presets, effect previews and recipe lists. Other save fields can be edited without those tables. No game is needed to launch the editor.
-
-Choose **Open save**, select a slot or `rf4_sys.sav`, then edit values. Choose the destination under **Review & export** before exporting. **Try synthetic demo** lets you inspect the interface without touching a personal save.
 
 See the [MyGO guide](docs/mygo-desktop.md) for controls, tests and build details. The v0.41 download below is the earlier Qt edition.
 
@@ -85,7 +87,7 @@ Undo, redo, Save as and JSON change reports are included. No per-page editing op
 
 ## Interface and languages
 
-For MyGO controls and caption coverage, see the [MyGO guide](docs/mygo-desktop.md#controls-and-save-safety). The details below describe the Qt edition unless explicitly marked MyGO.
+For MyGO controls and caption coverage, see the [MyGO guide](docs/mygo-desktop.md#controls-and-save-safety). The language and layout details in this section describe the Qt edition unless explicitly marked MyGO.
 
 **Game names** offers bundled English, Japanese, French, German, Korean, Traditional Chinese and Simplified Chinese. It changes item, recipe-result, character, nickname and skill names; missing names fall back to English. Choose a different language without changing save bytes.
 

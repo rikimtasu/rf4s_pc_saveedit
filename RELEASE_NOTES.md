@@ -1,20 +1,20 @@
 # v0.5 — MyGO desktop GUI with Nord theme
 
-Download **RF4S-Save-Editor-v0.5-win-x64.zip**, extract it and open **RF4S Save Editor.exe**. Windows 10/11 x64. Fonts, curated game references and item icons are bundled. No installation, Python, Node, Qt, browser or game-folder reading is required.
+An offline save editor for PC/Steam saves, extracted Switch saves and `rf4_sys.sav` system saves. Download **RF4S-Save-Editor-v0.5-win-x64.zip**, extract it and open **RF4S Save Editor.exe** on Windows 10/11 x64. Fonts, curated game references and item icons are bundled. No installation, Python, Node, Qt, browser or game-folder reading is required.
 
 - Replaced the default Qt GUI with MyGO native Go widgets and a Nord palette. The shared save algorithms run in Goja inside the executable; no WebView or local server is used.
 - Added a grouped sidebar, a section selector for compact windows, a virtualized inventory icon grid, searchable record/item selectors and scrolling forms. English/Chinese interface captions and seven game-name languages are available; some helper text remains English.
 - Carried over the save-editing areas, including equipment attachments/effect previews, recipes, relationships, orders, soil, system names/unlocks, experimental roster creation and story tools. Valid drafts apply before switching records/pages or exporting; invalid drafts remain visible and block those actions.
-- Kept undo/redo, explicit export, PC/Switch conversion consent, JSON reports and managed backups. Exports and restores back up the destination first and retain up to ten matching editor backups after success.
+- Kept undo/redo, explicit export, JSON reports and managed backups. Converting between PC and Switch output requires selecting the output platform and checking the experimental-conversion acknowledgement under **Review & export**. Exports and restores back up the destination first and retain up to ten matching editor backups after success.
 - Added a synthetic demo with export disabled. `start.bat` prefers the MyGO build; the Qt and browser source entry points remain available.
 
 ## Verification and limits
 
-All 173 JavaScript tests and the MyGO Go tests passed. The Go tests cover native controls at desktop and 640×480 sizes, invalid drafts, atomic edits, undo/redo, checksums, UTF-8 names, PC/Switch output and backup retention/restoration. The standalone Windows executable rendered a synthetic inventory screenshot from outside the source directory, and its window opened and responded to a normal close request. No in-game acceptance testing was performed.
+All 173 JavaScript tests and the MyGO Go tests passed. The Go tests cover native controls at desktop and 640×480 sizes, invalid drafts, atomic edits, undo/redo, checksums, UTF-8 names, PC/Switch output and backup retention/restoration. Standalone Windows startup/rendering and the packaged executable were checked. No in-game acceptance testing was performed.
 
 **Back up your entire save folder and close the game before exporting or restoring.** A valid checksum does not guarantee gameplay compatibility. Story, romance, roster and order edits do not execute game scripts or reconstruct missing world state. PC/Switch conversion remains experimental. Handle Steam Cloud conflicts separately.
 
-See the [MyGO guide](docs/mygo-desktop.md) for usage and source builds. Previous releases are unchanged.
+See the [MyGO guide](https://github.com/rikimtasu/rf4s_pc_saveedit/blob/v0.5/docs/mygo-desktop.md) for usage and source builds; it is also included as `docs/mygo-desktop.md` in the ZIP. Previous releases are unchanged.
 
 ---
 
