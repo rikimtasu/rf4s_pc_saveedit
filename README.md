@@ -4,19 +4,40 @@ A local, offline save editor for **PC / Steam**, **extracted Switch saves**, and
 
 ## Quick start
 
-### Portable Windows app
+### MyGO desktop app
+
+Download [**v0.5**](https://github.com/rikimtasu/rf4s_pc_saveedit/releases/tag/v0.5), extract **RF4S-Save-Editor-v0.5-win-x64.zip**, and open **RF4S Save Editor.exe**. Windows 10/11 x64; no installation or build tools are needed.
+
+The GUI uses [MyGO](https://github.com/egoist/mygo)'s native Go widgets with a Nord theme. It runs without Qt, Python, a browser, WebView or a local server. Goja runs the save-editing JavaScript inside the executable.
+
+The build below targets **Windows 10/11 x64**. Install **Go 1.27.3+**, **Node.js 20+** and **Python 3.10+**, then run these commands in PowerShell from the root of your source checkout. No `npm install` is needed; the build fetches esbuild and Go dependencies.
+
+```powershell
+npm run build:mygo
+.\start.bat
+```
+
+The executable is `dist/mygo/RF4S Save Editor.exe`; `start.bat` prefers it over older Qt builds. Node and Python are build tools only. To run the source app after preparing its assets, use `npm run start:mygo`.
+
+The build bundles fonts and any curated catalog/icons already in `builtin/`. A fresh checkout needs [asset preparation](docs/mygo-desktop.md#offline-assets) for item replacements, equipment presets, effect previews and recipe lists. Other save fields can be edited without those tables. No game is needed to launch the editor.
+
+Choose **Open save**, select a slot or `rf4_sys.sav`, then edit values. Choose the destination under **Review & export** before exporting. **Try synthetic demo** lets you inspect the interface without touching a personal save.
+
+See the [MyGO guide](docs/mygo-desktop.md) for controls, tests and build details. The v0.41 download below is the earlier Qt edition.
+
+### Earlier portable Windows app (Qt v0.41)
 
 Download **v0.41** from [GitHub Releases](https://github.com/rikimtasu/rf4s_pc_saveedit/releases/tag/v0.41). Extract **RF4S-Save-Editor-v0.41-win-x64.zip** and open `RF4S Save Editor.exe`. Item/effect definitions, recipes, seven name languages, item/NPC icons and Noto Latin/Chinese fonts are bundled; no game-folder reading is required.
 
 The app uses **native Qt Widgets** without Chromium, WebView, an HTML interface or a local server. Python and required native Qt libraries are bundled; you do not need to install them. Windows 10/11 x64 is supported. First launch unpacks its runtime into a temporary folder.
 
-For local builds, `start.bat` prefers `dist/v0.41/RF4S Save Editor.exe`, then falls back to earlier builds in `dist/`. The executable is approximately **49 MiB**, including standalone references, icons and English/Chinese fonts; no installation is needed.
+When no MyGO build is present, `start.bat` prefers `dist/v0.41/RF4S Save Editor.exe`, then falls back to earlier builds in `dist/`. The Qt executable is approximately **49 MiB**, including standalone references, icons and English/Chinese fonts; no installation is needed.
 
 Close the game and open the intended slot save (`rf4_sNN.sav`) or `rf4_sys.sav`. Edit values, then click **Export edited save** for PC output. It writes directly to `%APPDATA%\Rune Factory 4 Special`, backing up the current destination there first. Use **Save as…** for separate copies or extracted Switch output. Edits stay in memory until you explicitly export.
 
-### Native source version (developers)
+### Earlier Qt source version (developers)
 
-Follow the [build instructions](#build-the-portable-windows-executable) to install the requirements and prepare the bundled catalog/icons with `python -m scripts.generate_builtin "<game folder>"`. Run `npm run build:native-core`, then `python desktop.py`. Node/esbuild compiles the shared save algorithms for Qt's small standalone scripting interpreter, not a browser. Users of the standalone EXE do not need Node or the game folder.
+Follow the [build instructions](#build-the-earlier-qt-windows-executable) to install the requirements and prepare the bundled catalog/icons with `python -m scripts.generate_builtin "<game folder>"`. Run `npm run build:native-core`, then `python desktop.py`. Node/esbuild compiles the shared save algorithms for Qt's small standalone scripting interpreter, not a browser. Users of the standalone EXE do not need Node or the game folder.
 
 ### Feature guides
 
@@ -64,6 +85,8 @@ Undo, redo, Save as and JSON change reports are included. No per-page editing op
 
 ## Interface and languages
 
+For MyGO controls and caption coverage, see the [MyGO guide](docs/mygo-desktop.md#controls-and-save-safety). The details below describe the Qt edition unless explicitly marked MyGO.
+
 **Game names** offers bundled English, Japanese, French, German, Korean, Traditional Chinese and Simplified Chinese. It changes item, recipe-result, character, nickname and skill names; missing names fall back to English. Choose a different language without changing save bytes.
 
 The independent **Interface / 界面** selector has a **Follow system** option: Simplified Chinese for Chinese Windows locales, English otherwise. Manual English/Chinese overrides are remembered. Switching captions preserves drafts, IDs and save bytes. On launch the save picker starts at `%APPDATA%\Rune Factory 4 Special` (home-folder fallback); no save is automatically loaded.
@@ -72,7 +95,7 @@ Compact windows are supported down to **640×480**. Forms reflow instead of clip
 
 Both native and browser interfaces use bundled **Noto Sans Medium (500)** for English and **Noto Sans CJK SC Medium** for Chinese. The supplied Latin font has no Chinese glyphs, so the matching CJK face is included for consistent offline rendering. Fonts need no system installation; portable builds include both faces and their SIL OFL notices.
 
-The native interface has a game-inspired icon grid with quantity badges and **11-point** Medium body text. Controls and dropdowns use Nord colors. **Ctrl+Shift+L** or **Learn all recipes** learns every loaded recipe as one undoable edit. Pickers share indexed models, load icons on demand and cache slot lists for faster full-storage browsing. See the [native guide](docs/native-desktop.md) and the [measured comparison](RELEASE_NOTES.md#readability-and-retained-functionality).
+The MyGO interface has an item icon grid with quantity badges, **15-DIP** Medium body text and Nord-colored controls. It switches from a sidebar to a section selector in compact windows. **Ctrl+Shift+L** or **Learn all recipes** learns every loaded recipe as one undoable edit. The earlier Qt edition uses 11-point text; its [native guide](docs/native-desktop.md) and [measured comparison](RELEASE_NOTES.md#readability-and-retained-functionality) describe that edition.
 
 ### Older-save compatibility
 
@@ -100,7 +123,7 @@ For individual edits use **Dating & nicknames**; localized choices are bundled. 
 
 ## Optional reference overrides and legacy browser setup
 
-The v0.3+ portable app includes all editor-required references; these steps are optional overrides. A fresh source checkout does not include generated game assets: prepare `builtin/` using the native build instructions below. The source-only legacy browser version uses the separate reference modules described here.
+The v0.3+ Qt portable app includes all editor-required references; these steps are optional overrides for that edition. A fresh source checkout does not include generated game assets. For MyGO asset preparation, use the [MyGO guide](docs/mygo-desktop.md#offline-assets). The source-only legacy browser version uses the separate reference modules described here.
 
 Import extracted tables using **Read tables** in the item reference tools or **Read recipe tables** in Recipes. Alternatively, generate references from your own game installation:
 
@@ -138,7 +161,8 @@ The experimental **end-game flag shortcut**, **soil editing**, opt-in **non-cand
 
 ## Documentation
 
-- [Native user guide](docs/native-desktop.md)
+- [MyGO desktop guide](docs/mygo-desktop.md)
+- [Earlier Qt user guide](docs/native-desktop.md)
 - [App state-machine map and transition rules](docs/state-machines.md)
 - [Legacy browser user guide](web/help.html)
 - [Save layout and appearance evidence](docs/save-layout.md)
@@ -151,11 +175,12 @@ Testing also requires **Node.js 20+**; it is not needed to run the editor.
 
 ```powershell
 npm test
+npm run test:mygo
 python tests/verify_upstream.py
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-### Build the portable Windows executable
+### Build the earlier Qt Windows executable
 
 Build tools (Python, Node.js 20+, esbuild and PyInstaller) are needed **only on the developer's computer**:
 

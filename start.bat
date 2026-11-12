@@ -1,6 +1,10 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+if exist "%~dp0dist\mygo\RF4S Save Editor.exe" (
+  start "" "%~dp0dist\mygo\RF4S Save Editor.exe"
+  exit /b 0
+)
 if exist "%~dp0dist\v0.41\RF4S Save Editor.exe" (
   start "" "%~dp0dist\v0.41\RF4S Save Editor.exe"
   exit /b 0

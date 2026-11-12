@@ -7,6 +7,7 @@ web/local-game-data.js
 web/local-save-reference.js
 web/local-languages.js
 web/native-bundle.js
+web/mygo-bundle.js
 /dist/
 /build/
 *.spec
